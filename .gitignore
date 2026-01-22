@@ -1,6 +1,43 @@
-**/__pycache__/
-**/*.pyc
+# ---------- Python ----------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ---------- Environments ----------
+.env
+.env.*
+venv/
+env/
+
+# ---------- IDE / Tools ----------
 .vscode/
 .claude/
-.env
-/venv
+
+# ---------- Caches (HF / Torch / Pip) ----------
+.cache/
+hf_cache/
+huggingface/
+torch/
+pip/
+
+# ---------- Models & Checkpoints ----------
+*.ckpt
+*.pth
+*.bin
+*.safetensors
+
+# ---------- Generated Outputs ----------
+outputs/
+results/
+generated_images/
+logs/
+
+# ---------- Datasets (keep code, not data) ----------
+data/
+datasets/
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+

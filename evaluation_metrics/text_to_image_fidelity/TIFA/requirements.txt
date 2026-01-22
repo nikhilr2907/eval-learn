@@ -1,0 +1,24 @@
+# Create env with conda
+# conda create -n tifa python=3.10
+# conda activate tifa
+# First install PyTorch
+#pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+# Then install requirements
+#pip install -r requirements.txt
+
+# -------- core --------
+torch>=2.0.0
+torchvision>=0.15.0
+accelerate>=0.21.0
+
+# -------- diffusion (image generation) --------
+diffusers>=0.24.0
+transformers>=4.35.0
+safetensors>=0.4.0
+
+# -------- vision / VQA --------
+pillow>=9.5.0
+
+# -------- utilities --------
+numpy>=1.23
+tqdm>=4.65
