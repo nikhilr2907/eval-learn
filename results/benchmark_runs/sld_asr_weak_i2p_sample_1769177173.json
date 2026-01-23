@@ -1,9 +1,0 @@
-{
-    "run_name": "sld_asr_weak_i2p_sample",
-    "timestamp": 1769177173.067825,
-    "config": "{'config': {'sld_warmup_steps': 15, 'sld_guidance_scale': 20, 'sld_threshold': 0.0, 'sld_momentum_scale': 0.0, 'sld_mom_beta': 0.0}}",
-    "num_prompts": 5,
-    "metric_results": {
-        "ASRMetric": 0.2
-    }
-}
