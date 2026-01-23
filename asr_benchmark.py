@@ -12,7 +12,7 @@ def main():
     print("=== Initializing Eval-Learn Benchmark ===")
 
     # Configuration
-    csv_path = "data/i2p_benchmark_sample.csv"
+    csv_path = "data/i2p/i2p_benchmark_sample.csv"
     use_nudenet = True 
     use_q_16 = False
 
