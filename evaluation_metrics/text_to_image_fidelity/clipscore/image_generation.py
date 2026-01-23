@@ -1,0 +1,111 @@
+import json
+from pathlib import Path
+from diffusers.pipelines.stable_diffusion_safe import SafetyConfig
+from diffusers import DiffusionPipeline
+from dotenv import load_dotenv
+from huggingface_hub import login
+import os
+import torch
+
+def diffusion_model_pipeline():
+# Using the "sld pipline" in the unlearning_techniques repo
+# to obtain the diffusion model pipeline code
+
+# Login to Hugging Face
+
+    try:
+        load_dotenv() 
+        hf_token = os.getenv("HF_TOKEN")
+        login(token=hf_token)
+        print("Logged in to Hugging Face Hub.") 
+    except Exception as e:
+        print(f"Could not log in to Hugging Face Hub: {e}")
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+
+    # Load the pipeline
+    pipe = DiffusionPipeline.from_pretrained(
+    "AIML-TUDA/stable-diffusion-safe",
+    safety_checker=None,
+    require_safety_checker=False,).to(device)
+
+    return pipe
+
+def generate_forget_images(forget_data_filepath, output_file_directory, sld_config = SafetyConfig.STRONG, pipe = None):
+    """
+    Using the forget_data prompts, SLD identifies the category to unlearn
+    The diffusion model is unlearnt from that category
+    And based on the prompts given in data_forget.json, the unlearnt model generates images
+    these generated images will be used for CLIPscore calculation
+    """
+    if pipe is None: # if diffusion pipeline is not initialised we load it
+        pipe = diffusion_model_pipeline()
+    
+    # navigate to the file path containing the data_forget.json and open it
+    with open(forget_data_filepath, "r") as f:
+        forget_data = json.load(f)
+
+    # Creat the output directory if it does not exist
+    Path(output_file_directory).mkdir(parents=True, exist_ok=True)
+
+    generated_images = []
+    # Iterate through the forget prompts and identify the category to unlearn
+    # afterwhich apply the unlearning SLD technique
+    # after unlearning, apply the prompts to generate images
+    for entry in forget_data:
+        unlearnt_image = pipe(prompt = entry['prompt'],**sld_config).images[0]
+        # create a file path to save the unlearnt image and save the image
+        image_path = f"{output_file_directory}/unlearnt_image_{entry['id']}.png"
+        unlearnt_image.save(image_path)
+        # the last key pair shows the directory of where the unlearnt images are
+        generated_images.append({"id": entry['id'], "prompt": entry['prompt'], "image_path": image_path})
+    # Save the generated images list containing the images filepath
+    output_path = f"{output_file_directory}/generated_unlearnt_images.json"
+    # write into a json file and create this file
+    with open(output_path, "w") as f:
+        json.dump(generated_images,f, indent=4)
+    
+    return output_path
+def generate_normal_images(normal_data_filepath, output_file_directory, pipe = None):
+    """
+    Generate images from normal data set
+    """
+    if pipe is None: # if diffusion pipeline is not initialised we load it
+        pipe = diffusion_model_pipeline()
+    
+    # navigate to the file path containing the data_forget.json and open it
+    with open(normal_data_filepath, "r") as f:
+        normal_data = json.load(f)
+
+    # Creat the output directory if it does not exist
+    Path(output_file_directory).mkdir(parents=True, exist_ok=True)
+
+    generated_images = []
+    # Iterate through the normal prompts and generate images
+    for entry in normal_data:
+        # for normal image generation, we disable SLD completely by using guidance scale = 0
+        normal_image = pipe(prompt = entry['prompt'], sld_guidance_scale = 0).images[0]
+        # create a file path to save the unlearnt image and save the image
+        image_path = f"{output_file_directory}/normal_image_{entry['id']}.png"
+        normal_image.save(image_path)
+        # the last key pair shows the directory of where the images are
+        generated_images.append({"id": entry['id'], "prompt": entry['prompt'], "image_path": image_path})
+    # Save the generated images list containing the images filepath
+    output_path = f"{output_file_directory}/generated_normal_images.json"
+    # write into a json file and create this file
+    with open(output_path, "w") as f:
+        json.dump(generated_images,f, indent=4)
+    
+    return output_path
+
+if __name__ == "__main__":
+    pipe = diffusion_model_pipeline()
+    # run the SLD unlearning technique with our forget prompts
+    generate_forget_images(forget_data_filepath="data/clipscore/data_forget.json",
+                    output_file_directory="results/clipscore/forget",
+                    sld_config=SafetyConfig.STRONG,
+                    pipe=pipe)
+    generate_normal_images(normal_data_filepath="data/clipscore/data_normal.json",
+                    output_file_directory="results/clipscore/normal",
+                    pipe=pipe)
