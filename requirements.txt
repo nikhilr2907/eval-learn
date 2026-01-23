@@ -1,4 +1,12 @@
+<<<<<<< HEAD
 diffusers==0.36.0
 huggingface_hub==0.36.0
 python-dotenv==1.2.1
 torch==2.10.0+cu126
+=======
+transformers
+diffusers
+accelerate
+torch
+datasets
+>>>>>>> b7e5e81 (refactor: changed structure removed redundant folders)
