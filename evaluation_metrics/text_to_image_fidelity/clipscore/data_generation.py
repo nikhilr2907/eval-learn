@@ -4,9 +4,9 @@ from pycocotools.coco import COCO
 import random
 
 
-def dataset_extraction(instances_json_path = "/data/ko25/datasets/cocodataset/annotations/instances_val2017.json",
-                        captions_json_path = "annotations/captions_val2017.json",
-                        output_directory = "data/clipscore", forget_category = 'gun', seed = 66900, number_of_samples = 50):
+def dataset_extraction(instances_json_path = "/tmp/ko25/datasets/cocodataset/annotations/instances_val2017.json",
+                        captions_json_path = "/tmp/ko25/datasets/cocodataset/annotations/captions_val2017.json",
+                        output_directory = "data/clipscore", forget_category = 'knife', seed = 66900, number_of_samples = 50):
     """
     dataset_extraction takes in the COCO data set, and turns it into a suitable format for CLIPscore
     This function was used to create the data_forget.json and data_normal.json data sets
@@ -60,4 +60,4 @@ def dataset_extraction(instances_json_path = "/data/ko25/datasets/cocodataset/an
     return data_forget, data_normal
 
 if __name__ == "__main__":
-    dataset_extraction(forget_category="gun", number_of_samples=5)
+    dataset_extraction(forget_category="knife", number_of_samples=5)

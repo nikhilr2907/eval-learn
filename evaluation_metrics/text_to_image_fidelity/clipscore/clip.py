@@ -1,7 +1,7 @@
 import pandas as pd
 import torch
 from PIL import Image
-from torchmetrics.multimodal import CLIPScore
+from torchmetrics.multimodal.clip_score import CLIPScore
 from torchvision import transforms
 from pycocotools.coco import COCO
 import random
