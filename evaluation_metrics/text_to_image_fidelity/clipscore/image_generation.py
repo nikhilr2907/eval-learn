@@ -15,7 +15,9 @@ def diffusion_model_pipeline():
 
     try:
         load_dotenv() 
-        
+        hf_token = os.getenv("HF_TOKEN")
+        login(token=hf_token)
+        print("Logged in to Hugging Face Hub.")
     except Exception as e:
         print(f"Could not log in to Hugging Face Hub: {e}")
 
@@ -26,7 +28,11 @@ def diffusion_model_pipeline():
     pipe = DiffusionPipeline.from_pretrained(
     "AIML-TUDA/stable-diffusion-safe",
     safety_checker=None,
-    require_safety_checker=False).to(device)
+    torch_dtype=torch.float16 if device == "cuda" else torch.float32).to(device)
+    # Reduce memory usage
+    pipe.enable_attention_slicing()
+    pipe.enable_vae_slicing()
+    pipe = pipe.to(device)
 
     return pipe
 
@@ -100,10 +106,18 @@ def generate_normal_images(normal_data_filepath, output_file_directory, pipe = N
 if __name__ == "__main__":
     pipe = diffusion_model_pipeline()
     # run the SLD unlearning technique with our forget prompts
-    generate_forget_images(forget_data_filepath="/Users/ongkaisheng/Desktop/ImperialCollege/MSc Group Project/eval-learn/results/clipscore/forget/data_forget.json",
-                    output_file_directory="/Users/ongkaisheng/Desktop/ImperialCollege/MSc Group Project/eval-learn/results/clipscore/forget",
+    #forgetfilepath = "/Users/ongkaisheng/Desktop/ImperialCollege/MSc Group Project/eval-learn/results/clipscore/forget/data_forget.json"
+    forgetfilepath = "results/clipscore/forget/data_forget.json"
+    #outputforgetdir = "/Users/ongkaisheng/Desktop/ImperialCollege/MSc Group Project/eval-learn/results/clipscore/forget"
+    outputforgetdir = "results/clipscore/forget"
+    generate_forget_images(forget_data_filepath= forgetfilepath,
+                    output_file_directory=outputforgetdir,
                     sld_config=SafetyConfig.STRONG,
                     pipe=pipe)
-    generate_normal_images(normal_data_filepath="/Users/ongkaisheng/Desktop/ImperialCollege/MSc Group Project/eval-learn/results/clipscore/normal/data_normal.json",
-                    output_file_directory="/Users/ongkaisheng/Desktop/ImperialCollege/MSc Group Project/eval-learn/results/clipscore/normal",
+    #normalfilepath = "/Users/ongkaisheng/Desktop/ImperialCollege/MSc Group Project/eval-learn/results/clipscore/normal/data_normal.json"
+    normalfilepath = "results/clipscore/normal/data_normal.json"
+    #outputnormaldir = "/Users/ongkaisheng/Desktop/ImperialCollege/MSc Group Project/eval-learn/results/clipscore/normal"
+    outputnormaldir = "results/clipscore/normal"
+    generate_normal_images(normal_data_filepath= normalfilepath,
+                    output_file_directory=outputnormaldir,
                     pipe=pipe)
