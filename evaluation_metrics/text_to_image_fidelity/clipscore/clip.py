@@ -54,7 +54,7 @@ def CLIP_score_calculation(json_filepath, model_name = "openai/clip-vit-base-pat
         # used for calculating average over all entries
         total_clip_score += score.item()
         # we store clip scores for each entry in a dictionary for further reference and data analysis if needed
-        score_dict[entry['id']] = score.item()
+        score_dict[entry['image_id']] = score.item()
     
     average_clip_score = total_clip_score / len(data)
     return average_clip_score, score_dict
