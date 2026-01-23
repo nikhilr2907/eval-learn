@@ -9,4 +9,8 @@ diffusers
 accelerate
 torch
 datasets
+<<<<<<< HEAD
 >>>>>>> b7e5e81 (refactor: changed structure removed redundant folders)
+=======
+sfd 
+>>>>>>> 1f776e0 (feat: beginning to implement err)
