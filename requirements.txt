@@ -3,3 +3,4 @@ diffusers
 accelerate
 torch
 datasets
+sfd 
