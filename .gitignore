@@ -1,22 +1,6 @@
-.json
-
 **/__pycache__/
 **/*.pyc
 .vscode/
 .claude/
-<<<<<<< HEAD
-<<<<<<< HEAD
 .env
 /venv
-=======
-evaluation_metrics/TIFA/**
-evaluation_metrics/CLIPSCORE/**
-evaluation_metrics/FID/**
-results/sld/**
->>>>>>> 2ad097d (refactor/feat: added other metrics and changed ERR structure)
-=======
-evaluation_metrics/TIFA/**
-evaluation_metrics/CLIPSCORE/**
-evaluation_metrics/FID/**
-results/sld/**
->>>>>>> 7922bb2d1d687b3c152a2a6daa9e1221c44d530c
