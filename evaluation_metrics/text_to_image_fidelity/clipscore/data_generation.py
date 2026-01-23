@@ -4,7 +4,7 @@ from pycocotools.coco import COCO
 import random
 
 
-def dataset_extraction(instances_json_path = "annotations/instances_val2017.json",
+def dataset_extraction(instances_json_path = "/data/ko25/datasets/cocodataset/annotations/instances_val2017.json",
                         captions_json_path = "annotations/captions_val2017.json",
                         output_directory = "data/clipscore", forget_category = 'gun', seed = 66900, number_of_samples = 50):
     """

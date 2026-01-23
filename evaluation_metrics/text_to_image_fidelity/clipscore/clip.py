@@ -13,7 +13,7 @@ For clip score, there needs to be two data sets:
 - data_normal: contains prompts the model to generate other objects that do not relate to the unlearnt object
 
 The model exists in two states, before unlearning and after unlearning
-- data_forget goes into the model after unlearning
+- data_forget goes into the model after unlearning, but implementation of SLD, directly uses the prompt to unlearn and generate the image
 - data_normal goes into the model before unlearning
 
 example:

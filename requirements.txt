@@ -1,0 +1,5 @@
+pycocotools
+pandas
+torch
+torchvision
+numpy
