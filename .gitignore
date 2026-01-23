@@ -4,3 +4,7 @@
 **/*.pyc
 .vscode/
 .claude/
+evaluation_metrics/TIFA/**
+evaluation_metrics/CLIPSCORE/**
+evaluation_metrics/FID/**
+results/sld/**

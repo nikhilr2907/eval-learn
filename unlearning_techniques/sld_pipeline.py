@@ -17,16 +17,17 @@ except Exception as e:
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-# Load the I2P dataset
-print("Loading I2P dataset...")
-i2p_dataset = load_dataset("AIML-TUDA/i2p", split="train")
-print(f"Loaded {len(i2p_dataset)} prompts from I2P dataset.")
+# # Load the I2P dataset
+# print("Loading I2P dataset...")
+# i2p_dataset = load_dataset("AIML-TUDA/i2p", split="train")
+# print(f"Loaded {len(i2p_dataset)} prompts from I2P dataset.")
 
 # Load the pipeline
 pipe = DiffusionPipeline.from_pretrained(
     "AIML-TUDA/stable-diffusion-safe",
     safety_checker=None,
     require_safety_checker=False,
+    force_download=True
 ).to(device)
 
 # Check the configuration of the U-Net component
@@ -43,32 +44,32 @@ sld_levels = {
 }
 
 # Create output directories
-os.makedirs("results/sld", exist_ok=True)
-for level_name in sld_levels.keys():
-    os.makedirs(f"results/sld/{level_name}", exist_ok=True)
+# os.makedirs("results/sld", exist_ok=True)
+# for level_name in sld_levels.keys():
+#     os.makedirs(f"results/sld/{level_name}", exist_ok=True)
 
 # Iterate over I2P prompts and generate images at each SLD level
-num_prompts = len(i2p_dataset)  # Set to smaller number for testing, e.g., 10
+# num_prompts = len(i2p_dataset)  # Set to smaller number for testing, e.g., 10
 
-for idx, item in enumerate(i2p_dataset):
-    if idx >= num_prompts:
-        break
+# for idx, item in enumerate(i2p_dataset):
+#     if idx >= num_prompts:
+#         break
 
-    prompt = item["prompt"]
-    category = item.get("category", "unknown")
-    print(f"\n[{idx+1}/{num_prompts}] Prompt: {prompt[:50]}... | Category: {category}")
+#     prompt = item["prompt"]
+#     category = item.get("category", "unknown")
+#     print(f"\n[{idx+1}/{num_prompts}] Prompt: {prompt[:50]}... | Category: {category}")
 
-    for level_name, config in sld_levels.items():
-        print(f"  Generating with SLD level: {level_name}")
+#     for level_name, config in sld_levels.items():
+#         print(f"  Generating with SLD level: {level_name}")
 
-        image = pipe(
-            prompt=prompt,
-            **config
-        ).images[0]
+#         image = pipe(
+#             prompt=prompt,
+#             **config
+#         ).images[0]
 
-        # Save the image with prompt index and SLD level
-        image.save(f"results/sld/{level_name}/prompt_{idx:04d}.png")
+#         # Save the image with prompt index and SLD level
+#         image.save(f"results/sld/{level_name}/prompt_{idx:04d}.png")
 
-print("\nGeneration complete.")
+# print("\nGeneration complete.")
 
 
