@@ -15,15 +15,9 @@ from unlearning_techniques.sld_pipeline.sld_wrapper import SLDWrapper
 
 
 class ERRBenchmarkTask(BenchmarkTask):
-    """
-    Complete ERR Benchmark: loads local datasets, generates images, and evaluates ERR metric.
-    Inherits from BenchmarkTask for framework integration.
+    """ERR Benchmark: loads datasets, generates images, and evaluates ERR metric."""
 
-    - I2P: Loaded from existing local CSV (data/i2p/i2p_benchmark_sample.csv)
-    - Ring-A-Bell: Downloaded from HuggingFace if not cached
-    """
-
-    RAB_DATASET = "AIML-TUDA/ring-a-bell"
+    RAB_DATASET_HF = "Chia15/RingABell-Nudity"
     IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp"}
 
     def __init__(
@@ -134,56 +128,52 @@ class ERRBenchmarkTask(BenchmarkTask):
         print(f"    ✓ {len(data)} items loaded")
         return data
 
-    def _download_rab_dataset(self) -> List[Dict[str, str]]:
-        """Download Ring-A-Bell dataset from HuggingFace and save as CSV."""
+    def _load_rab_dataset(self) -> List[Dict[str, str]]:
+        """Load Ring-A-Bell adversarial prompts dataset."""
         if self.rab_csv_path.exists():
-            print(f"  Ring-A-Bell already exists, loading...")
+            print(f"  Loading Ring-A-Bell from {self.rab_csv_path}...")
             with open(self.rab_csv_path, "r", encoding="utf-8") as f:
                 data = list(csv.DictReader(f))
             print(f"    ✓ {len(data)} items loaded")
             return data
 
+        print(f"  Downloading Ring-A-Bell from {self.RAB_DATASET_HF}...")
         try:
-            print(f"  Downloading {self.RAB_DATASET}...")
-            dataset = load_dataset(self.RAB_DATASET, split="train")
+            dataset = load_dataset(self.RAB_DATASET_HF, split="train")
 
+            self.rab_dir.mkdir(parents=True, exist_ok=True)
             with open(self.rab_csv_path, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow(["index", "prompt", "concept"])
                 for idx, item in enumerate(dataset):
-                    prompt = item.get("prompt", "")
-                    concept = item.get("concept", "") or item.get("category", "")
+                    prompt = item.get("prompt", "") or item.get("text", "")
+                    concept = item.get("concept", "") or item.get("category", "") or "nudity"
                     writer.writerow([idx, prompt, concept])
 
-            print(f"    ✓ {len(dataset)} items saved to {self.rab_csv_path}")
-            # Return as list of dicts for consistency
+            print(f"    ✓ {len(dataset)} items downloaded and saved")
             return [
                 {
-                    "prompt": item.get("prompt", ""),
-                    "concept": item.get("concept", "") or item.get("category", ""),
+                    "prompt": item.get("prompt", "") or item.get("text", ""),
+                    "concept": item.get("concept", "") or item.get("category", "") or "nudity",
                 }
                 for item in dataset
             ]
+
         except Exception as e:
-            print(f"    ⚠️ {e}")
+            print(f"  ⚠️ Failed to download Ring-A-Bell: {e}")
             return []
 
     def _load_datasets(self) -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
-        """Load I2P (from existing CSV) and download Ring-A-Bell."""
+        """Load I2P and Ring-A-Bell datasets from local CSV files."""
         print("\n[STEP 1] Loading datasets")
-        return self._load_i2p_dataset(), self._download_rab_dataset()
+        return self._load_i2p_dataset(), self._load_rab_dataset()
 
     # =========================================================================
     # Data Generation (CSV + Images)
     # =========================================================================
 
     def _save_image(self, img: Any, output_dir: Path, idx: int) -> Optional[str]:
-        """
-        Save a single image to directory.
-
-        Returns:
-            Path string if successful, None if failed
-        """
+        """Save a single image to directory. Returns path if successful, None if failed."""
         try:
             path = output_dir / f"{idx:04d}.png"
             img.save(path)
@@ -192,16 +182,8 @@ class ERRBenchmarkTask(BenchmarkTask):
             print(f"    ⚠️ Image {idx}: {e}")
             return None
 
-    def _write_csv(
-        self, path: Path, data: List[Tuple[int, str, str, str]]
-    ) -> None:
-        """
-        Write prompt data to CSV.
-
-        Args:
-            path: Output CSV path
-            data: List of (index, prompt, section, concept) tuples
-        """
+    def _write_csv(self, path: Path, data: List[Tuple[int, str, str, str]]) -> None:
+        """Write prompt data to CSV."""
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["index", "prompt", "section", "concept"])
@@ -218,15 +200,7 @@ class ERRBenchmarkTask(BenchmarkTask):
         prompt_key: str = "prompt",
         concept_key: str = "categories",
     ) -> Tuple[List[str], List[str], List[Any]]:
-        """
-        Generic method to generate data for any category.
-
-        Images and their concepts are paired atomically - only successfully
-        saved images are recorded in the CSV, ensuring index alignment.
-
-        Returns:
-            Tuple of (prompts, concepts, images) for successfully saved pairs only
-        """
+        """Generate data for a category. Only successfully saved images are recorded."""
         items = min(num_items, len(data))
 
         input_prompts = [row.get(prompt_key, "") for row in data[:items]]
@@ -236,7 +210,6 @@ class ERRBenchmarkTask(BenchmarkTask):
 
         print(f"  Generating {len(input_prompts)} images...")
 
-        # Track successfully saved pairs
         saved_prompts: List[str] = []
         saved_concepts: List[str] = []
         saved_images: List[Any] = []
@@ -245,7 +218,6 @@ class ERRBenchmarkTask(BenchmarkTask):
         try:
             images = self.technique.generate(input_prompts, **self.generation_config)
 
-            # Save images and only record successful pairs
             for img, prompt, concept in zip(images, input_prompts, input_concepts):
                 saved_path = self._save_image(img, image_dir, len(saved_images))
                 if saved_path is not None:
@@ -254,7 +226,6 @@ class ERRBenchmarkTask(BenchmarkTask):
                     saved_images.append(img)
                     csv_data.append((len(csv_data), prompt, section, concept))
 
-            # Write CSV only with successfully saved pairs
             self._write_csv(csv_path, csv_data)
             print(f"  ✓ {section}: {len(saved_prompts)}/{len(input_prompts)} images saved")
 
@@ -265,15 +236,7 @@ class ERRBenchmarkTask(BenchmarkTask):
         return saved_prompts, saved_concepts, saved_images
 
     def _generate_retention_data(self) -> Tuple[List[str], List[str], List[Any]]:
-        """
-        Generate retention data from challenge dataset.
-
-        Images and their concepts are paired atomically - only successfully
-        saved images are recorded in the CSV, ensuring index alignment.
-
-        Returns:
-            Tuple of (prompts, concepts, images) for successfully saved pairs only
-        """
+        """Generate retention data from challenge dataset."""
         print("\n[STEP 2] Generating RETENTION data")
 
         if not self.good_dataset_path.exists():
@@ -290,7 +253,6 @@ class ERRBenchmarkTask(BenchmarkTask):
 
         print(f"  Generating {len(input_prompts)} images...")
 
-        # Track successfully saved pairs
         saved_prompts: List[str] = []
         saved_concepts: List[str] = []
         saved_images: List[Any] = []
@@ -299,7 +261,6 @@ class ERRBenchmarkTask(BenchmarkTask):
         try:
             images = self.technique.generate(input_prompts, **self.generation_config)
 
-            # Save images and only record successful pairs
             for img, prompt, concept in zip(images, input_prompts, input_concepts):
                 saved_path = self._save_image(img, self.retain_dir, len(saved_images))
                 if saved_path is not None:
@@ -308,7 +269,6 @@ class ERRBenchmarkTask(BenchmarkTask):
                     saved_images.append(img)
                     csv_data.append((len(csv_data), prompt, "retain", concept))
 
-            # Write CSV only with successfully saved pairs
             self._write_csv(self.retain_csv_path, csv_data)
             print(f"  ✓ retain: {len(saved_prompts)}/{len(input_prompts)} images saved")
 
@@ -321,12 +281,7 @@ class ERRBenchmarkTask(BenchmarkTask):
     def _generate_target_data(
         self, i2p_data: List[Dict[str, str]]
     ) -> Tuple[List[str], List[str], List[Any]]:
-        """
-        Generate target (forgetting) data from I2P dataset.
-
-        Returns:
-            Tuple of (prompts, concepts, images)
-        """
+        """Generate target (forgetting) data from I2P dataset."""
         print("\n[STEP 3] Generating TARGET data")
         if not i2p_data:
             print("  ❌ No I2P data available")
@@ -343,12 +298,7 @@ class ERRBenchmarkTask(BenchmarkTask):
     def _generate_adversarial_data(
         self, rab_data: List[Dict[str, str]]
     ) -> Tuple[List[str], List[str], List[Any]]:
-        """
-        Generate adversarial data from Ring-A-Bell dataset.
-
-        Returns:
-            Tuple of (prompts, concepts, images)
-        """
+        """Generate adversarial data from Ring-A-Bell dataset."""
         print("\n[STEP 4] Generating ADVERSARIAL data")
         if not rab_data:
             print("  ⚠️ Ring-A-Bell unavailable, skipping")
@@ -367,12 +317,7 @@ class ERRBenchmarkTask(BenchmarkTask):
     # =========================================================================
 
     def _load_data(self) -> List[str]:
-        """
-        Load prompts from CSV files. Required by BenchmarkTask.
-
-        This method can be used to reload prompts from saved CSVs if needed,
-        or called by the base class workflow.
-        """
+        """Load prompts from CSV files. Required by BenchmarkTask."""
 
         def load_csv(path: Path) -> List[str]:
             if not path.exists():
@@ -417,20 +362,7 @@ class ERRBenchmarkTask(BenchmarkTask):
     def _calculate_metric(
         self, generated_images: List[Any], prompts: List[str]
     ) -> Dict[str, Any]:
-        """
-        Calculate ERR metric. Required by BenchmarkTask.
-
-        Note: For ERR, this method uses the stored image-concept pairs from
-        the generation phase rather than the passed parameters, as ERR requires
-        separate handling of target/retain/adversarial categories.
-
-        Args:
-            generated_images: Not used directly (ERR uses categorized images)
-            prompts: Not used directly (ERR uses categorized prompts)
-
-        Returns:
-            Dict with ERR_Score and Details breakdown
-        """
+        """Calculate ERR metric. Required by BenchmarkTask."""
         print("\n[STEP 5] Calculating ERR metric")
 
         data = self._get_image_concept_pairs()
@@ -456,12 +388,7 @@ class ERRBenchmarkTask(BenchmarkTask):
     # =========================================================================
 
     def run(self) -> Dict[str, Any]:
-        """
-        Run complete ERR benchmark pipeline.
-
-        Returns:
-            Dict with ERR_Score and Details breakdown
-        """
+        """Run complete ERR benchmark pipeline."""
         print("=" * 60)
         print(f"ERR BENCHMARK: {self.technique_name}")
         print("=" * 60)
@@ -488,7 +415,6 @@ class ERRBenchmarkTask(BenchmarkTask):
             "adversarial": adv_images,
         }
 
-        # Combine all for base class compatibility
         all_prompts = target_prompts + retain_prompts + adv_prompts
         all_images = target_images + retain_images + adv_images
 
@@ -514,7 +440,7 @@ if __name__ == "__main__":
         num_target_prompts=1,
         num_retain_prompts=0,
         num_adversarial_prompts=0,
-        generation_config={},  # Pass any generation config here
+        generation_config={},
     )
     result = benchmark.run()
     print(f"Final result: {result}")
