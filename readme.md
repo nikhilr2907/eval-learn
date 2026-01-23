@@ -1,5 +1,11 @@
 # Msc AI Group Project
 
+## run python asr_benchmark.py to run
+
+## .env include HF_TOKEN (hgging face token)
+
+
+
 for .env file make sure to add huggingface token
 
 Evaluation Benchmark for Unlearning in T2I diffusion models
