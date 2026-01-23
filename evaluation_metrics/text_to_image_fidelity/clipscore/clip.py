@@ -6,6 +6,7 @@ from torchvision import transforms
 from pycocotools.coco import COCO
 import random
 import json
+import csv
 
 """
 For clip score, there needs to be two data sets:
@@ -59,9 +60,18 @@ def CLIP_score_calculation(json_filepath, model_name = "openai/clip-vit-base-pat
     average_clip_score = total_clip_score / len(data)
     return average_clip_score, score_dict
 
-
+def write_results(average_forget_clipscore, forget_scores_dict, average_normal_clipscore, normal_scores_dict, output_filepath = "results/clipscore/clipscore_results.json", category_unlearnt="dog"):
+    """
+    Write the results to a json file
+    """
+    results = {"forget_data":{"category_unlearnt": category_unlearnt, "average_clipscore": average_forget_clipscore, "scores_dict": forget_scores_dict},
+    "normal_data":{"category_unlearnt": category_unlearnt, "average_clipscore": average_normal_clipscore, "scores_dict": normal_scores_dict}}
+    with open(output_filepath, "w") as f:
+        json.dump(results, f, indent=4)
+        print(f"Results from unlearning {category_unlearnt} written and saved to: ", output_filepath)
 if __name__ == "__main__":
     average_forget_clipscore, forget_scores_dict = CLIP_score_calculation("results/clipscore/forget/generated_unlearnt_images.json")
     average_normal_clipscore, normal_scores_dict = CLIP_score_calculation("results/clipscore/normal/generated_normal_images.json")
     print(f"CLIP Score for forget data: Average: {average_forget_clipscore}, Scores: {forget_scores_dict}")
     print(f"CLIP Score for normal data: Average: {average_normal_clipscore}, Scores: {normal_scores_dict}")
+    write_results(average_forget_clipscore, forget_scores_dict, average_normal_clipscore, normal_scores_dict, "results/clipscore/clipscore_results.json", category_unlearnt="knife")
