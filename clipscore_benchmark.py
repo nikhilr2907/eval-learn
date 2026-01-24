@@ -34,9 +34,8 @@ class ClipScore(UnlearningTechnique):
     If needed, save and write results into a json file
     """
 
-    def __init__(self, output_directory = "data/clipscore", model_name = "openai/clip-vit-base-patch32", number_of_samples = 50):
+    def __init__(self, model_name = "openai/clip-vit-base-patch32", number_of_samples = 50):
         self.model_name = model_name
-        self.output_directory = output_directory
         self.number_of_samples = number_of_samples
 
     def score(self, json_filepath):
@@ -79,7 +78,7 @@ class ClipScore(UnlearningTechnique):
         return average_clip_score, score_dict
         
 
-    def obtain_datasets(instances_json_path = "/tmp/ko25/datasets/cocodataset/annotations/instances_val2017.json",
+    def obtain_datasets(self, instances_json_path = "/tmp/ko25/datasets/cocodataset/annotations/instances_val2017.json",
                         captions_json_path = "/tmp/ko25/datasets/cocodataset/annotations/captions_val2017.json",
                         output_directory = "data/clipscore", forget_category = 'knife', number_of_samples = 50):
         """
@@ -145,7 +144,7 @@ class ClipScore(UnlearningTechnique):
 
         return data_forget, data_normal
     
-    def apply_SLD_max(forget_data_filepath, output_file_directory, sld_config = SafetyConfig.STRONG, pipe = None):
+    def SLD_generate_images(self, forget_data_filepath, output_file_directory, sld_config = SafetyConfig.STRONG, pipe = None):
         """
         Using the forget_data prompts, SLD identifies the category to unlearn
         The diffusion model is unlearnt from that category
@@ -179,42 +178,58 @@ class ClipScore(UnlearningTechnique):
         with open(output_path, "w") as f:
             json.dump(generated_images,f, indent=4)
     
-            return output_path
+        return output_path
 
-    def generate_normal_images(normal_data_filepath, output_file_directory, pipe = None):
+    def generate_normal_images(self,normal_data_filepath, output_file_directory, pipe = None):
         """
         Generate images from normal data set
         """
         if pipe is None: # if diffusion pipeline is not initialised we load it
             pipe = diffusion_model_pipeline()
     
-    # navigate to the file path containing the data_forget.json and open it
-    with open(normal_data_filepath, "r") as f:
-        normal_data = json.load(f)
+        # navigate to the file path containing the data_forget.json and open it
+        with open(normal_data_filepath, "r") as f:
+            normal_data = json.load(f)
 
-    # Creat the output directory if it does not exist
-    Path(output_file_directory).mkdir(parents=True, exist_ok=True)
+        # Creat the output directory if it does not exist
+        Path(output_file_directory).mkdir(parents=True, exist_ok=True)
 
-    generated_images = []
-    # Iterate through the normal prompts and generate images
-    for entry in normal_data:
-        # for normal image generation, we disable SLD completely by using guidance scale = 0
-        normal_image = pipe.generate([entry['prompt']], config={"sld_guidance_scale": 0})[0]
-        # create a file path to save the unlearnt image and save the image
-        image_path = f"{output_file_directory}/normal_image_{entry['image_id']}.png"
-        normal_image.save(image_path)
-        # the last key pair shows the directory of where the images are
-        generated_images.append({"image_id": entry['image_id'], "prompt": entry['prompt'], "image_path": image_path})
-    # Save the generated images list containing the images filepath
-    output_path = f"{output_file_directory}/generated_normal_images.json"
-    # write into a json file and create this file
-    with open(output_path, "w") as f:
-        json.dump(generated_images,f, indent=4)
+        generated_images = []
+        # Iterate through the normal prompts and generate images
+        for entry in normal_data:
+            # for normal image generation, we disable SLD completely by using guidance scale = 0
+            normal_image = pipe.generate([entry['prompt']], config={"sld_guidance_scale": 0})[0]
+            # create a file path to save the unlearnt image and save the image
+            image_path = f"{output_file_directory}/normal_image_{entry['image_id']}.png"
+            normal_image.save(image_path)
+            # the last key pair shows the directory of where the images are
+            generated_images.append({"image_id": entry['image_id'], "prompt": entry['prompt'], "image_path": image_path})
+        # Save the generated images list containing the images filepath
+        output_path = f"{output_file_directory}/generated_normal_images.json"
+        # write into a json file and create this file
+        with open(output_path, "w") as f:
+            json.dump(generated_images,f, indent=4)
     
-    return output_path
+        return output_path
+    def benchmark(self, instances_json_path = "/tmp/ko25/datasets/cocodataset/annotations/instances_val2017.json",
+                        captions_json_path = "/tmp/ko25/datasets/cocodataset/annotations/captions_val2017.json",
+                        output_directory = "data/clipscore", forget_category = 'knife'):
+        self.obtain_datasets(output_directory=output_directory, forget_category= forget_category, number_of_samples=number_of_samples,
+                             instances_json_path=instances_json_path, captions_json_path=captions_json_path)
+        
+        forget_data_filepath = f"{output_directory}/data_forget.json"
+        normal_data_filepath = f"{output_directory}/data_normal.json"
 
-    def benchmark(self):
-        self.obtain_datasets()
-        self.generate_images()
-        self.score()
+        unlearnt_images_json_filepath = self.SLD_generate_images(forget_data_filepath = forget_data_filepath, output_directory = output_directory)
+        normal_images_json_filepath = self.generate_normal_images(normal_data_filepath = normal_data_filepath, output_file_directory= output_directory)
+        unlearnt_average_clipscore, unlearnt_score_dict = self.score(json_filepath = unlearnt_images_json_filepath)
+        normal_average_clipscore, normal_score_dict = self.score(json_filepath = normal_images_json_filepath)
+
+        return unlearnt_average_clipscore, unlearnt_score_dict, normal_average_clipscore, normal_score_dict
+
 if __name__ == "__main__":
+    clip_score = ClipScore(number_of_samples = 50)
+    clip_score_results = clip_score.benchmark(instances_json_path = "/tmp/ko25/datasets/cocodataset/annotations/instances_val2017.json",
+                        captions_json_path = "/tmp/ko25/datasets/cocodataset/annotations/captions_val2017.json",
+                        output_directory = "data/clipscore", forget_category = 'knife', number_of_samples = 50)
+    print('Average clipscore after unlearning: ', clip_score_results[0], 'Clipscore Dictionary after unlearning:' clip_score_results[1], 'Average clipscore for normal data: ',  clip_score_results[2], 'Clipscore Dictionary for normal data:', clip_score_results[3])
