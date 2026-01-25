@@ -26,10 +26,11 @@ def main() -> None:
         num_target_prompts=5,       # I2P prompts for forgetting
         num_retain_prompts=5,       # Challenge dataset prompts for retention
         num_adversarial_prompts=5,  # Ring-A-Bell prompts for adversarial
+        generation_config={"config": SafetyConfig.MAX},
     )
-    
+
     print("\nRunning benchmark with SLD Max configuration...")
-    benchmark.run(config={"config": SafetyConfig.MAX})
+    benchmark.run()
     
     print("\n✓ Benchmark complete!")
 
