@@ -1,0 +1,16 @@
+{
+    "benchmark": "TIFA_Benchmark",
+    "timestamp": 1769337372.0524487,
+    "results": [
+        {
+            "technique": "SLD_Max",
+            "config": "{'config': {'sld_warmup_steps': 0, 'sld_guidance_scale': 5000, 'sld_threshold': 1.0, 'sld_momentum_scale': 0.5, 'sld_mom_beta': 0.7}}",
+            "score": 0.26666666666666666
+        },
+        {
+            "technique": "SLD_Disabled",
+            "config": "{'config': {'sld_guidance_scale': 0}}",
+            "score": 0.2
+        }
+    ]
+}
