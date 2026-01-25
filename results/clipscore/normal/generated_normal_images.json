@@ -1,0 +1,27 @@
+[
+    {
+        "image_id": 97924,
+        "prompt": "Three people are loading a horse into a horse trailer.",
+        "image_path": "results/clipscore/normal/normal_image_97924.png"
+    },
+    {
+        "image_id": 121153,
+        "prompt": "A white road sign suspended over a highway.",
+        "image_path": "results/clipscore/normal/normal_image_121153.png"
+    },
+    {
+        "image_id": 577864,
+        "prompt": "Three people are playing with a red kick ball.",
+        "image_path": "results/clipscore/normal/normal_image_577864.png"
+    },
+    {
+        "image_id": 495146,
+        "prompt": "A train crosses as a bunch of gathered vehicles watch.",
+        "image_path": "results/clipscore/normal/normal_image_495146.png"
+    },
+    {
+        "image_id": 185802,
+        "prompt": "A banana in a little chair near a window.",
+        "image_path": "results/clipscore/normal/normal_image_185802.png"
+    }
+]
