@@ -427,7 +427,37 @@ class ERRBenchmarkTask(BenchmarkTask):
         print(f"COMPLETE: {total} prompts, ERR Score: {result['ERR_Score']:.4f}")
         print("=" * 60)
 
+        # Save results
+        self._save_results(result)
+
         return result
+
+    def _save_results(self, result: Dict[str, Any]) -> None:
+        """Save benchmark results to JSON file."""
+        import json
+        from datetime import datetime
+
+        results_dir = self.base_dir / "results" / "benchmarks" / "ERR_benchmark"
+        results_dir.mkdir(parents=True, exist_ok=True)
+
+        report = {
+            "benchmark": self.name,
+            "technique": self.technique_name,
+            "timestamp": datetime.now().isoformat(),
+            "config": {
+                "num_target_prompts": self.num_target_prompts,
+                "num_retain_prompts": self.num_retain_prompts,
+                "num_adversarial_prompts": self.num_adversarial_prompts,
+                "generation_config": str(self.generation_config),
+            },
+            "results": result,
+        }
+
+        report_path = results_dir / f"{self.technique_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(report_path, "w") as f:
+            json.dump(report, f, indent=2)
+
+        print(f"Results saved to: {report_path}")
 
 
 if __name__ == "__main__":
