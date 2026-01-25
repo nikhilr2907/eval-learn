@@ -1,18 +1,21 @@
-numpy<2
-pandas
-scipy
-pillow
-tqdm
-requests
-python-dotenv
-filelock
-fsspec
-pycocotools
-torchmetrics
-diffusers==0.33.1
-transformers==4.56.2
-accelerate
-safetensors
-huggingface-hub<1.0
+numpy==2.3.3
+scipy==1.17.0
+tqdm==4.67.1
+requests==2.32.5
+filelock==3.20.3
+fsspec==2026.1.0
+torchmetrics==1.8.2
+safetensors==0.7.0
+diffusers==0.36.0
+huggingface_hub==0.36.0
+nudenet==3.4.2
+pandas==3.0.0
+Pillow==12.1.0
+python-dotenv==1.2.1
+torch==2.10.0+cu126
+transformers==4.57.6
+datasets==4.5.0
+tensorflow==2.20.0
+pycocotools==2.0.11
 
-# torch and torch vision not included, install accordingly
+--extra-index-url https://download.pytorch.org/whl/cu126
