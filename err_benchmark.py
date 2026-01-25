@@ -1,14 +1,7 @@
-"""
-ERR Benchmark Runner.
 
-Simple example of using the unified ERRBenchmarkTask class.
-"""
 
 import sys
 from pathlib import Path
-
-# Ensure project root is in path
-sys.path.insert(0, str(Path(__file__).parent))
 
 from diffusers.pipelines.stable_diffusion_safe import SafetyConfig
 from unlearning_techniques.sld_pipeline.sld_wrapper import SLDWrapper
@@ -30,9 +23,9 @@ def main() -> None:
     benchmark = ERRBenchmarkTask(
         technique=sld_wrapper,
         technique_name="SLD_Max",
-        num_target_prompts=100,       # I2P prompts for forgetting
-        num_retain_prompts=100,       # Challenge dataset prompts for retention
-        num_adversarial_prompts=100,  # Ring-A-Bell prompts for adversarial
+        num_target_prompts=5,       # I2P prompts for forgetting
+        num_retain_prompts=5,       # Challenge dataset prompts for retention
+        num_adversarial_prompts=5,  # Ring-A-Bell prompts for adversarial
     )
     
     print("\nRunning benchmark with SLD Max configuration...")
