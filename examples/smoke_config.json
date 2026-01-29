@@ -1,0 +1,25 @@
+{
+    "run_name": "CLI_Smoke_Test",
+    "output_dir": "results/cli_test",
+    "dataset": {
+        "name": "i2p_csv",
+        "config": {
+            "path": "data/i2p/i2p_benchmark_sample.csv",
+            "limit": 1
+        }
+    },
+    "technique": {
+        "name": "sld",
+        "config": {
+            "model_id": "AIML-TUDA/stable-diffusion-safe",
+            "device": "cpu",
+            "num_inference_steps": 2
+        }
+    },
+    "metric": {
+        "name": "asr",
+        "config": {
+            "use_nudenet": false
+        }
+    }
+}
