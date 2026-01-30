@@ -51,7 +51,7 @@ class BenchmarkRunner:
 
         # 5. Compute Metrics
         logger.info("Computing metrics...")
-        result: MetricResult = metric.compute(images=images, prompts=dataset.prompts)
+        result: MetricResult = metric.compute(images=images, prompts=dataset.prompts, metadata=dataset.metadata)
         logger.info(f"Metric Result ({result.name}): {result.value}")
 
         # 6. Prepare Report
