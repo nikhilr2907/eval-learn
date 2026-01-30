@@ -1,178 +1,181 @@
-# Eval-Learn Developer Guide
+# Developer Guide: Adding New Techniques to Eval-Learn
 
-## 1. Project Overview
+Welcome to the **Eval-Learn Developer Guide**. This document is intended for contributors who want to extend the library by adding new **Unlearning Techniques**.
 
-**Eval-Learn** is a modular, extensible benchmarking framework for evaluating "unlearning" techniques in Text-to-Image models (like Stable Diffusion). 
+The library is designed with a plugin architecture, making it easy to add new methods without modifying the core runner logic.
 
-### Purpose
-To provide a standardized way to measure:
-*   **Safety:** Can the model stop generating harmful content (e.g., Nudity)? (Metric: ASR)
-*   **Utility:** Does the model still generate high-quality images? (Metric: FID, TIFA)
-*   **Robustness:** Is the safety mechanism resistant to jailbreaks?
+---
 
-### Architecture
-The project follows a **Registry-Plugin Architecture**. The core runner logic is generic and doesn't know about specific techniques or metrics. Instead, components are registered dynamically and instantiated via configuration files.
+## 1. Architecture Overview
 
-```mermaid
-graph TD
-    CLI["CLI (eval-learn run)"] --> Config[Config Loader]
-    Config --> Runner[BenchmarkRunner]
-    
-    subgraph Registry
-        T_Reg[Techniques]
-        M_Reg[Metrics]
-        D_Reg[Datasets]
-    end
-    
-    Runner -->|Load| D_Reg
-    Runner -->|Init| T_Reg
-    Runner -->|Init| M_Reg
-    
-    Runner -->|1. Load Prompts| Dataset
-    Runner -->|2. Generate| Technique(SLD, etc.)
-    Runner -->|3. Compute| Metric(ASR, etc.)
-    Runner -->|4. Save| Writer[ArtifactWriter]
-    
-    Writer --> JSON[Report.json]
-    Writer --> IMG[Images/]
+Before adding code, understand the core flow:
+
+1.  **Registry:** All techniques are registered via a decorator (`@register_technique`). This allows the `BenchmarkRunner` to find them by a string name (e.g., `"sld"`).
+2.  **Interface:** A technique is simply a class that implements a `generate(prompts, ...)` method.
+3.  **Configuration:** Techniques use strongly-typed `dataclasses` (inherited from `BaseConfig`) for configuration.
+
+---
+
+## 2. Directory Structure
+
+Your new technique should live in `src/eval_learn/techniques/<your_technique_name>/`.
+
+**Example Structure:**
+```text
+src/eval_learn/techniques/
+└── my_new_technique/
+    ├── __init__.py      # Exports
+    ├── config.py        # Configuration Dataclass
+    └── wrapper.py       # Main Logic (The Wrapper Class)
 ```
 
 ---
 
-## 2. File & Folder Breakdown
+## 3. Step-by-Step Implementation Guide
 
-The project is structured under `src/eval_learn/` to ensure it is installable as a standard Python package.
+Let's say you want to implement a technique called **" ESD "** (Erasing Stable Diffusion).
 
-### Core Components
-*   **`src/eval_learn/cli.py`**: The entry point for the command-line interface. Handles argument parsing and config loading.
-*   **`src/eval_learn/types.py`**: Defines shared data structures (`Dataset`, `MetricResult`) to ensure type safety across modules.
-*   **`src/eval_learn/logging_utils.py`**: Provides a standardized `get_logger()` function for consistent console output.
+### Step 1: Create the Configuration
 
-### Functional Modules
-*   **`registry/`**: The heart of the plugin system.
-    *   `local.py`: Contains decorators (`@register_technique`, etc.) and lookup functions.
-    *   `entrypoints.py`: Handles discovery of third-party plugins installed via pip.
-*   **`runners/`**: Orchestration logic.
-    *   `benchmark_runner.py`: The main loop that connects Datasets, Techniques, and Metrics. It generates images and computes scores.
-*   **`configs/`**: Configuration management.
-    *   `base.py`: The `BaseConfig` class that all configs inherit from. Handles dictionary serialization.
-*   **`artifacts/`**: Output handling.
-    *   `writer.py`: Saves generated images and JSON reports to the filesystem in a structured way.
+Create `src/eval_learn/techniques/esd/config.py`.
+Inherit from `BaseConfig` to get automatic dictionary serialization.
 
-### Plugin Implementations
-*   **`techniques/`**: Algorithms for image generation/unlearning.
-    *   `sld/`: Safe Latent Diffusion implementation.
-        *   `wrapper.py`: Adapts the Diffusers pipeline to our `Technique` interface.
-        *   `config.py`: Configuration dataclass for SLD (e.g., `safety_concept`, `guidance_scale`).
-*   **`metrics/`**: Scoring algorithms.
-    *   `asr/`: Attack Success Rate.
-        *   `metric.py`: Calculates score using NudeNet/Q16.
-        *   `config.py`: Configuration for ASR (e.g., `use_nudenet`).
-*   **`datasets/`**: Data loading logic.
-    *   `i2p_csv.py`: Loads prompts from the I2P benchmark CSV file.
-
----
-
-## 3. User Workflow
-
-How a user interacts with the package to run a benchmark.
-
-### Step 1: Install
-```bash
-pip install -e .[asr,diffusers]
-```
-*   Installs the package in editable mode with optional dependencies for ASR (NudeNet) and Diffusers.
-
-### Step 2: Create Configuration
-Create a YAML or JSON file (e.g., `my_run.json`) defining what to run.
-
-```json
-{
-    "run_name": "My_First_Run",
-    "output_dir": "results/",
-    "dataset": {
-        "name": "i2p_csv",
-        "config": { "path": "data/i2p/i2p_benchmark_sample.csv", "limit": 10 }
-    },
-    "technique": {
-        "name": "sld",
-        "config": { "model_id": "AIML-TUDA/stable-diffusion-safe", "device": "cuda" }
-    },
-    "metric": {
-        "name": "asr",
-        "config": { "use_nudenet": true }
-    }
-}
-```
-
-### Step 3: Execute
-```bash
-eval-learn run --config my_run.json
-```
-*   **Outcome:** The system loads the dataset, generates images using SLD, checks them with ASR, and saves a report to `results/My_First_Run/`.
-
----
-
-## 4. Developer Extension Guide
-
-How to add new features without touching the core code.
-
-### Extension Points
-You can extend the system by adding new:
-1.  **Datasets** (e.g., loading from HuggingFace Datasets)
-2.  **Techniques** (e.g., ESD, UCE, or a new concept eraser)
-3.  **Metrics** (e.g., CLIP Score, Aesthetics)
-
-### Scenario: Adding a New Metric ("CLIP Score")
-
-#### 1. Create Directory Structure
-Create `src/eval_learn/metrics/clip_score/`.
-
-#### 2. Define Configuration
-Create `src/eval_learn/metrics/clip_score/config.py`:
 ```python
 from dataclasses import dataclass
+from typing import Optional
 from ...configs.base import BaseConfig
 
 @dataclass
-class ClipScoreConfig(BaseConfig):
-    model_name: str = "openai/clip-vit-base-patch32"
+class ESDConfig(BaseConfig):
+    """
+    Configuration for Erasing Stable Diffusion (ESD).
+    """
+    # 1. Standard params (model, device)
+    model_id: str = "CompVis/stable-diffusion-v1-4"
+    device: Optional[str] = None
+    
+    # 2. Technique-specific hyperparameters
+    train_method: str = "xattn"  # 'xattn', 'noc', 'selfattn'
+    lr: float = 1e-5
+    steps: int = 1000
+    erase_concept: str = "nudity"
 ```
 
-#### 3. Implement Logic & Register
-Create `src/eval_learn/metrics/clip_score/metric.py`:
-```python
-from ...registry import register_metric
-from ...types import MetricResult
-from .config import ClipScoreConfig
+### Step 2: Create the Wrapper Class
 
-@register_metric("clip_score")
-class ClipScoreMetric:
+Create `src/eval_learn/techniques/esd/wrapper.py`.
+
+**Key Requirements:**
+1.  **Decorate:** Use `@register_technique("esd")`.
+2.  **Initialize:** Accept `**kwargs` and convert them to your Config.
+3.  **Implement `generate`:** Must accept `prompts` (list of strings) and return a list of images.
+
+```python
+from typing import List, Any, Optional
+import torch
+
+# 1. Import Registry & Logger
+from ...registry import register_technique
+from ...logging_utils import get_logger
+from .config import ESDConfig
+
+logger = get_logger(__name__)
+
+# 2. Register the technique with a unique string key
+@register_technique("esd")
+class ESDWrapper:
     def __init__(self, **kwargs):
-        self.config = ClipScoreConfig.from_dict(kwargs)
-        # Load CLIP model here...
+        # 3. Load Config
+        self.config = ESDConfig.from_dict(kwargs)
+        
+        # 4. Initialize Model (Heavy Lifting)
+        logger.info(f"Initializing ESD with method: {self.config.train_method}")
+        
+        # ... Load your model/pipeline here ...
+        # self.pipe = MyESDPipeline.from_pretrained(self.config.model_id)
+        # self.pipe.to(self.config.device)
+        
+        pass
 
-    def compute(self, images, prompts, metadata=None) -> MetricResult:
-        # Calculate score...
-        score = 0.85 
-        return MetricResult(name="CLIP Score", value=score)
+    def generate(self, prompts: List[str], seed: Optional[int] = None, **kwargs) -> List[Any]:
+        """
+        Generate images for the given prompts.
+        """
+        logger.info(f"Generating {len(prompts)} images...")
+        
+        images = []
+        # 5. Generation Loop
+        for prompt in prompts:
+            # Call your pipeline
+            # output = self.pipe(prompt, ...).images[0]
+            # images.append(output)
+            pass
+            
+        return images
 ```
 
-#### 4. Export
-Update `src/eval_learn/metrics/__init__.py`:
+### Step 3: Expose the Module (Optional but Recommended)
+
+In `src/eval_learn/techniques/__init__.py`, import your wrapper so it gets registered when someone imports `eval_learn.techniques`.
+
 ```python
-from .clip_score.metric import ClipScoreMetric
+# src/eval_learn/techniques/__init__.py
+
+# ... existing imports ...
+from .esd.wrapper import ESDWrapper # This triggers the @register_technique
 ```
 
-#### 5. Use It
-Update your JSON config to use `"name": "clip_score"`.
+---
 
-### Testing Strategy
-1.  **Smoke Test:** Create a test in `tests/` that mocks the heavy model calls (like `tests/test_smoke_asr_sld.py`) to verify the registry and config wiring work.
-2.  **Unit Test:** Test the logic of your `compute` method in isolation.
-3.  **Run:** `pytest tests/`
+## 4. Handling Dependencies
 
-### Contribution Guidelines
-1.  **Format:** Use strict type hints and dataclasses.
-2.  **Log, Don't Print:** Always use `logger = get_logger(__name__)`.
-3.  **Dependencies:** If your feature requires a heavy library (like `tensorflow`), wrap imports in `try/except` and raise a helpful error if missing.
+If your technique requires specific libraries (e.g., specific diffusers version, clip, etc.):
+
+1.  **Do NOT** put them in `pyproject.toml`'s main dependencies unless strictly necessary for *everyone*.
+2.  **Use Optional Imports:** Import them inside the file or in a `try/except` block.
+3.  **Fail Gracefully:** If the user lacks the dependency, raise a clear error telling them what to install.
+
+**Example:**
+```python
+try:
+    import concept_erasure
+except ImportError:
+    raise RuntimeError(
+        "ESD requires 'concept_erasure'. Install with: pip install eval-learn[esd]"
+    )
+```
+
+---
+
+## 5. Testing Your New Technique
+
+You don't need to write a full benchmark to test your wrapper.
+
+1.  Create a test file: `tests/test_technique_esd.py`
+2.  Use the registry to load it (verifies registration works).
+3.  Mock the heavy generation if possible, or run a tiny smoke test.
+
+```python
+from eval_learn.registry import get_technique
+
+def test_esd_registration():
+    # 1. Get class
+    ESDClass = get_technique("esd")
+    
+    # 2. Instantiate with config
+    esd = ESDClass(train_method="full", steps=10)
+    
+    # 3. Check config
+    assert esd.config.train_method == "full"
+    assert esd.config.steps == 10
+```
+
+---
+
+## 6. Checklist for PRs
+
+*   [ ] Created `config.py` with `BaseConfig`.
+*   [ ] Created `wrapper.py` with `@register_technique("name")`.
+*   [ ] Implemented `generate(prompts) -> List[Image]`.
+*   [ ] Added graceful error handling for missing dependencies.
+*   [ ] Added a basic test case.
