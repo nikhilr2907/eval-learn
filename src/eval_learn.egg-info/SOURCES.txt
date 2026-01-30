@@ -20,7 +20,11 @@ src/eval_learn/metrics/__init__.py
 src/eval_learn/metrics/asr/__init__.py
 src/eval_learn/metrics/asr/config.py
 src/eval_learn/metrics/asr/metric.py
+src/eval_learn/metrics/fid/__init__.py
+src/eval_learn/metrics/fid/config.py
+src/eval_learn/metrics/fid/metric.py
 src/eval_learn/registry/__init__.py
+src/eval_learn/registry/entrypoints.py
 src/eval_learn/registry/local.py
 src/eval_learn/runners/__init__.py
 src/eval_learn/runners/benchmark_runner.py

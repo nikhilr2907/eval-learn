@@ -7,6 +7,9 @@ from typing import Dict, Any
 # Ensure registry is populated
 import eval_learn.techniques.sld.wrapper
 import eval_learn.metrics.asr.metric
+import eval_learn.metrics.fid.metric
+import eval_learn.metrics.err.metric
+import eval_learn.metrics.tifa.metric
 import eval_learn.datasets.i2p_csv
 
 from eval_learn.registry import get_technique, get_metric, get_dataset
