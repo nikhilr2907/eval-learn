@@ -10,6 +10,7 @@ import eval_learn.metrics.asr.metric
 import eval_learn.metrics.fid.metric
 import eval_learn.metrics.err.metric
 import eval_learn.metrics.tifa.metric
+import eval_learn.metrics.clip_score.metric
 import eval_learn.datasets.i2p_csv
 
 from eval_learn.registry import get_technique, get_metric, get_dataset

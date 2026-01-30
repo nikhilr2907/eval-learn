@@ -98,7 +98,7 @@ class TIFAMetric:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _load_pil(img) -> Optional["Image.Image"]:
+    def _load_pil(img) -> Optional["Image.Image"]: # type: ignore
         """Return a PIL Image from a path string or PIL Image."""
         if Image and isinstance(img, Image.Image):
             return img
