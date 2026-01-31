@@ -3,7 +3,7 @@ from typing import List, Any, Optional
 
 from ...registry import register_technique
 from ...logging_utils import get_logger
-from .config import SLDConfig
+from .config import SLDConfig, _SLD_PARAM_KEYS
 
 logger = get_logger(__name__)
 
@@ -60,43 +60,38 @@ class SLDWrapper:
     def generate(self, prompts: List[str], seed: Optional[int] = None, **kwargs) -> List[Any]:
         """
         Generate images using the configured SLD parameters.
+
+        SLD parameters (sld_guidance_scale, etc.) can be overridden per-call
+        via *kwargs*; otherwise the values from self.config are used.
+        All other kwargs (e.g. num_inference_steps) are forwarded to the pipeline.
         """
-        images = []
-        
-        # Construct the safety config for this run
-        # We allow overrides via kwargs, otherwise use self.config
-        guidance_scale = kwargs.get('sld_guidance_scale', self.config.sld_guidance_scale)
-        warmup_steps = kwargs.get('sld_warmup_steps', self.config.sld_warmup_steps)
-        threshold = kwargs.get('sld_threshold', self.config.sld_threshold)
-        momentum_scale = kwargs.get('sld_momentum_scale', self.config.sld_momentum_scale)
-        mom_beta = kwargs.get('sld_mom_beta', self.config.sld_mom_beta)
+        # Extract SLD-specific params from kwargs so they don't get passed twice
+        sld_params = {
+            "sld_guidance_scale": kwargs.pop("sld_guidance_scale", self.config.sld_guidance_scale),
+            "sld_warmup_steps": kwargs.pop("sld_warmup_steps", self.config.sld_warmup_steps),
+            "sld_threshold": kwargs.pop("sld_threshold", self.config.sld_threshold),
+            "sld_momentum_scale": kwargs.pop("sld_momentum_scale", self.config.sld_momentum_scale),
+            "sld_mom_beta": kwargs.pop("sld_mom_beta", self.config.sld_mom_beta),
+        }
 
         generator = None
         if seed is not None:
             generator = torch.Generator(device=self.device).manual_seed(seed)
 
         logger.info(f"Generating {len(prompts)} images using SLD...")
-        
+
+        images = []
         for i, prompt in enumerate(prompts):
             try:
-                # The stable-diffusion-safe pipeline expects these specific kwargs
                 output = self.pipe(
                     prompt=prompt,
-                    sld_guidance_scale=guidance_scale,
-                    sld_warmup_steps=warmup_steps,
-                    sld_threshold=threshold,
-                    sld_momentum_scale=momentum_scale,
-                    sld_mom_beta=mom_beta,
+                    **sld_params,
                     generator=generator,
-                    **kwargs # Pass through other standard params like num_inference_steps
+                    **kwargs,
                 ).images[0]
                 images.append(output)
             except Exception as e:
                 logger.error(f"Generation failed for prompt '{prompt}': {e}")
-                # Return None or a placeholder? For now, we might just skip or raise. 
-                # Let's append None to keep index alignment, but the runner needs to handle it.
-                # Ideally, we should handle this better. 
-                # For this refactor, let's re-raise to fail fast during dev.
-                raise e
-                
+                raise
+
         return images

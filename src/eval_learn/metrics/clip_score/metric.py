@@ -27,7 +27,7 @@ try:
 except ImportError:
     Image = None
 
-
+# TODO: Add batch processing for efficiency
 @register_metric("clip_score")
 class CLIPScoreMetric:
     """

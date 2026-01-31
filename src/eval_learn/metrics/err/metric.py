@@ -38,14 +38,14 @@ class ERRMetric:
     Evaluates concept unlearning across three categories using CLIP:
     - Forgetting: target concept should NOT appear in generated images.
     - Retention: benign concepts should STILL appear correctly.
-    - Adversarial: target concept should NOT appear even with adversarial prompts.
+    - Robustness (Adversarial): target concept should NOT appear even with adversarial prompts.
 
     The final ERR score is the harmonic mean of the three sub-metrics.
 
     The ``compute()`` method expects ``metadata`` to contain:
     - ``concepts``: list of concept strings, parallel to ``images``.
     - ``categories``: list of category strings (``"target"``, ``"retain"``,
-      or ``"adversarial"``), parallel to ``images``.
+      or ``"robustness"``), parallel to ``images``.
     """
 
     def __init__(self, **kwargs):

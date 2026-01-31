@@ -105,13 +105,12 @@ def main():
 
     parser = argparse.ArgumentParser(description="Eval-Learn CLI")
     parser.add_argument("--version", action="store_true", help="Show version")
-    
+
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
-    
+
     # Run Command
     run_parser = subparsers.add_parser("run", help="Execute a benchmark run")
     run_parser.add_argument("--config", "-c", required=True, help="Path to config file (JSON/YAML)")
-    
     args = parser.parse_args()
 
     if args.version:

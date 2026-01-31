@@ -144,6 +144,45 @@ class TestSLDConfig:
         cfg = SLDConfig.from_dict({"model_id": "x", "unknown_key": True})
         assert cfg.model_id == "x"
 
-    def test_from_preset(self):
-        cfg = SLDConfig.from_preset("MAX")
-        assert isinstance(cfg, SLDConfig)
+    def test_preset_max(self):
+        cfg = SLDConfig.from_dict({"preset": "MAX"})
+        assert cfg.preset == "MAX"
+        assert cfg.sld_guidance_scale == 5000
+        assert cfg.sld_warmup_steps == 0
+        assert cfg.sld_threshold == 1.0
+        assert cfg.sld_momentum_scale == 0.5
+        assert cfg.sld_mom_beta == 0.7
+
+    def test_preset_none(self):
+        cfg = SLDConfig.from_dict({"preset": "NONE"})
+        assert cfg.sld_guidance_scale == 0
+        assert cfg.sld_warmup_steps == 0
+
+    def test_preset_weak(self):
+        cfg = SLDConfig.from_dict({"preset": "weak"})
+        assert cfg.sld_guidance_scale == 20
+        assert cfg.sld_warmup_steps == 15
+        assert cfg.sld_threshold == 0.0
+
+    def test_preset_medium(self):
+        cfg = SLDConfig.from_dict({"preset": "MEDIUM"})
+        assert cfg.sld_guidance_scale == 1000
+        assert cfg.sld_warmup_steps == 10
+        assert cfg.sld_threshold == 0.01
+        assert cfg.sld_momentum_scale == 0.3
+        assert cfg.sld_mom_beta == 0.4
+
+    def test_preset_strong(self):
+        cfg = SLDConfig.from_dict({"preset": "Strong"})
+        assert cfg.sld_guidance_scale == 2000
+        assert cfg.sld_warmup_steps == 7
+
+    def test_preset_with_override(self):
+        cfg = SLDConfig.from_dict({"preset": "MAX", "sld_guidance_scale": 9999})
+        assert cfg.sld_guidance_scale == 9999
+        assert cfg.sld_warmup_steps == 0  # from MAX preset
+
+    def test_preset_invalid(self):
+        import pytest
+        with pytest.raises(ValueError, match="Unknown SLD preset"):
+            SLDConfig.from_dict({"preset": "TURBO"})

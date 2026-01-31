@@ -130,11 +130,24 @@ Wraps a Stable Diffusion pipeline with safety guidance.
 | `model_id` | `str` | `"AIML-TUDA/..."` | The HuggingFace model ID to load. |
 | `device` | `str` | `None` | Execution device (`cuda`, `cpu`, `mps`). |
 | `safety_concept` | `str` | `"nudity"` | The concept to suppress. |
-| `sld_guidance_scale` | `float` | `2000` | Strength of the safety guidance. |
-| `sld_warmup_steps` | `int` | `7` | Steps to apply safety at the start. |
-| `sld_threshold` | `float` | `0.025` | Activation threshold for safety. |
+| `preset` | `str` | `None` | Named preset: `"none"`, `"weak"`, `"medium"`, `"strong"`, `"max"`. Sets all SLD parameters below automatically. |
+| `sld_guidance_scale` | `float` | `5000` | Strength of the safety guidance. |
+| `sld_warmup_steps` | `int` | `0` | Steps to apply safety at the start. |
+| `sld_threshold` | `float` | `1.0` | Activation threshold for safety. |
 | `sld_momentum_scale` | `float` | `0.5` | Momentum for safety guidance. |
 | `sld_mom_beta` | `float` | `0.7` | Momentum beta. |
+
+**SLD Preset Reference:**
+
+Instead of setting individual parameters, you can use the `preset` field. Any individual SLD parameter you also pass will override the preset value for that parameter.
+
+| Preset | `sld_guidance_scale` | `sld_warmup_steps` | `sld_threshold` | `sld_momentum_scale` | `sld_mom_beta` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `none` | 0 | 0 | 0.0 | 0.0 | 0.0 |
+| `weak` | 200 | 15 | 0.0 | 0.0 | 0.0 |
+| `medium` | 1000 | 10 | 0.01 | 0.3 | 0.4 |
+| `strong` | 2000 | 7 | 0.025 | 0.5 | 0.7 |
+| `max` | 5000 | 0 | 1.0 | 0.5 | 0.7 |
 
 ---
 
@@ -201,16 +214,120 @@ scales = [0, 500, 1000, 2000]
 for scale in scales:
     tech_config = {
         "model_id": "CompVis/stable-diffusion-v1-4",
-        "sld_guidance_scale": scale, 
+        "sld_guidance_scale": scale,
         # ... other params ...
     }
-    
+
     runner = BenchmarkRunner(
         # ... same factories ...
         technique_config=tech_config,
         # ... same metric config ...
         run_name=f"SLD_Scale_{scale}"
     )
-    
+
     runner.run()
 ```
+
+---
+
+## 6. Recipes: Common Evaluation Configurations
+
+Below are complete, copy-pasteable examples for common evaluation setups.
+
+### Recipe 1 — SLD MAX with ASR Only
+
+Evaluate the strongest SLD safety preset and measure how many generated images are still detected as unsafe (NSFW). This uses a single metric with the `BenchmarkRunner`.
+
+```python
+from eval_learn.registry import get_dataset, get_technique, get_metric
+from eval_learn.runners import BenchmarkRunner
+
+# Components
+DatasetLoader = get_dataset("i2p_csv")
+TechniqueFactory = get_technique("sld")
+MetricFactory = get_metric("asr")
+
+# Configs
+dataset_config = {
+    "path": "data/i2p/i2p_benchmark.csv",
+    "limit": 50,
+}
+
+technique_config = {
+    "preset": "max",       # Uses SLD-MAX safety parameters
+    "device": "cuda",
+}
+
+metric_config = {
+    "use_nudenet": True,
+}
+
+# Run
+runner = BenchmarkRunner(
+    dataset_loader=DatasetLoader,
+    technique_factory=TechniqueFactory,
+    metric_factory=MetricFactory,
+    dataset_config=dataset_config,
+    technique_config=technique_config,
+    metric_config=metric_config,
+    output_dir="results/sld_max_asr",
+    run_name="SLD_Max_ASR",
+)
+
+report = runner.run()
+print(f"ASR Score: {report['metric_result']['value']}")
+```
+
+**CLI equivalent** — save this as `config_sld_max_asr.json` and run with `eval-learn run --config config_sld_max_asr.json`:
+
+```json
+{
+    "run_name": "SLD_Max_ASR",
+    "output_dir": "results/sld_max_asr",
+    "dataset": {
+        "name": "i2p_csv",
+        "config": { "path": "data/i2p/i2p_benchmark.csv", "limit": 50 }
+    },
+    "technique": {
+        "name": "sld",
+        "config": { "preset": "max", "device": "cuda" }
+    },
+    "metric": {
+        "name": "asr",
+        "config": { "use_nudenet": true }
+    }
+}
+```
+
+---
+
+### Recipe 2 — SLD WEAK with ASR + CLIPScore
+
+Evaluate the lightest SLD safety preset on two metrics: safety (ASR) and image-text alignment (CLIPScore). Since `BenchmarkRunner` accepts one metric at a time, we generate images once and then evaluate each metric separately using the lower-level API.
+
+```python
+from eval_learn.registry import get_dataset, get_technique, get_metric
+
+# 1. Load dataset
+DatasetLoader = get_dataset("i2p_csv")
+dataset = DatasetLoader(path="data/i2p/i2p_benchmark.csv", limit=50)
+
+# 2. Generate images once with SLD-WEAK
+TechniqueFactory = get_technique("sld")
+technique = TechniqueFactory(preset="weak", device="cuda")
+images = technique.generate(prompts=dataset.prompts)
+
+# 3. Evaluate ASR
+ASRMetric = get_metric("asr")
+asr = ASRMetric(use_nudenet=True)
+asr_result = asr.compute(images=images, prompts=dataset.prompts, metadata=dataset.metadata)
+print(f"ASR Score: {asr_result.value}")
+
+# 4. Evaluate CLIPScore
+CLIPScoreMetric = get_metric("clip_score")
+clip = CLIPScoreMetric(device="cuda")
+clip_result = clip.compute(images=images, prompts=dataset.prompts, metadata=dataset.metadata)
+print(f"CLIPScore: {clip_result.value}")
+```
+
+This pattern avoids generating images twice. You can add any number of additional metrics the same way — just instantiate and call `.compute()` on the same `images` list.
