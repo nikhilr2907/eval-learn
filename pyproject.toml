@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eval-learn"
+version = "0.1.0"
+description = "Unlearning Benchmark for Text-to-Image Models"
+readme = "readme.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Eval-Learn Team"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "tqdm",
+    "requests",
+    "filelock",
+    "fsspec",
+    "torchmetrics",
+    "safetensors",
+    "diffusers",
+    "huggingface_hub",
+    "pandas",
+    "Pillow",
+    "python-dotenv",
+    "torch",
+    "transformers",
+    "datasets"
+]
+
+[project.optional-dependencies]
+asr = ["nudenet"]
+fid = ["tensorflow", "pycocotools"]
+dev = ["pytest", "ruff", "mypy"]
+
+[project.scripts]
+eval-learn = "eval_learn.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

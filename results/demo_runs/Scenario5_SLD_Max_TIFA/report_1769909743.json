@@ -1,0 +1,46 @@
+{
+    "scenario": "Scenario5_SLD_Max_TIFA",
+    "dataset": {
+        "name": "tifa_json",
+        "total_prompts": 5
+    },
+    "technique": {
+        "name": "sld",
+        "config": {
+            "model_id": "AIML-TUDA/stable-diffusion-safe",
+            "device": "cuda",
+            "num_inference_steps": 25
+        }
+    },
+    "metric_results": {
+        "tifa": {
+            "name": "TIFA",
+            "value": 0.26666666666666666,
+            "details": {
+                "correct": 4,
+                "total_questions": 15,
+                "total_images": 5,
+                "per_image_scores": [
+                    0.6666666666666666,
+                    0.0,
+                    0.3333333333333333,
+                    0.3333333333333333,
+                    0.0
+                ],
+                "config": {
+                    "vqa_model_name": "Salesforce/blip2-flan-t5-xl",
+                    "device": "cuda"
+                }
+            }
+        }
+    },
+    "skipped_metrics": [],
+    "image_paths": [
+        "results/demo_runs\\Scenario5_SLD_Max_TIFA\\images\\run_1769909743\\0.png",
+        "results/demo_runs\\Scenario5_SLD_Max_TIFA\\images\\run_1769909743\\1.png",
+        "results/demo_runs\\Scenario5_SLD_Max_TIFA\\images\\run_1769909743\\2.png",
+        "results/demo_runs\\Scenario5_SLD_Max_TIFA\\images\\run_1769909743\\3.png",
+        "results/demo_runs\\Scenario5_SLD_Max_TIFA\\images\\run_1769909743\\4.png"
+    ],
+    "timestamp": 1769909743.4151866
+}

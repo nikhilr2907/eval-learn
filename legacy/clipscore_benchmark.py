@@ -232,4 +232,4 @@ if __name__ == "__main__":
     clip_score_results = clip_score.benchmark(instances_json_path = "/tmp/ko25/datasets/cocodataset/annotations/instances_val2017.json",
                         captions_json_path = "/tmp/ko25/datasets/cocodataset/annotations/captions_val2017.json",
                         output_directory = "data/clipscore", forget_category = 'knife', number_of_samples = 50)
-    print('Average clipscore after unlearning: ', clip_score_results[0], 'Clipscore Dictionary after unlearning:' clip_score_results[1], 'Average clipscore for normal data: ',  clip_score_results[2], 'Clipscore Dictionary for normal data:', clip_score_results[3])
+    print('Average clipscore after unlearning: ', clip_score_results[0], 'Clipscore Dictionary after unlearning:', clip_score_results[1], 'Average clipscore for normal data: ',  clip_score_results[2], 'Clipscore Dictionary for normal data:', clip_score_results[3])
