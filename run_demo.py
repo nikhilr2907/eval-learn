@@ -1,8 +1,16 @@
 """
 run_demo.py — Demonstrates eval-learn library workflows.
 
-Runs 3 scenarios showing SLD (Safe Latent Diffusion) evaluated
+Runs 6 scenarios showing SLD (Safe Latent Diffusion) evaluated
 with different metric combinations on appropriate datasets.
+
+  Scenario 1: SLD MAX  + ASR, CLIPScore  (I2P)
+  Scenario 2: SLD WEAK + ASR, CLIPScore  (I2P)
+  Scenario 3: Full Suite — ERR/ASR/CLIPScore + TIFA (multi-pass)
+  Scenario 4: SLD MAX  + ASR only        (I2P)
+  Scenario 5: SLD MAX  + TIFA only       (TIFA captions)
+  Scenario 6: SLD MAX  + FID             (COCO)
+
 All results saved to results/demo_runs/.
 
 Usage:
@@ -24,9 +32,11 @@ from eval_learn.logging_utils import get_logger
 # Trigger registration of all components
 import eval_learn.datasets.i2p_csv
 import eval_learn.datasets.tifa_json
+import eval_learn.datasets.coco_parquet
 import eval_learn.datasets.err_composite
 import eval_learn.metrics.asr.metric
 import eval_learn.metrics.tifa.metric
+import eval_learn.metrics.fid.metric
 import eval_learn.metrics.err.metric
 import eval_learn.metrics.clip_score.metric
 import eval_learn.techniques.sld.wrapper
@@ -166,20 +176,19 @@ def _print_summary(
 # ---------------------------------------------------------------------------
 # Scenario 1: Safety + Faithfulness
 # ---------------------------------------------------------------------------
-def scenario_1_safety_faithfulness():
-    """SLD x TIFA dataset x [ASR, TIFA, CLIPScore]."""
-    scenario_name = "Scenario1_Safety_Faithfulness"
-    dataset_name = "tifa_json"
+def scenario_1_sld_max_with_asr_clip():
+    """SLD x i2p_csv dataset x [ASR, TIFA, CLIPScore]."""
+    scenario_name = "scenario_1_sld_max_with_asr_tifa_clip"
+    dataset_name = "i2p_csv"
 
     loader = get_dataset(dataset_name)
     dataset = loader(limit=PROMPT_LIMIT)
 
     technique_cls = get_technique("sld")
-    technique = technique_cls(model_id=SLD_MODEL_ID, device=DEVICE)
+    technique = technique_cls(model_id=SLD_MODEL_ID, device=DEVICE, preset="max")
 
     metric_configs = [
         {"name": "asr", "kwargs": {"use_nudenet": True, "device": DEVICE}},
-        {"name": "tifa", "kwargs": {"device": DEVICE}},
         {"name": "clip_score", "kwargs": {"device": DEVICE}},
     ]
 
@@ -190,6 +199,32 @@ def scenario_1_safety_faithfulness():
         metric_configs=metric_configs,
         technique=technique,
     )
+
+# Scenario 2: SLD Weak + ASR, TIFA, CLIPScore
+def scenario_2_sld_weak_with_asr_clip():
+    """SLD x TIFA dataset x [ASR, TIFA, CLIPScore]."""
+    scenario_name = "scenario_2_sld_weak_with_asr_tifa_clip"
+    dataset_name = "i2p_csv"
+
+    loader = get_dataset(dataset_name)
+    dataset = loader(limit=PROMPT_LIMIT)
+
+    technique_cls = get_technique("sld")
+    technique = technique_cls(model_id=SLD_MODEL_ID, device=DEVICE, preset="weak")
+
+    metric_configs = [
+        {"name": "asr", "kwargs": {"use_nudenet": True, "device": DEVICE}},
+        {"name": "clip_score", "kwargs": {"device": DEVICE}},
+    ]
+
+    run_scenario(
+        scenario_name=scenario_name,
+        dataset=dataset,
+        dataset_name=dataset_name,
+        metric_configs=metric_configs,
+        technique=technique,
+    )
+
 
 
 # ---------------------------------------------------------------------------
@@ -367,6 +402,96 @@ def scenario_3_full_suite():
 
 
 # ---------------------------------------------------------------------------
+# Scenario 4: SLD MAX + ASR only
+# ---------------------------------------------------------------------------
+def scenario_4_sld_max_asr():
+    """SLD-MAX x I2P dataset x [ASR]."""
+    scenario_name = "Scenario4_SLD_Max_ASR"
+    dataset_name = "i2p_csv"
+
+    loader = get_dataset(dataset_name)
+    dataset = loader(limit=PROMPT_LIMIT)
+
+    technique_cls = get_technique("sld")
+    technique = technique_cls(model_id=SLD_MODEL_ID, device=DEVICE, preset="max")
+
+    metric_configs = [
+        {"name": "asr", "kwargs": {"use_nudenet": True, "device": DEVICE}},
+    ]
+
+    run_scenario(
+        scenario_name=scenario_name,
+        dataset=dataset,
+        dataset_name=dataset_name,
+        metric_configs=metric_configs,
+        technique=technique,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Scenario 5: SLD MAX + TIFA
+# ---------------------------------------------------------------------------
+def scenario_5_sld_max_tifa():
+    """SLD-MAX x TIFA dataset x [TIFA]."""
+    scenario_name = "Scenario5_SLD_Max_TIFA"
+    dataset_name = "tifa_json"
+
+    loader = get_dataset(dataset_name)
+    dataset = loader(limit=PROMPT_LIMIT)
+
+    technique_cls = get_technique("sld")
+    technique = technique_cls(model_id=SLD_MODEL_ID, device=DEVICE, preset="max")
+
+    metric_configs = [
+        {"name": "tifa", "kwargs": {"device": DEVICE}},
+    ]
+
+    run_scenario(
+        scenario_name=scenario_name,
+        dataset=dataset,
+        dataset_name=dataset_name,
+        metric_configs=metric_configs,
+        technique=technique,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Scenario 6: SLD MAX + FID (image quality on COCO)
+# ---------------------------------------------------------------------------
+def scenario_6_sld_max_fid():
+    """SLD-MAX x COCO dataset x [FID].
+
+    Loads captions from the COCO parquet file, generates images with
+    SLD-MAX, then computes FID against the real COCO reference images
+    that the dataset loader extracts to disk.
+    """
+    scenario_name = "Scenario6_SLD_Max_FID"
+    dataset_name = "coco_parquet"
+
+    loader = get_dataset(dataset_name)
+    dataset = loader(limit=PROMPT_LIMIT)
+
+    technique_cls = get_technique("sld")
+    technique = technique_cls(model_id=SLD_MODEL_ID, device=DEVICE, preset="max")
+
+    # The coco_parquet loader stores the extracted reference image directory
+    # in metadata so we can pass it straight to the FID metric.
+    real_images_dir = dataset.metadata["real_images_dir"]
+
+    metric_configs = [
+        {"name": "fid", "kwargs": {"real_images_dir": real_images_dir}},
+    ]
+
+    run_scenario(
+        scenario_name=scenario_name,
+        dataset=dataset,
+        dataset_name=dataset_name,
+        metric_configs=metric_configs,
+        technique=technique,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
@@ -374,8 +499,11 @@ if __name__ == "__main__":
     print(f"Device: {DEVICE}")
     print(f"Output: {OUTPUT_DIR}\n")
 
-    scenario_1_safety_faithfulness()
-    scenario_2_alignment_adversarial()
-    scenario_3_full_suite()
+    scenario_1_sld_max_with_asr_clip()
+    scenario_2_sld_weak_with_asr_clip()
+    # scenario_3_full_suite()
+    # scenario_4_sld_max_asr()
+    scenario_5_sld_max_tifa()
+    scenario_6_sld_max_fid()
 
     print("\nAll scenarios complete. Results in:", OUTPUT_DIR)

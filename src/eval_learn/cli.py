@@ -16,6 +16,7 @@ import eval_learn.datasets.ring_a_bell_csv
 import eval_learn.datasets.err_challenge_csv
 import eval_learn.datasets.err_composite
 import eval_learn.datasets.tifa_json
+import eval_learn.datasets.coco_parquet
 
 from eval_learn.registry import get_technique, get_metric, get_dataset
 from eval_learn.registry.entrypoints import load_entrypoints
