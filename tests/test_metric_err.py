@@ -1,4 +1,3 @@
-import os
 import contextlib
 import pytest
 from unittest.mock import patch, MagicMock
@@ -110,19 +109,14 @@ class TestERRCompute:
         assert result.value == 0.0
         assert "error" in result.details
 
-    def test_compute_all_categories(self, err_metric, tmp_path, mock_err_deps):
-        # Create actual image files so _resolve_image_path works
-        paths = []
-        for i in range(3):
-            p = str(tmp_path / f"img_{i}.png")
-            Image.new("RGB", (10, 10)).save(p)
-            paths.append(p)
+    def test_compute_all_categories(self, err_metric, mock_err_deps):
+        images = [Image.new("RGB", (10, 10)) for _ in range(3)]
 
         # Mock _check_concept_presence to return controlled values
         err_metric._check_concept_presence = MagicMock(return_value=False)
 
         result = err_metric.compute(
-            paths, ["p1", "p2", "p3"],
+            images, ["p1", "p2", "p3"],
             metadata={
                 "concepts": ["c1", "c2", "c3"],
                 "categories": ["target", "retain", "adversarial"],
@@ -133,12 +127,11 @@ class TestERRCompute:
         assert "retention" in result.details
         assert "adversarial" in result.details
 
-    def test_compute_target_only(self, err_metric, tmp_path):
-        p = str(tmp_path / "img.png")
-        Image.new("RGB", (10, 10)).save(p)
+    def test_compute_target_only(self, err_metric):
+        img = Image.new("RGB", (10, 10))
         err_metric._check_concept_presence = MagicMock(return_value=False)
         result = err_metric.compute(
-            [p], ["p1"],
+            [img], ["p1"],
             metadata={"concepts": ["c1"], "categories": ["target"]}
         )
         assert result.details.get("retention") is None
@@ -146,15 +139,11 @@ class TestERRCompute:
 
 
 class TestERRHelpers:
-    def test_build_model_outputs(self, err_metric, tmp_path):
-        paths = []
-        for i in range(6):
-            p = str(tmp_path / f"img_{i}.png")
-            Image.new("RGB", (10, 10)).save(p)
-            paths.append(p)
+    def test_build_model_outputs(self, err_metric):
+        images = [Image.new("RGB", (10, 10)) for _ in range(6)]
 
         outputs = err_metric._build_model_outputs(
-            paths,
+            images,
             ["c0", "c1", "c2", "c3", "c4", "c5"],
             ["target", "target", "retain", "retain", "adversarial", "adversarial"],
         )
@@ -162,23 +151,13 @@ class TestERRHelpers:
         assert len(outputs["retain"]) == 2
         assert len(outputs["adversarial"]) == 2
 
-    def test_resolve_image_path_string(self, tmp_path):
-        from eval_learn.metrics.err.metric import ERRMetric
-        p = str(tmp_path / "test.png")
-        Image.new("RGB", (10, 10)).save(p)
-        result = ERRMetric._resolve_image_path(p)
-        assert result == p
-
-    def test_resolve_image_path_pil(self):
-        from eval_learn.metrics.err.metric import ERRMetric
-        img = Image.new("RGB", (10, 10))
-        result = ERRMetric._resolve_image_path(img)
-        assert isinstance(result, str)
-        assert os.path.isfile(result)
-        # Cleanup
-        os.remove(result)
-
-    def test_resolve_image_path_unknown(self):
-        from eval_learn.metrics.err.metric import ERRMetric
-        result = ERRMetric._resolve_image_path(42)
-        assert result is None
+    def test_build_model_outputs_skips_none(self, err_metric):
+        images = [Image.new("RGB", (10, 10)), None, Image.new("RGB", (10, 10))]
+        outputs = err_metric._build_model_outputs(
+            images,
+            ["c0", "c1", "c2"],
+            ["target", "retain", "adversarial"],
+        )
+        assert len(outputs["target"]) == 1
+        assert len(outputs["retain"]) == 0
+        assert len(outputs["adversarial"]) == 1

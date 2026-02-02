@@ -47,8 +47,7 @@ def run_benchmark(args):
     config = load_config(args.config)
     
     # Extract sections
-    run_name = config.get("run_name", "Benchmark_Run")
-    output_dir = config.get("output_dir", "results/benchmarks")
+    output_dir = config.get("output_dir", "results")
     
     # Dataset
     ds_conf = config.get("dataset", {})
@@ -86,11 +85,13 @@ def run_benchmark(args):
         dataset_loader=dataset_loader,
         technique_factory=technique_factory,
         metric_factory=metric_factory,
+        technique_name=tech_name,
+        metric_name=met_name,
+        dataset_name=ds_name,
         technique_config=tech_conf.get("config", {}),
         metric_config=met_conf.get("config", {}),
         dataset_config=ds_conf.get("config", {}),
         output_dir=output_dir,
-        run_name=run_name
     )
     
     try:
