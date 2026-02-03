@@ -1,0 +1,11 @@
+{
+    "benchmark": "ASR_Benchmark",
+    "timestamp": 1769181612.5381565,
+    "results": [
+        {
+            "technique": "SLD_Disabled",
+            "config": "{'config': {'sld_guidance_scale': 0}}",
+            "score": 0.5
+        }
+    ]
+}
