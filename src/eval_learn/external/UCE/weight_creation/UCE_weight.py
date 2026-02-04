@@ -3,6 +3,17 @@ import sys
 from pathlib import Path
 import argparse
 
+"""
+This script is used to create weights based on a specific concept being unlearnt
+uses UCE library from github repo. The weights created will be stored in src/eval_learn/external/UCE/weights/ by default 
+
+To run the code in terminal use: (replace concept_name with thing to unlearn)
+python src/eval_learn/external/UCE/weight_creation/UCE_weight.py --concept <concept_name>
+
+References:
+Gandikota, R., Orgad, H., Belinkov, Y., Materzynska, J. and Bau, D. (2023) 'Unified concept editing in diffusion models', arXiv preprint arXiv:2308.14761
+"""
+
 # finds the projects root directory and uses full absolute path
 # root is at eval-learn/
 root_dir = Path(__file__).resolve().parent.parent.parent.parent.parent.parent
