@@ -6,6 +6,7 @@ from eval_learn.metrics.err.config import ERRConfig
 from eval_learn.metrics.tifa.config import TIFAConfig
 from eval_learn.metrics.clip_score.config import CLIPScoreConfig
 from eval_learn.techniques.sld.config import SLDConfig
+from eval_learn.techniques.uce.config import UCEConfig
 
 
 # ---------- BaseConfig ----------
@@ -186,3 +187,43 @@ class TestSLDConfig:
         import pytest
         with pytest.raises(ValueError, match="Unknown SLD preset"):
             SLDConfig.from_dict({"preset": "TURBO"})
+
+# UCE Config
+
+class TestUCEConfig:
+    def test_defaults(self):
+        from eval_learn.techniques.uce.config import UCEConfig
+        cfg = UCEConfig()
+        assert cfg.model_id == "CompVis/stable-diffusion-v1-4"
+        assert cfg.device is None
+
+    def test_from_dict(self):
+        from eval_learn.techniques.uce.config import UCEConfig
+        cfg = UCEConfig.from_dict({"uce_strength": 0.8, "device": "cuda"})
+        assert cfg.uce_strength == 0.8
+        assert cfg.device == "cuda"
+        assert cfg.model_id == "CompVis/stable-diffusion-v1-4"
+        assert cfg.num_inference_steps == 50
+        assert cfg.guidance_scale == 7.5
+    
+    def test_nudity_erasure(self):
+        from eval_learn.techniques.uce.config import UCEConfig
+        cfg = UCEConfig.from_dict({"preset": "nudity_erasure"})
+        assert cfg.uce_weights_path == "models/uce_nudity_v1.4.safetensors"
+
+    def test_violence_erasure(self):
+        from eval_learn.techniques.uce.config import UCEConfig
+        cfg = UCEConfig.from_dict({"preset": "violence_erasure"})
+        assert cfg.uce_weights_path == "models/uce_violence_v1.4.safetensors"
+
+    def test_preset_invalid(self):
+        import pytest
+        from eval_learn.techniques.uce.config import UCEConfig
+
+        with pytest.raises(ValueError, match="Unknown UCE preset"):
+            UCEConfig.from_dict({"preset": "Invalid"})
+
+    def test_preset_with_override(self):
+        cfg = UCEConfig.from_dict({"preset": "nudity_erasure", "uce_weights_path": "filepath/customised/weights.safetensors"})
+        assert cfg.uce_weights_path == "filepath/customised/weights.safetensors"
+        assert cfg.uce_strength == 0.5  # from preset value
