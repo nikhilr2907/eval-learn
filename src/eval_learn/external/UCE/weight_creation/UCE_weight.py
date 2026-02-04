@@ -26,7 +26,7 @@ def weight_creation(concept: str, output_path: str = "src/eval_learn/external/UC
     # flags are edit_concepts, concept_type, exp_name and save_dir based on what uce_sd_erase.py requires
     print("Creating Weights...")
     subprocess.run([sys.executable, str(UCE_library_filepath), "--edit_concepts", concept, "--concept_type", "object", "--save_dir", str(output_path), "--exp_name", f"uce_{concept}"], check = True)
-    print("Weights Created Successfully and saved to" + str(output_path))
+    print("Weights Created Successfully and saved to " + str(output_path))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
