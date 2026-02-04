@@ -6,10 +6,10 @@ from ...configs.base import BaseConfig
 # name of weight files is used to access the respective filepath
 # presets are the preset maps, that maps name to respective uce weight file path
 _PRESETS: Dict[str, Dict[str, Any]] = { "nudity_erasure": {
-        "uce_weights_path": "models/uce_nudity_v1.4.safetensors",
+        "uce_weights_path": "src/eval_learn/external/UCE/weights/uce_nudity.safetensors",
     },
     "violence_erasure": {
-        "uce_weights_path": "models/uce_violence_v1.4.safetensors",
+        "uce_weights_path": "src/eval_learn/external/UCE/weights/uce_violence.safetensors",
     },
 }
 

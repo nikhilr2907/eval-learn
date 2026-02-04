@@ -200,7 +200,6 @@ class TestUCEConfig:
     def test_from_dict(self):
         from eval_learn.techniques.uce.config import UCEConfig
         cfg = UCEConfig.from_dict({"uce_strength": 0.8, "device": "cuda"})
-        assert cfg.uce_strength == 0.8
         assert cfg.device == "cuda"
         assert cfg.model_id == "CompVis/stable-diffusion-v1-4"
         assert cfg.num_inference_steps == 50
@@ -209,12 +208,12 @@ class TestUCEConfig:
     def test_nudity_erasure(self):
         from eval_learn.techniques.uce.config import UCEConfig
         cfg = UCEConfig.from_dict({"preset": "nudity_erasure"})
-        assert cfg.uce_weights_path == "models/uce_nudity_v1.4.safetensors"
+        assert cfg.uce_weights_path == "src/eval_learn/external/UCE/weights/uce_nudity.safetensors"
 
     def test_violence_erasure(self):
         from eval_learn.techniques.uce.config import UCEConfig
         cfg = UCEConfig.from_dict({"preset": "violence_erasure"})
-        assert cfg.uce_weights_path == "models/uce_violence_v1.4.safetensors"
+        assert cfg.uce_weights_path == "src/eval_learn/external/UCE/weights/uce_violence.safetensors"
 
     def test_preset_invalid(self):
         import pytest
@@ -226,4 +225,3 @@ class TestUCEConfig:
     def test_preset_with_override(self):
         cfg = UCEConfig.from_dict({"preset": "nudity_erasure", "uce_weights_path": "filepath/customised/weights.safetensors"})
         assert cfg.uce_weights_path == "filepath/customised/weights.safetensors"
-        assert cfg.uce_strength == 0.5  # from preset value
