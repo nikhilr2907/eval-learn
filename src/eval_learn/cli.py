@@ -9,6 +9,7 @@ load_dotenv(override=True)
 
 # Ensure registry is populated
 import eval_learn.techniques.sld.wrapper
+import eval_learn.techniques.uce.wrapper
 import eval_learn.techniques.SAFREE.wrapper
 import eval_learn.metrics.asr.metric
 import eval_learn.metrics.fid.metric

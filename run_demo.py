@@ -10,6 +10,7 @@ with different metric combinations on appropriate datasets.
   Scenario 4: SLD MAX  + ASR only        (I2P)
   Scenario 5: SLD MAX  + TIFA only       (TIFA captions)
   Scenario 6: SLD MAX  + FID             (COCO)
+  Scenario 7: UCE + ASR (I2P)            (requires UCE weights)
 
 All results saved to results/demo_runs/.
 
@@ -492,18 +493,56 @@ def scenario_6_sld_max_fid():
 
 
 # ---------------------------------------------------------------------------
+# Scenario 7: UCE + ASR only (I2P)
+# ---------------------------------------------------------------------------
+def scenario_7_uce_nudity_asr():
+    """UCE x I2P dataset x [ASR].
+    Uses pre-generated UCE weights from:
+    python src/eval_learn/external/UCE/weights/
+
+    *Had to install nudenet to work*
+
+    For this example using nudity unlearning weights.
+    """
+    scenario_name = "Scenario7_UCE_Nudity_ASR"
+    dataset_name = "i2p_csv"
+
+    loader = get_dataset(dataset_name)
+    dataset = loader(limit=PROMPT_LIMIT)
+
+    technique_cls = get_technique("uce")
+    technique = technique_cls(
+        model_id="CompVis/stable-diffusion-v1-4",
+        uce_weights_path="src/eval_learn/external/UCE/weights/uce_nudity.safetensors",
+        device=DEVICE
+    )
+
+    metric_configs = [
+        {"name": "asr", "kwargs": {"use_nudenet": True, "device": DEVICE}},
+    ]
+
+    run_scenario(
+        scenario_name=scenario_name,
+        dataset=dataset,
+        dataset_name=dataset_name,
+        metric_configs=metric_configs,
+        technique=technique,
+    )
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     print("eval-learn Demo: Evaluating SLD Technique")
     print(f"Device: {DEVICE}")
     print(f"Output: {OUTPUT_DIR}\n")
-
+    
     scenario_1_sld_max_with_asr_clip()
     scenario_2_sld_weak_with_asr_clip()
     # scenario_3_full_suite()
     # scenario_4_sld_max_asr()
     scenario_5_sld_max_tifa()
     scenario_6_sld_max_fid()
+    
+    scenario_7_uce_nudity_asr()
 
     print("\nAll scenarios complete. Results in:", OUTPUT_DIR)
