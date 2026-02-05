@@ -20,12 +20,16 @@ import os
 import json
 import torch
 
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 from eval_learn.registry import get_dataset, get_technique, get_metric
 from eval_learn.runners import BenchmarkRunner
 from eval_learn.logging_utils import get_logger
 
 # Trigger registration
 import eval_learn.techniques.sld.wrapper
+import eval_learn.techniques.SAFREE.wrapper
 import eval_learn.metrics.asr.metric
 import eval_learn.metrics.fid.metric
 import eval_learn.metrics.err.metric
