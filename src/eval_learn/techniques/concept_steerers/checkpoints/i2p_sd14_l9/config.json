@@ -1,0 +1,1 @@
+{"n_dirs_local": 3072, "d_model": 768, "k": 32, "auxk": 256, "dead_steps_threshold": 2441, "auxk_coef": 0.03125}
