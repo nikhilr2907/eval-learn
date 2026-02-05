@@ -34,12 +34,14 @@ class HFSync:
         results_repo: str,
         images_repo: str,
         token: Optional[str] = None,
+        create_pr: bool = False,
     ):
         self.token = token or os.environ.get("HF_TOKEN")
         self.api = HfApi(token=self.token)
         self.datasets_repo = datasets_repo
         self.results_repo = results_repo
         self.images_repo = images_repo
+        self.create_pr = create_pr
 
     # ------------------------------------------------------------------
     # Push
@@ -71,6 +73,7 @@ class HFSync:
             repo_id=self.results_repo,
             repo_type="dataset",
             commit_message=f"Add report for run {run_id}",
+            create_pr=self.create_pr,
         )
         logger.info("Report pushed: %s", url)
         return url
@@ -101,6 +104,7 @@ class HFSync:
             repo_id=self.images_repo,
             repo_type="dataset",
             commit_message=f"Add images for run {run_id}",
+            create_pr=self.create_pr,
         )
         logger.info("Images pushed: %s", url)
         return url

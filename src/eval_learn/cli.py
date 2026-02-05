@@ -49,6 +49,7 @@ def _build_hf_sync(args) -> HFSync:
         datasets_repo=datasets_repo,
         results_repo=results_repo,
         images_repo=images_repo,
+        create_pr=getattr(args, 'create_pr', False),
     )
 
 def load_config(path: str) -> Dict[str, Any]:
@@ -195,6 +196,8 @@ def main():
                              help="Local run directory (e.g. results/sld_asr_a1b2c3d4)")
     push_parser.add_argument("--run-id", required=True,
                              help="8-char hex run ID")
+    push_parser.add_argument("--create-pr", action="store_true",
+                             help="Create a Pull Request instead of pushing directly (use if you don't have write access)")
 
     # Pull Command
     pull_parser = subparsers.add_parser(

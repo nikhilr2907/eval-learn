@@ -52,9 +52,9 @@ def run_test(metric_name, dataset_name, dataset_config, metric_config):
 
     runner = BenchmarkRunner(
         dataset_loader=get_dataset(dataset_name),
-        technique_factory=get_technique("sld"),
+        technique_factory=get_technique("safree"),
         metric_factory=get_metric(metric_name),
-        technique_name="sld",
+        technique_name="safree",
         metric_name=metric_name,
         dataset_name=dataset_name,
         technique_config={"model_id": SLD_MODEL_ID, "device": DEVICE},
