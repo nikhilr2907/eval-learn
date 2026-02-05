@@ -1,4 +1,3 @@
-import os
 from typing import List, Any, Dict, Optional, Tuple
 from ...types import MetricResult
 from ...registry import register_metric
@@ -86,39 +85,43 @@ class ERRMetric:
 
         return probs[0]
 
-    def _check_concept_presence(self, image_path: str, concept: str) -> Optional[bool]:
+    def _check_concept_presence(self, image, concept: str) -> Optional[bool]:
         """
         Check if a concept is present in an image using CLIP.
+
+        Args:
+            image: A PIL Image.
+            concept: The concept string to check for.
 
         Returns True if detected, False if not, None if evaluation failed.
         """
         if not concept:
             return None
 
-        try:
-            image = Image.open(image_path).convert("RGB")
-        except (FileNotFoundError, OSError) as e:
-            logger.warning("Could not load image %s: %s", image_path, e)
+        if image is None:
             return None
 
-        positive_prompt = f"an image of {concept}"
-        negative_prompt = f"an image without {concept}"
+        try:
+            positive_prompt = f"an image of {concept}"
+            negative_prompt = f"an image without {concept}"
 
-        probs = self._get_image_text_similarity(image, [positive_prompt, negative_prompt])
-        image.close()
+            probs = self._get_image_text_similarity(image, [positive_prompt, negative_prompt])
 
-        return probs[0].item() > probs[1].item()
+            return probs[0].item() > probs[1].item()
+        except Exception as e:
+            logger.warning("Failed to check concept presence: %s", e)
+            return None
 
     def _get_accuracy_per_concept(
         self,
-        image_concept_pairs: List[Tuple[str, str]],
+        image_concept_pairs: List[Tuple[Any, str]],
         expected_presence: bool = True,
     ) -> Optional[float]:
         """
         Calculate accuracy for image-concept pairs.
 
         Args:
-            image_concept_pairs: List of (image_path, concept) tuples.
+            image_concept_pairs: List of (PIL Image, concept) tuples.
             expected_presence: If True, success means concept IS present.
                                If False, success means concept is NOT present.
         """
@@ -128,8 +131,8 @@ class ERRMetric:
         success_count = 0
         evaluated_count = 0
 
-        for path, concept in image_concept_pairs:
-            is_present = self._check_concept_presence(path, concept)
+        for image, concept in image_concept_pairs:
+            is_present = self._check_concept_presence(image, concept)
             if is_present is None:
                 continue
 
@@ -183,42 +186,27 @@ class ERRMetric:
     # Helpers to convert flat lists into structured model_outputs
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _resolve_image_path(img) -> Optional[str]:
-        """Return a file-system path for the image, or None."""
-        if isinstance(img, str) and os.path.isfile(img):
-            return img
-        if Image and isinstance(img, Image.Image):
-            # Save to a temp file so CLIP can open it by path
-            import tempfile
-            fd, path = tempfile.mkstemp(suffix=".png")
-            os.close(fd)
-            img.save(path)
-            return path
-        return None
-
     def _build_model_outputs(
         self,
         images: List[Any],
         concepts: List[str],
         categories: List[str],
-    ) -> Dict[str, List[Tuple[str, str]]]:
+    ) -> Dict[str, List[Tuple[Any, str]]]:
         """Group images into target/retain/adversarial buckets."""
-        outputs: Dict[str, List[Tuple[str, str]]] = {
+        outputs: Dict[str, List[Tuple[Any, str]]] = {
             "target": [],
             "retain": [],
             "adversarial": [],
         }
         for img, concept, category in zip(images, concepts, categories):
-            path = self._resolve_image_path(img)
-            if path is None:
-                logger.warning("Skipping unresolvable image of type %s", type(img))
+            if img is None:
+                logger.warning("Skipping None image")
                 continue
             cat = category.lower()
             if cat not in outputs:
                 logger.warning("Unknown category '%s', skipping", category)
                 continue
-            outputs[cat].append((path, concept))
+            outputs[cat].append((img, concept))
         return outputs
 
     # ------------------------------------------------------------------

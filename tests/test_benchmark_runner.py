@@ -41,11 +41,13 @@ def _make_runner(deps, **overrides):
         dataset_loader=deps["loader"],
         technique_factory=deps["technique_factory"],
         metric_factory=deps["metric_factory"],
+        technique_name="sld",
+        metric_name="asr",
+        dataset_name="i2p_csv",
         technique_config={"model_id": "test-model"},
         metric_config={"use_nudenet": False},
         dataset_config={"limit": 5},
         output_dir=deps["output_dir"],
-        run_name="TestRun",
     )
     kwargs.update(overrides)
     return BenchmarkRunner(**kwargs)
@@ -85,7 +87,8 @@ class TestRunnerReport:
     def test_report_structure(self, runner_deps):
         runner = _make_runner(runner_deps)
         report = runner.run()
-        for key in ("run_name", "dataset_metadata", "technique_config",
+        for key in ("run_id", "timestamp", "technique_name", "metric_name",
+                     "dataset_name", "dataset_metadata", "technique_config",
                      "metric_config", "metric_result"):
             assert key in report
         assert "name" in report["metric_result"]
@@ -95,20 +98,60 @@ class TestRunnerReport:
     def test_report_values(self, runner_deps):
         runner = _make_runner(runner_deps)
         report = runner.run()
-        assert report["run_name"] == "TestRun"
+        assert report["technique_name"] == "sld"
+        assert report["metric_name"] == "asr"
+        assert report["dataset_name"] == "i2p_csv"
         assert report["metric_result"]["value"] == 0.42
         assert report["metric_result"]["name"] == "TestMetric"
 
+    def test_run_id_is_8_char_hex(self, runner_deps):
+        runner = _make_runner(runner_deps)
+        report = runner.run()
+        run_id = report["run_id"]
+        assert len(run_id) == 8
+        assert all(c in "0123456789abcdef" for c in run_id)
+
 
 class TestRunnerArtifacts:
-    def test_saves_artifacts(self, runner_deps):
+    def test_saves_artifacts_with_new_naming(self, runner_deps):
         runner = _make_runner(runner_deps)
-        runner.run()
-        run_dir = os.path.join(runner_deps["output_dir"], "TestRun")
+        report = runner.run()
+        run_id = report["run_id"]
+        run_dir = os.path.join(runner_deps["output_dir"], f"sld_asr_{run_id}")
         assert os.path.isdir(run_dir)
-        # Should have a JSON report
+        # Should have a JSON report named <run_id>_report.json
         json_files = [f for f in os.listdir(run_dir) if f.endswith(".json")]
         assert len(json_files) == 1
+        assert json_files[0] == f"{run_id}_report.json"
+
+    def test_saves_images_flat_without_categories(self, runner_deps):
+        runner = _make_runner(runner_deps)
+        report = runner.run()
+        run_id = report["run_id"]
+        images_dir = os.path.join(runner_deps["output_dir"], f"sld_asr_{run_id}", "images")
+        assert os.path.isdir(images_dir)
+
+    def test_saves_images_in_category_subdirs(self, runner_deps, dummy_pil_image):
+        """When metadata has categories, images go into subdirectories."""
+        imgs = [dummy_pil_image(), dummy_pil_image(), dummy_pil_image()]
+        runner_deps["loader"].return_value = Dataset(
+            prompts=["p1", "p2", "p3"],
+            metadata={
+                "source": "test",
+                "concepts": ["c1", "c2", "c3"],
+                "categories": ["target", "retain", "adversarial"],
+            }
+        )
+        runner_deps["technique_instance"].generate.return_value = imgs
+
+        runner = _make_runner(runner_deps, metric_name="err")
+        report = runner.run()
+        run_id = report["run_id"]
+
+        images_dir = os.path.join(runner_deps["output_dir"], f"sld_err_{run_id}", "images")
+        assert os.path.isdir(os.path.join(images_dir, "target"))
+        assert os.path.isdir(os.path.join(images_dir, "retain"))
+        assert os.path.isdir(os.path.join(images_dir, "adversarial"))
 
     def test_execution_order(self, runner_deps):
         call_order = []
