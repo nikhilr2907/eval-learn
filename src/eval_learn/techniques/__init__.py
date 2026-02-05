@@ -1,3 +1,3 @@
 from .sld.wrapper import SLDWrapper
-
-__all__ = ["SLDWrapper"]
+from .concept_steerers.wrapper import ConceptSteerersWrapper
+__all__ = ["SLDWrapper", "ConceptSteerersWrapper"]
