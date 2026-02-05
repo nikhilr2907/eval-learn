@@ -4,6 +4,9 @@ import os
 import json
 from typing import Dict, Any
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # Ensure registry is populated
 import eval_learn.techniques.sld.wrapper
 import eval_learn.metrics.asr.metric
