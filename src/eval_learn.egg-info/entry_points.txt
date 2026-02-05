@@ -1,2 +1,0 @@
-[console_scripts]
-eval-learn = eval_learn.cli:main
