@@ -11,10 +11,10 @@ def runner_deps(tmp_path, dummy_pil_image):
     """Build mocked components for BenchmarkRunner."""
     mock_img = dummy_pil_image()
 
-    mock_loader = MagicMock(return_value=Dataset(
+    mock_dataset = Dataset(
         prompts=["prompt1", "prompt2"],
         metadata={"source": "test", "concepts": ["c1", "c2"]}
-    ))
+    )
 
     mock_technique_instance = MagicMock()
     mock_technique_instance.generate.return_value = [mock_img, mock_img]
@@ -22,14 +22,15 @@ def runner_deps(tmp_path, dummy_pil_image):
 
     mock_metric_instance = MagicMock()
     mock_metric_instance.compute.return_value = MetricResult("TestMetric", 0.42, {"detail": "val"})
+    mock_metric_instance.load_dataset.return_value = mock_dataset
     mock_metric_factory = MagicMock(return_value=mock_metric_instance)
 
     return {
-        "loader": mock_loader,
         "technique_factory": mock_technique_factory,
         "technique_instance": mock_technique_instance,
         "metric_factory": mock_metric_factory,
         "metric_instance": mock_metric_instance,
+        "dataset": mock_dataset,
         "output_dir": str(tmp_path / "results"),
         "img": mock_img,
     }
@@ -38,15 +39,12 @@ def runner_deps(tmp_path, dummy_pil_image):
 def _make_runner(deps, **overrides):
     """Helper to build a BenchmarkRunner from deps dict."""
     kwargs = dict(
-        dataset_loader=deps["loader"],
         technique_factory=deps["technique_factory"],
         metric_factory=deps["metric_factory"],
         technique_name="sld",
         metric_name="asr",
-        dataset_name="i2p_csv",
         technique_config={"model_id": "test-model"},
         metric_config={"use_nudenet": False},
-        dataset_config={"limit": 5},
         output_dir=deps["output_dir"],
     )
     kwargs.update(overrides)
@@ -54,11 +52,6 @@ def _make_runner(deps, **overrides):
 
 
 class TestRunnerCalls:
-    def test_calls_loader_with_config(self, runner_deps):
-        runner = _make_runner(runner_deps, dataset_config={"limit": 5})
-        runner.run()
-        runner_deps["loader"].assert_called_once_with(limit=5)
-
     def test_calls_technique_factory_with_config(self, runner_deps):
         runner = _make_runner(runner_deps, technique_config={"model_id": "test-model"})
         runner.run()
@@ -68,6 +61,11 @@ class TestRunnerCalls:
         runner = _make_runner(runner_deps, metric_config={"use_nudenet": False})
         runner.run()
         runner_deps["metric_factory"].assert_called_once_with(use_nudenet=False)
+
+    def test_metric_load_dataset_called(self, runner_deps):
+        runner = _make_runner(runner_deps)
+        runner.run()
+        runner_deps["metric_instance"].load_dataset.assert_called_once()
 
     def test_calls_generate_with_prompts(self, runner_deps):
         runner = _make_runner(runner_deps)
@@ -100,7 +98,7 @@ class TestRunnerReport:
         report = runner.run()
         assert report["technique_name"] == "sld"
         assert report["metric_name"] == "asr"
-        assert report["dataset_name"] == "i2p_csv"
+        assert report["dataset_name"] == "test"
         assert report["metric_result"]["value"] == 0.42
         assert report["metric_result"]["name"] == "TestMetric"
 
@@ -134,7 +132,7 @@ class TestRunnerArtifacts:
     def test_saves_images_in_category_subdirs(self, runner_deps, dummy_pil_image):
         """When metadata has categories, images go into subdirectories."""
         imgs = [dummy_pil_image(), dummy_pil_image(), dummy_pil_image()]
-        runner_deps["loader"].return_value = Dataset(
+        cat_dataset = Dataset(
             prompts=["p1", "p2", "p3"],
             metadata={
                 "source": "test",
@@ -142,6 +140,7 @@ class TestRunnerArtifacts:
                 "categories": ["target", "retain", "adversarial"],
             }
         )
+        runner_deps["metric_instance"].load_dataset.return_value = cat_dataset
         runner_deps["technique_instance"].generate.return_value = imgs
 
         runner = _make_runner(runner_deps, metric_name="err")
@@ -155,9 +154,13 @@ class TestRunnerArtifacts:
 
     def test_execution_order(self, runner_deps):
         call_order = []
-        runner_deps["loader"].side_effect = lambda **kw: (
-            call_order.append("loader"),
-            Dataset(prompts=["p1"], metadata={"source": "test"})
+        runner_deps["metric_factory"].side_effect = lambda **kw: (
+            call_order.append("metric_factory"),
+            runner_deps["metric_instance"]
+        )[1]
+        runner_deps["metric_instance"].load_dataset.side_effect = lambda: (
+            call_order.append("load_dataset"),
+            runner_deps["dataset"]
         )[1]
         runner_deps["technique_factory"].side_effect = lambda **kw: (
             call_order.append("technique_factory"),
@@ -167,10 +170,6 @@ class TestRunnerArtifacts:
             call_order.append("generate"),
             [runner_deps["img"]]
         )[1]
-        runner_deps["metric_factory"].side_effect = lambda **kw: (
-            call_order.append("metric_factory"),
-            runner_deps["metric_instance"]
-        )[1]
         runner_deps["metric_instance"].compute.side_effect = lambda **kw: (
             call_order.append("compute"),
             MetricResult("T", 0.0)
@@ -178,4 +177,4 @@ class TestRunnerArtifacts:
 
         runner = _make_runner(runner_deps)
         runner.run()
-        assert call_order == ["loader", "technique_factory", "generate", "metric_factory", "compute"]
+        assert call_order == ["metric_factory", "load_dataset", "technique_factory", "generate", "compute"]

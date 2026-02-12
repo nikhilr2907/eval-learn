@@ -1,11 +1,10 @@
 import hashlib
 import json
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 from ..types import Dataset, MetricResult
 from ..logging_utils import get_logger
-from ..configs.base import BaseConfig
-from ..artifacts import ArtifactWriter
+from .core.base_runner import BaseRunner
 
 logger = get_logger(__name__)
 
@@ -29,90 +28,105 @@ def generate_run_id(
     }, sort_keys=True)
     return hashlib.sha256(payload.encode()).hexdigest()[:8]
 
-class BenchmarkRunner:
+
+class BenchmarkRunner(BaseRunner):
     """
-    Orchestrates the execution of a benchmark run.
+    Single technique × single metric benchmark runner.
+
+    Orchestrates the execution of a benchmark run where one technique
+    generates images for one metric to evaluate.
+
+    Each metric owns its dataset via ``metric.load_dataset()``.
     """
 
     def __init__(
         self,
-        dataset_loader: Any,
         technique_factory: Any,
         metric_factory: Any,
         technique_name: str,
         metric_name: str,
-        dataset_name: str,
         technique_config: Dict[str, Any],
         metric_config: Dict[str, Any],
-        dataset_config: Dict[str, Any] = {},
         output_dir: str = "results",
     ):
-        self.dataset_loader = dataset_loader
+        """
+        Initialize the single-benchmark runner.
+
+        Args:
+            technique_factory: Technique class (not instantiated).
+            metric_factory: Metric class (not instantiated).
+            technique_name: Name of the technique (e.g., "sld").
+            metric_name: Name of the metric (e.g., "asr").
+            technique_config: Config dict to pass to technique.__init__().
+            metric_config: Config dict to pass to metric.__init__().
+            output_dir: Directory where artifacts will be saved.
+        """
+        super().__init__(output_dir)
         self.technique_factory = technique_factory
         self.metric_factory = metric_factory
         self.technique_name = technique_name
         self.metric_name = metric_name
-        self.dataset_name = dataset_name
         self.technique_config = technique_config
         self.metric_config = metric_config
-        self.dataset_config = dataset_config
-        self.writer = ArtifactWriter(base_dir=output_dir)
 
     def run(self) -> Dict[str, Any]:
+        """Execute single technique × single metric benchmark."""
         logger.info("Starting Benchmark Run...")
-        ts = time.time()
+        timestamp = time.time()
 
+        # 1. Initialize Metric
+        self._log_phase("Initializing metric")
+        metric = self.metric_factory(**self.metric_config)
+
+        # 2. Load Dataset (owned by the metric)
+        self._log_phase("Loading dataset")
+        dataset: Dataset = metric.load_dataset()
+        dataset_name = dataset.metadata.get("source", "unknown")
+        logger.info(f"Loaded {len(dataset.prompts)} prompts from '{dataset_name}'.")
+
+        # Generate run_id now that we have dataset_name
         run_id = generate_run_id(
             technique_name=self.technique_name,
             technique_config=self.technique_config,
             metric_name=self.metric_name,
             metric_config=self.metric_config,
-            dataset_name=self.dataset_name,
-            timestamp=ts,
+            dataset_name=dataset_name,
+            timestamp=timestamp,
         )
         logger.info(f"Run ID: {run_id}")
 
-        # 1. Load Dataset
-        logger.info("Loading dataset...")
-        dataset: Dataset = self.dataset_loader(**self.dataset_config)
-        logger.info(f"Loaded {len(dataset.prompts)} prompts.")
-
-        # 2. Initialize Technique
-        logger.info("Initializing technique...")
+        # 3. Initialize Technique
+        self._log_phase("Initializing technique")
         technique = self.technique_factory(**self.technique_config)
 
-        # 3. Generate Images
-        logger.info("Generating images...")
+        # 4. Generate Images
+        self._log_phase("Generating images")
         images = technique.generate(prompts=dataset.prompts)
         logger.info(f"Generated {len(images)} images.")
 
-        # 4. Initialize Metric
-        logger.info("Initializing metric...")
-        metric = self.metric_factory(**self.metric_config)
-
         # 5. Compute Metrics
-        logger.info("Computing metrics...")
+        self._log_phase("Computing metrics")
         result: MetricResult = metric.compute(
             images=images, prompts=dataset.prompts, metadata=dataset.metadata
         )
         logger.info(f"Metric Result ({result.name}): {result.value}")
 
         # 6. Prepare Report
-        report = {
-            "run_id": run_id,
-            "timestamp": ts,
-            "technique_name": self.technique_name,
-            "metric_name": self.metric_name,
-            "dataset_name": self.dataset_name,
-            "dataset_metadata": dataset.metadata,
-            "technique_config": self.technique_config,
-            "metric_config": self.metric_config,
-            "metric_result": {
+        report = self._build_base_report(
+            run_id=run_id,
+            timestamp=timestamp,
+            technique_name=self.technique_name,
+            metric_name=self.metric_name,
+            dataset_name=dataset_name,
+            dataset_metadata=dataset.metadata,
+            technique_config=self.technique_config,
+            metric_config=self.metric_config,
+            metric_result={
                 "name": result.name,
                 "value": result.value,
                 "details": result.details,
             },
-        }
+        )
 
         # 7. Save Artifacts
         self.writer.save_run(
@@ -124,4 +138,5 @@ class BenchmarkRunner:
             metadata=dataset.metadata,
         )
 
+        logger.info("Benchmark run completed.")
         return report

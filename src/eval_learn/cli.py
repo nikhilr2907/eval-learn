@@ -7,24 +7,7 @@ from typing import Dict, Any
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
-# Ensure registry is populated
-import eval_learn.techniques.esd.wrapper
-import eval_learn.techniques.sld.wrapper
-import eval_learn.techniques.uce.wrapper
-import eval_learn.techniques.SAFREE.wrapper
-import eval_learn.metrics.asr.metric
-import eval_learn.metrics.fid.metric
-import eval_learn.metrics.err.metric
-import eval_learn.metrics.tifa.metric
-import eval_learn.metrics.clip_score.metric
-import eval_learn.datasets.i2p_csv
-import eval_learn.datasets.ring_a_bell_csv
-import eval_learn.datasets.err_challenge_csv
-import eval_learn.datasets.err_composite
-import eval_learn.datasets.tifa_json
-import eval_learn.datasets.coco_parquet
-
-from eval_learn.registry import get_technique, get_metric, get_dataset
+from eval_learn.registry import get_technique, get_metric
 from eval_learn.registry.entrypoints import load_entrypoints
 from eval_learn.registry.hf_sync import HFSync
 from eval_learn.runners import BenchmarkRunner
@@ -78,24 +61,17 @@ def load_config(path: str) -> Dict[str, Any]:
 def run_benchmark(args):
     """Execute the benchmark run."""
     config = load_config(args.config)
-    
+
     # Extract sections
     output_dir = config.get("output_dir", "results")
-    
-    # Dataset
-    ds_conf = config.get("dataset", {})
-    ds_name = ds_conf.get("name")
-    if not ds_name:
-        logger.error("Config must specify 'dataset.name'")
-        sys.exit(1)
-        
+
     # Technique
     tech_conf = config.get("technique", {})
     tech_name = tech_conf.get("name")
     if not tech_name:
         logger.error("Config must specify 'technique.name'")
         sys.exit(1)
-        
+
     # Metric
     met_conf = config.get("metric", {})
     met_name = met_conf.get("name")
@@ -104,10 +80,9 @@ def run_benchmark(args):
         sys.exit(1)
 
     logger.info("Preparing run...")
-    logger.info(f"Dataset: {ds_name} | Technique: {tech_name} | Metric: {met_name}")
+    logger.info(f"Technique: {tech_name} | Metric: {met_name}")
 
     try:
-        dataset_loader = get_dataset(ds_name)
         technique_factory = get_technique(tech_name)
         metric_factory = get_metric(met_name)
     except ValueError as e:
@@ -115,18 +90,15 @@ def run_benchmark(args):
         sys.exit(1)
 
     runner = BenchmarkRunner(
-        dataset_loader=dataset_loader,
         technique_factory=technique_factory,
         metric_factory=metric_factory,
         technique_name=tech_name,
         metric_name=met_name,
-        dataset_name=ds_name,
         technique_config=tech_conf.get("config", {}),
         metric_config=met_conf.get("config", {}),
-        dataset_config=ds_conf.get("config", {}),
         output_dir=output_dir,
     )
-    
+
     try:
         report = runner.run()
         logger.info("Run completed successfully.")
