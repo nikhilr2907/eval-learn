@@ -7,10 +7,8 @@ from typing import Dict, Any
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
-from eval_learn.registry import get_technique, get_metric
-from eval_learn.registry.entrypoints import load_entrypoints
 from eval_learn.registry.hf_sync import HFSync
-from eval_learn.runners import BenchmarkRunner
+from eval_learn.runners import SingleBenchmarkRunner
 from eval_learn.logging_utils import get_logger
 
 logger = get_logger("cli")
@@ -62,17 +60,14 @@ def run_benchmark(args):
     """Execute the benchmark run."""
     config = load_config(args.config)
 
-    # Extract sections
     output_dir = config.get("output_dir", "results")
 
-    # Technique
     tech_conf = config.get("technique", {})
     tech_name = tech_conf.get("name")
     if not tech_name:
         logger.error("Config must specify 'technique.name'")
         sys.exit(1)
 
-    # Metric
     met_conf = config.get("metric", {})
     met_name = met_conf.get("name")
     if not met_name:
@@ -83,21 +78,16 @@ def run_benchmark(args):
     logger.info(f"Technique: {tech_name} | Metric: {met_name}")
 
     try:
-        technique_factory = get_technique(tech_name)
-        metric_factory = get_metric(met_name)
+        runner = SingleBenchmarkRunner(
+            technique_name=tech_name,
+            metric_name=met_name,
+            technique_config=tech_conf.get("config", {}),
+            metric_config=met_conf.get("config", {}),
+            output_dir=output_dir,
+        )
     except ValueError as e:
         logger.error(str(e))
         sys.exit(1)
-
-    runner = BenchmarkRunner(
-        technique_factory=technique_factory,
-        metric_factory=metric_factory,
-        technique_name=tech_name,
-        metric_name=met_name,
-        technique_config=tech_conf.get("config", {}),
-        metric_config=met_conf.get("config", {}),
-        output_dir=output_dir,
-    )
 
     try:
         report = runner.run()
@@ -143,9 +133,6 @@ def hf_pull(args):
 
 
 def main():
-    # Load plugins from entry points
-    load_entrypoints()
-
     parser = argparse.ArgumentParser(description="Eval-Learn CLI")
     parser.add_argument("--version", action="store_true", help="Show version")
 

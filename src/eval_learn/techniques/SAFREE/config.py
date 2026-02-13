@@ -2,7 +2,7 @@ from ...configs.base import BaseConfig
 from dataclasses import dataclass
 
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 
 @dataclass
 class SAFREEConfig(BaseConfig):
@@ -31,3 +31,9 @@ class SAFREEConfig(BaseConfig):
 
     # Alternative to SVF (if SVF disabled)
     re_attn_timestep_range: Tuple[int, int] = (-1, 1001)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'SAFREEConfig':
+        data = dict(data)
+        data.pop("model_id", None)
+        return super().from_dict(data)

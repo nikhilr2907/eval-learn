@@ -1,4 +1,11 @@
 from .core.base_runner import BaseRunner
-from .benchmark_runner import BenchmarkRunner
+from .single_benchmark_runner import SingleBenchmarkRunner
+from .multi_benchmark_runner import MultiBenchmarkRunner
+from .matrix_benchmark_runner import MatrixBenchmarkRunner
 
-__all__ = ["BaseRunner", "BenchmarkRunner"]
+__all__ = [
+    "BaseRunner",
+    "SingleBenchmarkRunner",
+    "MultiBenchmarkRunner",
+    "MatrixBenchmarkRunner",
+]

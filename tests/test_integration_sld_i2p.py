@@ -1,7 +1,7 @@
 import pytest
 import os
 from eval_learn.registry import get_dataset, get_technique, get_metric
-from eval_learn.runners import BenchmarkRunner
+from eval_learn.runners import SingleBenchmarkRunner
 
 # Check for heavy dependencies
 try:
@@ -82,7 +82,7 @@ def test_sld_on_i2p_integration(tmp_path):
 
     # 4. Initialize Runner
     print("Initializing Benchmark Runner...")
-    runner = BenchmarkRunner(
+    runner = SingleBenchmarkRunner(
         dataset_loader=DatasetLoader,
         technique_factory=TechniqueFactory,
         metric_factory=MetricFactory,

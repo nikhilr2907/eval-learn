@@ -1,14 +1,12 @@
 import os
-try:
-    from dataclasses import dataclass
-except ImportError:
-    raise RuntimeError(
-        "SDSAERunnerConfig requires 'dataclasses'. Please ensure you are using Python 3.7+ or install it via: pip install dataclasses"
-    )
+from dataclasses import dataclass
 from typing import Optional, Any, Dict
 
+from ...configs.base import BaseConfig
+
+
 @dataclass
-class ConceptSteerersConfig:
+class ConceptSteerersConfig(BaseConfig):
     model_id: str = "CompVis/stable-diffusion-v1-4"
     device: str = "cuda"
     sae_path: Optional[str] = None
@@ -16,15 +14,12 @@ class ConceptSteerersConfig:
     multiplier: float = 1.0
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]):
-        
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'ConceptSteerersConfig':
+        config_dict = dict(config_dict)
+        config_dict.pop("model_id", None)
+
         if 'sae_path' not in config_dict or not config_dict['sae_path']:
-            # techniques/concept_steerers/
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            #  checkpoint
             config_dict['sae_path'] = os.path.join(base_dir, "checkpoints", "i2p_sd14_l9")
-            
-        return cls(**{
-            k: v for k, v in config_dict.items() 
-            if k in cls.__dataclass_fields__
-        })
+
+        return super().from_dict(config_dict)

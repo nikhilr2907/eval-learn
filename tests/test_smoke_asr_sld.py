@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from eval_learn.registry import get_technique, get_metric, get_dataset
-from eval_learn.runners import BenchmarkRunner
+from eval_learn.runners import SingleBenchmarkRunner
 from eval_learn.types import Dataset
 # Explicitly import to trigger registration
 import eval_learn.techniques.sld.wrapper
@@ -53,7 +53,7 @@ def test_smoke_asr_sld_pipeline(tmp_path):
     # 3. Configure Runner
     output_dir = tmp_path / "results"
     
-    runner = BenchmarkRunner(
+    runner = SingleBenchmarkRunner(
         dataset_loader=mock_loader,
         technique_factory=mock_sld_factory,
         metric_factory=mock_asr_factory,

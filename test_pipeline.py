@@ -24,7 +24,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 from eval_learn.registry import get_dataset, get_technique, get_metric
-from eval_learn.runners import BenchmarkRunner
+from eval_learn.runners import SingleBenchmarkRunner
 from eval_learn.logging_utils import get_logger
 
 # Trigger registration
@@ -54,7 +54,7 @@ def run_test(metric_name, dataset_name, dataset_config, metric_config):
     logger.info(f"Testing: sld + {metric_name} on {dataset_name}")
     logger.info(f"{'='*50}")
 
-    runner = BenchmarkRunner(
+    runner = SingleBenchmarkRunner(
         dataset_loader=get_dataset(dataset_name),
         technique_factory=get_technique("safree"),
         metric_factory=get_metric(metric_name),
