@@ -2,13 +2,13 @@ import argparse
 import sys
 import os
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
 from eval_learn.registry.hf_sync import HFSync
-from eval_learn.runners import SingleBenchmarkRunner
+from eval_learn.runners import SingleBenchmarkRunner, MultiBenchmarkRunner, MatrixBenchmarkRunner
 from eval_learn.logging_utils import get_logger
 
 logger = get_logger("cli")
@@ -44,7 +44,7 @@ def load_config(path: str) -> Dict[str, Any]:
     if not os.path.exists(path):
         logger.error(f"Config file not found: {path}")
         sys.exit(1)
-        
+
     with open(path, 'r') as f:
         if path.endswith('.yaml') or path.endswith('.yml'):
             try:
@@ -56,12 +56,25 @@ def load_config(path: str) -> Dict[str, Any]:
         else:
             return json.load(f)
 
-def run_benchmark(args):
-    """Execute the benchmark run."""
-    config = load_config(args.config)
 
-    output_dir = config.get("output_dir", "results")
+def _parse_metrics_list(metrics_list: List[Dict[str, Any]]) -> tuple:
+    """Extract metric names and configs from a list of metric dicts."""
+    metric_names = []
+    metric_configs = {}
+    for m in metrics_list:
+        name = m.get("name")
+        if not name:
+            logger.error("Each entry in 'metrics' must have a 'name'")
+            sys.exit(1)
+        metric_names.append(name)
+        cfg = m.get("config", {})
+        if cfg:
+            metric_configs[name] = cfg
+    return metric_names, metric_configs
 
+
+def _build_single_runner(config: Dict[str, Any], output_dir: str) -> SingleBenchmarkRunner:
+    """Build a SingleBenchmarkRunner from config."""
     tech_conf = config.get("technique", {})
     tech_name = tech_conf.get("name")
     if not tech_name:
@@ -74,17 +87,103 @@ def run_benchmark(args):
         logger.error("Config must specify 'metric.name'")
         sys.exit(1)
 
-    logger.info("Preparing run...")
-    logger.info(f"Technique: {tech_name} | Metric: {met_name}")
+    logger.info(f"Mode: single | Technique: {tech_name} | Metric: {met_name}")
+
+    return SingleBenchmarkRunner(
+        technique_name=tech_name,
+        metric_name=met_name,
+        technique_config=tech_conf.get("config", {}),
+        metric_config=met_conf.get("config", {}),
+        output_dir=output_dir,
+    )
+
+
+def _build_multi_runner(config: Dict[str, Any], output_dir: str) -> MultiBenchmarkRunner:
+    """Build a MultiBenchmarkRunner from config."""
+    tech_conf = config.get("technique", {})
+    tech_name = tech_conf.get("name")
+    if not tech_name:
+        logger.error("Config must specify 'technique.name'")
+        sys.exit(1)
+
+    metrics_list = config.get("metrics", [])
+    if not metrics_list:
+        logger.error("Config must specify 'metrics' as a non-empty list")
+        sys.exit(1)
+
+    metric_names, metric_configs = _parse_metrics_list(metrics_list)
+
+    logger.info(f"Mode: multi | Technique: {tech_name} | Metrics: {metric_names}")
+
+    return MultiBenchmarkRunner(
+        technique_name=tech_name,
+        metric_names=metric_names,
+        technique_config=tech_conf.get("config", {}),
+        metric_configs=metric_configs,
+        output_dir=output_dir,
+    )
+
+
+def _build_matrix_runner(config: Dict[str, Any], output_dir: str) -> MatrixBenchmarkRunner:
+    """Build a MatrixBenchmarkRunner from config."""
+    techniques_list = config.get("techniques", [])
+    if not techniques_list:
+        logger.error("Config must specify 'techniques' as a non-empty list")
+        sys.exit(1)
+
+    metrics_list = config.get("metrics", [])
+    if not metrics_list:
+        logger.error("Config must specify 'metrics' as a non-empty list")
+        sys.exit(1)
+
+    technique_names = []
+    technique_configs = {}
+    for t in techniques_list:
+        name = t.get("name")
+        if not name:
+            logger.error("Each entry in 'techniques' must have a 'name'")
+            sys.exit(1)
+        technique_names.append(name)
+        cfg = t.get("config", {})
+        if cfg:
+            technique_configs[name] = cfg
+
+    metric_names, metric_configs = _parse_metrics_list(metrics_list)
+
+    logger.info(f"Mode: matrix | Techniques: {technique_names} | Metrics: {metric_names}")
+
+    return MatrixBenchmarkRunner(
+        technique_names=technique_names,
+        metric_names=metric_names,
+        technique_configs=technique_configs,
+        metric_configs=metric_configs,
+        output_dir=output_dir,
+    )
+
+
+def run_benchmark(args):
+    """Execute the benchmark run, auto-detecting mode from config structure."""
+    config = load_config(args.config)
+    output_dir = config.get("output_dir", "results")
+
+    has_techniques = "techniques" in config
+    has_technique = "technique" in config
+    has_metrics = "metrics" in config
+    has_metric = "metric" in config
 
     try:
-        runner = SingleBenchmarkRunner(
-            technique_name=tech_name,
-            metric_name=met_name,
-            technique_config=tech_conf.get("config", {}),
-            metric_config=met_conf.get("config", {}),
-            output_dir=output_dir,
-        )
+        if has_techniques and has_metrics:
+            runner = _build_matrix_runner(config, output_dir)
+        elif has_technique and has_metrics:
+            runner = _build_multi_runner(config, output_dir)
+        elif has_technique and has_metric:
+            runner = _build_single_runner(config, output_dir)
+        else:
+            logger.error(
+                "Invalid config: must specify technique+metric, "
+                "technique+metrics, or techniques+metrics"
+            )
+            sys.exit(1)
     except ValueError as e:
         logger.error(str(e))
         sys.exit(1)
@@ -101,6 +200,15 @@ def hf_push(args):
     sync = _build_hf_sync(args)
     run_dir = args.run_dir
     run_id = args.run_id
+
+    if getattr(args, "matrix", False):
+        # Matrix mode: push all sub-runs + matrix report
+        result = sync.push_matrix_run(run_dir, run_id)
+        logger.info("Matrix report pushed: %s", result["matrix_report_url"])
+        for folder, urls in result["sub_runs"].items():
+            logger.info("  %s — report: %s, images: %s",
+                        folder, urls["report_url"], urls["images_url"])
+        return
 
     if args.target == "report":
         url = sync.push_report(run_dir, run_id)
@@ -161,6 +269,8 @@ def main():
                              help="Local run directory (e.g. results/sld_asr_a1b2c3d4)")
     push_parser.add_argument("--run-id", required=True,
                              help="8-char hex run ID")
+    push_parser.add_argument("--matrix", action="store_true",
+                             help="Push a matrix run (--run-dir is the output directory containing sub-runs)")
     push_parser.add_argument("--create-pr", action="store_true",
                              help="Create a Pull Request instead of pushing directly (use if you don't have write access)")
 

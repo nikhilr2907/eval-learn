@@ -1,0 +1,32 @@
+{
+    "output_dir": "results/matrix_test",
+    "techniques": [
+        {
+            "name": "sld",
+            "config": {
+                "device": "cuda",
+                "num_inference_steps": 25
+            }
+        },
+        {
+            "name": "esd",
+            "config": {
+                "device": "cuda"
+            }
+        }
+    ],
+    "metrics": [
+        {
+            "name": "asr",
+            "config": {
+                "use_nudenet": true
+            }
+        },
+        {
+            "name": "clip_score",
+            "config": {
+                "device": "cuda"
+            }
+        }
+    ]
+}

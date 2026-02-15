@@ -68,3 +68,9 @@ coco_parquet = "eval_learn.datasets.coco_parquet:load_coco_parquet"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests that require GPU and real models (deselect with '-m \"not integration\"')",
+]

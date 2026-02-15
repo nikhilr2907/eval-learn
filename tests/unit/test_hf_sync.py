@@ -154,6 +154,73 @@ class TestPushRun:
         mock_hf_api.upload_folder.assert_called_once()
 
 
+class TestPushMatrixRun:
+    @pytest.fixture
+    def matrix_run_dir(self, tmp_path):
+        """Create a matrix-style output directory with sub-runs and matrix report."""
+        matrix_id = "m1a2b3c4"
+        output = tmp_path / "results"
+        output.mkdir()
+
+        # Sub-run A
+        sub_a_id = "aa111111"
+        sub_a = output / f"sld_multi_{sub_a_id}"
+        (sub_a / "images").mkdir(parents=True)
+        (sub_a / "images" / "0.png").write_bytes(b"fake")
+        with open(sub_a / f"{sub_a_id}_report.json", "w") as f:
+            json.dump({"run_id": sub_a_id}, f)
+
+        # Sub-run B
+        sub_b_id = "bb222222"
+        sub_b = output / f"esd_multi_{sub_b_id}"
+        (sub_b / "images").mkdir(parents=True)
+        (sub_b / "images" / "0.png").write_bytes(b"fake")
+        with open(sub_b / f"{sub_b_id}_report.json", "w") as f:
+            json.dump({"run_id": sub_b_id}, f)
+
+        # Matrix report
+        with open(output / f"matrix_{matrix_id}_report.json", "w") as f:
+            json.dump({"run_id": matrix_id, "comparison": {}}, f)
+
+        return {
+            "path": str(output),
+            "matrix_id": matrix_id,
+            "sub_a_id": sub_a_id,
+            "sub_b_id": sub_b_id,
+        }
+
+    def test_pushes_matrix_report(self, sync, mock_hf_api, matrix_run_dir):
+        result = sync.push_matrix_run(matrix_run_dir["path"], matrix_run_dir["matrix_id"])
+
+        assert "matrix_report_url" in result
+        # First upload_file call is the matrix report
+        first_call = mock_hf_api.upload_file.call_args_list[0]
+        assert first_call.kwargs["path_in_repo"] == "matrix_m1a2b3c4_report.json"
+        assert first_call.kwargs["repo_id"] == "test-org/results"
+
+    def test_pushes_all_sub_runs(self, sync, mock_hf_api, matrix_run_dir):
+        result = sync.push_matrix_run(matrix_run_dir["path"], matrix_run_dir["matrix_id"])
+
+        assert "sub_runs" in result
+        assert len(result["sub_runs"]) == 2
+        folder_names = sorted(result["sub_runs"].keys())
+        assert "esd_multi_bb222222" in folder_names
+        assert "sld_multi_aa111111" in folder_names
+
+    def test_each_sub_run_has_report_and_images_url(self, sync, mock_hf_api, matrix_run_dir):
+        result = sync.push_matrix_run(matrix_run_dir["path"], matrix_run_dir["matrix_id"])
+
+        for folder_name, urls in result["sub_runs"].items():
+            assert "report_url" in urls
+            assert "images_url" in urls
+
+    def test_raises_if_matrix_report_missing(self, sync, tmp_path):
+        empty_dir = str(tmp_path / "empty")
+        os.makedirs(empty_dir, exist_ok=True)
+        with pytest.raises(FileNotFoundError, match="Matrix report not found"):
+            sync.push_matrix_run(empty_dir, "deadbeef")
+
+
 # ------------------------------------------------------------------
 # Pull
 # ------------------------------------------------------------------
@@ -204,3 +271,25 @@ class TestPullRunImages:
             allow_patterns="sld_asr_a1b2c3d4/**",
             token="hf_fake_token",
         )
+
+
+class TestPullMatrixResults:
+    def test_calls_snapshot_with_matrix_patterns(self, sync, mock_snapshot):
+        path = sync.pull_matrix_results("m1a2b3c4", local_dir="results")
+
+        assert path == "/fake/download/path"
+        mock_snapshot.assert_called_once_with(
+            repo_id="test-org/results",
+            repo_type="dataset",
+            local_dir="results",
+            allow_patterns=[
+                "matrix_m1a2b3c4_report.json",
+                "*_multi_*/**",
+            ],
+            token="hf_fake_token",
+        )
+
+    def test_default_local_dir(self, sync, mock_snapshot):
+        sync.pull_matrix_results("m1a2b3c4")
+        call_kwargs = mock_snapshot.call_args.kwargs
+        assert call_kwargs["local_dir"] == "results"

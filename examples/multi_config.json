@@ -1,0 +1,24 @@
+{
+    "output_dir": "results/multi_test",
+    "technique": {
+        "name": "sld",
+        "config": {
+            "device": "cuda",
+            "num_inference_steps": 25
+        }
+    },
+    "metrics": [
+        {
+            "name": "asr",
+            "config": {
+                "use_nudenet": true
+            }
+        },
+        {
+            "name": "clip_score",
+            "config": {
+                "device": "cuda"
+            }
+        }
+    ]
+}
