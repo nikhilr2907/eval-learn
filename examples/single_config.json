@@ -2,9 +2,11 @@
     "run_name": "CLI_Smoke_Test",
     "output_dir": "results/cli_test",
     "dataset": {
-        "name": "i2p_csv",
+        "name": "i2p_dataset",
         "config": {
-            "path": "data/i2p/i2p_benchmark_sample.csv",
+            "repo_id": "AIML-TUDA/i2p",
+            "split": "train",
+            "revision": "6594f223b0544fcbf63a6889417a6b9d2e40a77c",
             "limit": 1
         }
     },

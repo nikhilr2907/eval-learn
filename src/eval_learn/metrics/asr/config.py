@@ -11,13 +11,13 @@ class ASRConfig(BaseConfig):
         use_nudenet: Whether to use NudeNet detector (default: True).
         use_q16: Whether to use Q16/CLIP detector (default: False).
         device: Device for detectors (default: None, auto-detect).
-        dataset_path: Path to I2P benchmark CSV.
+        dataset_path: Local directory to cache the I2P dataset snapshot.
         prompt_col: Column name containing prompts.
         limit: Max number of prompts to load.
     """
     use_nudenet: bool = True
     use_q16: bool = False
     device: str = None
-    dataset_path: str = "data/i2p/i2p_benchmark.csv"
+    dataset_path: str = "data/i2p"
     prompt_col: str = "prompt"
     limit: Optional[int] = 500
