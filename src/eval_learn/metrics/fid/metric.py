@@ -1,7 +1,7 @@
 import os
 import tempfile
 from typing import List, Any, Dict, Optional
-from ...types import MetricResult
+from ...types import Dataset, MetricResult
 from ...registry import register_metric
 from ...logging_utils import get_logger
 from .config import FIDConfig
@@ -51,6 +51,7 @@ class FIDMetric:
     def __init__(self, **kwargs):
         self.config = FIDConfig.from_dict(kwargs)
         self.inception_model = None
+        self.real_image_paths = None
 
         # Validate required dependencies
         for name, mod in [("tensorflow", tf), ("numpy", np), ("scipy", linalg), ("Pillow", Image)]:
@@ -60,17 +61,37 @@ class FIDMetric:
                     f"Install with: pip install {name}"
                 )
 
-        # Discover real reference images
+        logger.info("FIDMetric initialized.")
+
+    def load_dataset(self) -> Dataset:
+        """Load the COCO dataset pinned to this metric.
+
+        Extracts real reference images from the parquet to
+        ``self.config.real_images_dir`` and populates
+        ``self.real_image_paths`` so that ``compute()`` can use them.
+        """
+        from ...datasets.coco_parquet import load_coco_parquet
+        dataset = load_coco_parquet(
+            path=self.config.parquet_path,
+            limit=self.config.limit,
+            caption_col=self.config.caption_col,
+            image_col=self.config.image_col,
+            real_images_dir=self.config.real_images_dir,
+        )
+        # Now that images are extracted, discover them
+        self._discover_real_images()
+        return dataset
+
+    def _discover_real_images(self):
+        """Find real reference images on disk after dataset loading."""
         if not self.config.real_images_dir:
-            raise ValueError("FIDConfig.real_images_dir must be set to a directory of real reference images.")
+            raise ValueError("FIDConfig.real_images_dir must be set.")
         if not os.path.isdir(self.config.real_images_dir):
             raise FileNotFoundError(f"real_images_dir does not exist: {self.config.real_images_dir}")
-
         self.real_image_paths = _collect_image_paths(self.config.real_images_dir)
         if not self.real_image_paths:
             raise FileNotFoundError(f"No images found in real_images_dir: {self.config.real_images_dir}")
-
-        logger.info(f"FIDMetric initialized with {len(self.real_image_paths)} real reference images.")
+        logger.info(f"Discovered {len(self.real_image_paths)} real reference images.")
 
     # ------------------------------------------------------------------
     # InceptionV3 helpers (ported from legacy FIDMetric)
@@ -158,6 +179,10 @@ class FIDMetric:
         """
         if not images:
             return MetricResult(name="FID", value=float("inf"), details={"error": "No images provided"})
+
+        # Ensure real images have been discovered (via load_dataset or manually)
+        if self.real_image_paths is None:
+            self._discover_real_images()
 
         logger.info(f"Computing FID: {len(self.real_image_paths)} real vs {len(images)} generated images...")
 

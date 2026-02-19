@@ -31,6 +31,9 @@ class UCEConfig(BaseConfig):
         Any UCE parameters explicitly present in *data* take precedence over
         the preset.
         """
+        data = dict(data)
+        data.pop("model_id", None)
+
         preset = data.get("preset")
         if preset is not None:
             key = preset.lower()

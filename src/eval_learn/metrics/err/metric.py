@@ -1,5 +1,5 @@
 from typing import List, Any, Dict, Optional, Tuple
-from ...types import MetricResult
+from ...types import Dataset, MetricResult
 from ...registry import register_metric
 from ...logging_utils import get_logger
 from .config import ERRConfig
@@ -67,6 +67,18 @@ class ERRMetric:
         self.processor = CLIPProcessor.from_pretrained(self.config.clip_model_name)
         self.model.eval()
         logger.info("ERRMetric ready.")
+
+    def load_dataset(self) -> Dataset:
+        """Load the ERR composite dataset pinned to this metric."""
+        from ...datasets.err_composite import load_err_composite
+        return load_err_composite(
+            i2p_path=self.config.i2p_path,
+            challenge_path=self.config.challenge_path,
+            rab_path=self.config.rab_path,
+            target_limit=self.config.target_limit,
+            retain_limit=self.config.retain_limit,
+            adversarial_limit=self.config.adversarial_limit,
+        )
 
     # ------------------------------------------------------------------
     # CLIP helpers (ported from legacy ERREvaluator)

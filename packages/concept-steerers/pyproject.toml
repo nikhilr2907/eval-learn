@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "concept-steerers"
+version = "0.1.0"
+description = "SAE-based concept steering for Stable Diffusion (2025 research implementation)"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Concept Steerers Team"}
+]
+keywords = ["diffusion", "stable-diffusion", "concept-steering", "sparse-autoencoders", "mechanistic-interpretability"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "torch>=2.0.0",
+    "diffusers>=0.21.0",
+    "transformers>=4.30.0",
+    "Pillow>=9.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/concept-steerers"
+Repository = "https://github.com/your-org/concept-steerers"
+Documentation = "https://github.com/your-org/concept-steerers#readme"
+
+[tool.setuptools]
+packages = ["concept_steerers", "concept_steerers.sdlens", "concept_steerers.training"]
+
+[tool.setuptools.package-dir]
+"" = "src"

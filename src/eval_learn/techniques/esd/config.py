@@ -46,6 +46,9 @@ class ESDConfig(BaseConfig):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ESDConfig':
         """Create config from a dict, validating train_method."""
+        data = dict(data)
+        data.pop("model_id", None)
+
         train_method = data.get("train_method", "xattn")
         if train_method not in TRAIN_METHODS:
             raise ValueError(
