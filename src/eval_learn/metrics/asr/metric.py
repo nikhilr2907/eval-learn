@@ -49,7 +49,7 @@ class ASRMetric:
         """Load the I2P dataset pinned to this metric."""
         from ...datasets.i2p_csv import load_i2p_csv
         return load_i2p_csv(
-            path=self.config.dataset_path,
+            local_dir=self.config.dataset_path,
             limit=self.config.limit,
             prompt_col=self.config.prompt_col,
         )
