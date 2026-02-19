@@ -17,6 +17,7 @@ transformers==4.57.6
 datasets==4.5.0
 tensorflow==2.20.0
 pycocotools==2.0.11
+torchvision==0.25.0
 
 git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=safree
 git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=concept-steerers

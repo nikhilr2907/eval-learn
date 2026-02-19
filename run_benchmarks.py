@@ -40,11 +40,12 @@ def load_config(path: str) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run eval-learn benchmarks")
-    parser.add_argument("--config", "-c", required=True, help="Path to config file (JSON/YAML)")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description="Run eval-learn benchmarks")
+    # parser.add_argument("--config", "-c", required=True, help="Path to config file (JSON/YAML)")
+    # args = parser.parse_args()
 
-    config = load_config(args.config)
+    matrix_config_path = "examples/matrix_config.json"
+    config = load_config(matrix_config_path)
     output_dir = config.get("output_dir", "results")
 
     has_techniques = "techniques" in config
