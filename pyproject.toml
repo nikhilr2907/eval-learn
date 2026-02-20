@@ -36,8 +36,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Technique packages (pip install from PyPI)
+esd = ["esd"]
+concept-steerers = ["concept-steerers"]
+uce = ["uce"]
+safree = ["safree"]
+# Metric extras
 asr = ["nudenet"]
 fid = ["tensorflow", "pycocotools"]
+# Development
 dev = ["pytest", "ruff", "mypy"]
 
 [project.scripts]

@@ -4,18 +4,24 @@ from typing import List, Any, Optional
 from ...registry import register_technique
 from ...logging_utils import get_logger
 from .config import SAFREEConfig
-from safree.pipeline import SAFREEPipeline
-logger = get_logger(__name__)
+
+try:
+    from safree.pipeline import SAFREEPipeline
+except ImportError:
+    raise ImportError(
+        "SAFREETechnique requires the 'safree' package. Package not installed."
+    )
 
 try:
     import torch
     from huggingface_hub import login
 except ImportError as e:
-    logger.error("Optional dependencies for SLD missing.")
     raise RuntimeError(
-        "SLD technique requires 'diffusers', 'torch', and 'huggingface_hub'. "
-        "Install with: pip install eval-learn[diffusers]"
+        "SAFREE technique requires 'torch' and 'huggingface_hub'. "
+        "Install with: pip install eval-learn[safree]"
     ) from e
+
+logger = get_logger(__name__)
 
 
 

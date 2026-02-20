@@ -6,9 +6,7 @@ try:
     from esd import ESDPipeline
 except ImportError:
     raise ImportError(
-        "ESDWrapper requires the 'esd' package.\n"
-        "Install it via: pip install -e packages/esd\n"
-        "Or from GitHub: pip install git+https://github.com/your-org/esd.git"
+        "ESDWrapper requires the 'esd' package. Package not installed."
     )
 
 from ...registry import register_technique
