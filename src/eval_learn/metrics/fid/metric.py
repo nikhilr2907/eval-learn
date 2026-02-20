@@ -1,6 +1,15 @@
+import io
 import os
-import tempfile
 from typing import List, Any, Dict, Optional
+
+import numpy as np
+import torch
+import torch.nn as nn
+from PIL import Image
+from scipy import linalg
+from torchvision import models, transforms
+from torchvision.models import Inception_V3_Weights
+
 from ...types import Dataset, MetricResult
 from ...registry import register_metric
 from ...logging_utils import get_logger
@@ -8,169 +17,159 @@ from .config import FIDConfig
 
 logger = get_logger(__name__)
 
-# Optional imports
-try:
-    import tensorflow as tf
-except ImportError:
-    tf = None
-
-try:
-    import numpy as np
-except ImportError:
-    np = None
-
-try:
-    from scipy import linalg
-except ImportError:
-    linalg = None
-
-try:
-    from PIL import Image
-except ImportError:
-    Image = None
+# Preprocessing for InceptionV3: resize to 299x299 and normalize to [-1, 1]
+_inception_transform = transforms.Compose([
+    transforms.Resize((299, 299)),
+    transforms.ToTensor(),            # [0, 1]
+    transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),  # [-1, 1]
+])
 
 
-def _collect_image_paths(directory: str) -> List[str]:
-    """Return sorted list of image file paths from a directory."""
-    supported = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}
-    paths = []
-    for fname in sorted(os.listdir(directory)):
-        if os.path.splitext(fname)[1].lower() in supported:
-            paths.append(os.path.join(directory, fname))
-    return paths
+def _load_inception(device: str) -> nn.Module:
+    """Load InceptionV3 with the final pooling layer as output."""
+    model = models.inception_v3(weights=Inception_V3_Weights.IMAGENET1K_V1)
+    # Remove the final FC layer — we want the 2048-dim pool features
+    model.fc = nn.Identity()
+    model.eval()
+    return model.to(device)
+
+
+def _pil_to_inception_tensor(img: Image.Image) -> torch.Tensor:
+    """Convert a PIL Image to a preprocessed tensor for InceptionV3."""
+    return _inception_transform(img.convert("RGB"))
+
+
+@torch.no_grad()
+def _get_activations(images: List[Image.Image], model: nn.Module, device: str, batch_size: int) -> np.ndarray:
+    """Extract InceptionV3 pool features from a list of PIL images."""
+    activations = []
+    for i in range(0, len(images), batch_size):
+        batch_pils = images[i : i + batch_size]
+        batch = torch.stack([_pil_to_inception_tensor(img) for img in batch_pils]).to(device)
+        features = model(batch)
+        activations.append(features.cpu().numpy())
+    return np.concatenate(activations, axis=0)
+
+
+def _calculate_fid(mu1, sigma1, mu2, sigma2, eps=1e-6) -> float:
+    """Calculate Frechet Inception Distance between two Gaussian distributions."""
+    mu1, mu2 = np.atleast_1d(mu1), np.atleast_1d(mu2)
+    sigma1, sigma2 = np.atleast_2d(sigma1), np.atleast_2d(sigma2)
+
+    diff = mu1 - mu2
+    covmean, _ = linalg.sqrtm(sigma1.dot(sigma2), disp=False)
+
+    if not np.isfinite(covmean).all():
+        offset = np.eye(sigma1.shape[0]) * eps
+        covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
+
+    if np.iscomplexobj(covmean):
+        if not np.isclose(np.diagonal(covmean).imag, 0, atol=1e-3).all():
+            return float("inf")
+        covmean = covmean.real
+
+    tr_covmean = np.trace(covmean)
+    return float(diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2 * tr_covmean)
 
 
 @register_metric("fid")
 class FIDMetric:
     """
     Frechet Inception Distance (FID) Metric.
-    Measures the quality and diversity of generated images compared to real images.
-    Lower FID scores indicate better image quality.
+
+    Uses PyTorch InceptionV3 for feature extraction — no TensorFlow required.
+    Real images are loaded directly from the parquet into memory
+    without writing to disk.
     """
 
     def __init__(self, **kwargs):
         self.config = FIDConfig.from_dict(kwargs)
+
+        device = self.config.device
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
+
         self.inception_model = None
-        self.real_image_paths = None
+        self._real_activations = None
+        self._real_count = 0
 
-        # Validate required dependencies
-        for name, mod in [("tensorflow", tf), ("numpy", np), ("scipy", linalg), ("Pillow", Image)]:
-            if mod is None:
-                raise RuntimeError(
-                    f"FID metric requires '{name}'. "
-                    f"Install with: pip install {name}"
-                )
+        logger.info(f"FIDMetric initialized (device={self.device}).")
 
-        logger.info("FIDMetric initialized.")
-
-    def load_dataset(self) -> Dataset:
-        """Load the COCO dataset pinned to this metric.
-
-        Extracts real reference images from the parquet to
-        ``self.config.real_images_dir`` and populates
-        ``self.real_image_paths`` so that ``compute()`` can use them.
-        """
-        from ...datasets.coco_parquet import load_coco_parquet
-        dataset = load_coco_parquet(
-            path=self.config.parquet_path,
-            limit=self.config.limit,
-            caption_col=self.config.caption_col,
-            image_col=self.config.image_col,
-            real_images_dir=self.config.real_images_dir,
-        )
-        # Now that images are extracted, discover them
-        self._discover_real_images()
-        return dataset
-
-    def _discover_real_images(self):
-        """Find real reference images on disk after dataset loading."""
-        if not self.config.real_images_dir:
-            raise ValueError("FIDConfig.real_images_dir must be set.")
-        if not os.path.isdir(self.config.real_images_dir):
-            raise FileNotFoundError(f"real_images_dir does not exist: {self.config.real_images_dir}")
-        self.real_image_paths = _collect_image_paths(self.config.real_images_dir)
-        if not self.real_image_paths:
-            raise FileNotFoundError(f"No images found in real_images_dir: {self.config.real_images_dir}")
-        logger.info(f"Discovered {len(self.real_image_paths)} real reference images.")
-
-    # ------------------------------------------------------------------
-    # InceptionV3 helpers (ported from legacy FIDMetric)
-    # ------------------------------------------------------------------
-
-    def _load_inception(self):
-        """Load InceptionV3 model for feature extraction."""
+    def _get_model(self) -> nn.Module:
+        """Lazy-load InceptionV3."""
         if self.inception_model is None:
-            if not tf.config.list_physical_devices("GPU"):
-                logger.warning("No GPU found for TensorFlow. FID calculation will be slow.")
-            self.inception_model = tf.keras.applications.InceptionV3(
-                include_top=False, weights="imagenet", pooling="avg", input_shape=(299, 299, 3),
-            )
+            logger.info("Loading InceptionV3...")
+            self.inception_model = _load_inception(self.device)
         return self.inception_model
 
-    def _preprocess_image(self, path_or_pil):
-        """Load and preprocess an image for InceptionV3."""
-        if isinstance(path_or_pil, str):
-            image = Image.open(path_or_pil).convert("RGB").resize((299, 299), Image.Resampling.BICUBIC)
-        elif isinstance(path_or_pil, Image.Image):
-            image = path_or_pil.convert("RGB").resize((299, 299), Image.Resampling.BICUBIC)
-        else:
-            raise ValueError(f"Unsupported image type: {type(path_or_pil)}")
+    def load_dataset(self) -> Dataset:
+        """Load the COCO dataset and extract real image features in memory.
 
-        image = np.array(image)
-        image = tf.keras.applications.inception_v3.preprocess_input(image)
-        return image
+        Reads image bytes directly from the parquet file — no images
+        are written to disk.  Features are extracted via InceptionV3 and
+        stored as a numpy array for later FID computation.
+        """
+        import pandas as pd
 
-    def _get_activations(self, image_sources, model):
-        """Extract InceptionV3 features from a list of image paths / PIL images."""
-        n = len(image_sources)
-        if n == 0:
-            return np.array([])
+        path = self.config.parquet_path
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"COCO parquet not found at: {path}")
 
-        activation_batches = []
-        for i in range(0, n, self.config.batch_size):
-            batch = image_sources[i : i + self.config.batch_size]
-            batch_images = np.stack([self._preprocess_image(p) for p in batch], axis=0)
-            activations = model(batch_images, training=False).numpy()
-            activation_batches.append(activations)
+        logger.info(f"Loading COCO parquet from {path}...")
+        df = pd.read_parquet(path)
 
-        return np.concatenate(activation_batches, axis=0)
+        if self.config.caption_col not in df.columns:
+            raise ValueError(f"Column '{self.config.caption_col}' not found. Columns: {df.columns.tolist()}")
+        if self.config.image_col not in df.columns:
+            raise ValueError(f"Column '{self.config.image_col}' not found. Columns: {df.columns.tolist()}")
 
-    # ------------------------------------------------------------------
-    # FID math (ported from legacy FIDMetric)
-    # ------------------------------------------------------------------
+        if self.config.limit:
+            df = df.head(self.config.limit)
 
-    @staticmethod
-    def _calculate_fid_score(mu1, sigma1, mu2, sigma2, eps=1e-6):
-        """Calculate Frechet Inception Distance between two Gaussian distributions."""
-        mu1, mu2 = np.atleast_1d(mu1), np.atleast_1d(mu2)
-        sigma1, sigma2 = np.atleast_2d(sigma1), np.atleast_2d(sigma2)
+        captions = df[self.config.caption_col].tolist()
 
-        diff = mu1 - mu2
-        covmean, _ = linalg.sqrtm(sigma1.dot(sigma2), disp=False)
+        # Load real images from parquet bytes and extract features in batches
+        model = self._get_model()
+        logger.info(f"Extracting features from {len(df)} real images...")
 
-        if not np.isfinite(covmean).all():
-            offset = np.eye(sigma1.shape[0]) * eps
-            covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
+        all_activations = []
+        batch_pils: List[Image.Image] = []
 
-        if np.iscomplexobj(covmean):
-            if not np.isclose(np.diagonal(covmean).imag, 0, atol=1e-3).all():
-                return float("inf")
-            covmean = covmean.real
+        for _, row in df.iterrows():
+            img_data = row[self.config.image_col]
+            img_bytes = img_data["bytes"] if isinstance(img_data, dict) else img_data
+            img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+            batch_pils.append(img)
 
-        tr_covmean = np.trace(covmean)
-        fid = diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2 * tr_covmean
-        return float(fid)
+            if len(batch_pils) >= self.config.batch_size:
+                acts = _get_activations(batch_pils, model, self.device, self.config.batch_size)
+                all_activations.append(acts)
+                batch_pils = []
 
-    # ------------------------------------------------------------------
-    # Public interface
-    # ------------------------------------------------------------------
+        if batch_pils:
+            acts = _get_activations(batch_pils, model, self.device, self.config.batch_size)
+            all_activations.append(acts)
+
+        self._real_activations = np.concatenate(all_activations, axis=0)
+        self._real_count = len(df)
+        logger.info(f"Extracted features for {self._real_count} real images.")
+
+        return Dataset(
+            prompts=captions,
+            metadata={
+                "source": "coco_parquet",
+                "path": path,
+                "total_loaded": len(captions),
+            },
+        )
 
     def compute(self, images: List[Any], prompts: List[str], metadata: Optional[Dict[str, Any]] = None) -> MetricResult:
         """
         Compute FID score between generated images and the real reference images.
 
         Args:
-            images: List of generated images (file paths or PIL Images).
+            images: List of generated PIL Images (or file paths).
             prompts: List of prompts (unused by FID but required by metric interface).
             metadata: Optional metadata dict.
 
@@ -180,26 +179,31 @@ class FIDMetric:
         if not images:
             return MetricResult(name="FID", value=float("inf"), details={"error": "No images provided"})
 
-        # Ensure real images have been discovered (via load_dataset or manually)
-        if self.real_image_paths is None:
-            self._discover_real_images()
+        if self._real_activations is None:
+            raise RuntimeError("Real images not loaded. Call load_dataset() before compute().")
 
-        logger.info(f"Computing FID: {len(self.real_image_paths)} real vs {len(images)} generated images...")
+        if len(images) < 2:
+            return MetricResult(name="FID", value=float("inf"), details={"error": "At least 2 generated images are required to compute FID."})
+
+        logger.info(f"Computing FID: {self._real_count} real vs {len(images)} generated images...")
 
         try:
-            model = self._load_inception()
+            # Convert file paths to PIL if needed
+            pil_images = []
+            for img in images:
+                if isinstance(img, str):
+                    img = Image.open(img)
+                pil_images.append(img)
 
-            # Extract features for real images
-            real_activations = self._get_activations(self.real_image_paths, model)
-            # Extract features for generated images
-            gen_activations = self._get_activations(images, model)
+            model = self._get_model()
+            gen_activations = _get_activations(pil_images, model, self.device, self.config.batch_size)
 
-            mu_real = np.mean(real_activations, axis=0)
-            sigma_real = np.cov(real_activations, rowvar=False)
+            mu_real = np.mean(self._real_activations, axis=0)
+            sigma_real = np.cov(self._real_activations, rowvar=False)
             mu_gen = np.mean(gen_activations, axis=0)
             sigma_gen = np.cov(gen_activations, rowvar=False)
 
-            fid_score = self._calculate_fid_score(mu_real, sigma_real, mu_gen, sigma_gen)
+            fid_score = _calculate_fid(mu_real, sigma_real, mu_gen, sigma_gen)
             logger.info(f"FID Score: {fid_score:.4f}")
 
             return MetricResult(
@@ -207,7 +211,7 @@ class FIDMetric:
                 value=fid_score,
                 details={
                     "total_generated": len(images),
-                    "total_real": len(self.real_image_paths),
+                    "total_real": self._real_count,
                     "config": self.config.to_dict(),
                 },
             )

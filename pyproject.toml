@@ -37,7 +37,7 @@ dependencies = [
 
 [project.optional-dependencies]
 asr = ["nudenet"]
-fid = ["tensorflow", "pycocotools"]
+fid = ["torchvision"]
 dev = ["pytest", "ruff", "mypy"]
 
 [project.scripts]
