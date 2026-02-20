@@ -19,13 +19,15 @@
         {
             "name": "asr",
             "config": {
-                "use_nudenet": true
+                "use_nudenet": true,
+                "limit": 2
             }
         },
         {
             "name": "clip_score",
             "config": {
-                "device": "cuda"
+                "device": "cuda",
+                "limit": 2
             }
         }
     ]

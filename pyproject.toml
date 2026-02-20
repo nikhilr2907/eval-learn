@@ -43,8 +43,7 @@ uce = ["uce"]
 safree = ["safree"]
 # Metric extras
 asr = ["nudenet"]
-fid = ["tensorflow", "pycocotools"]
-# Development
+fid = ["torchvision"]
 dev = ["pytest", "ruff", "mypy"]
 
 [project.scripts]
