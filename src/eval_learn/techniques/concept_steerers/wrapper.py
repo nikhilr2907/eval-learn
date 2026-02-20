@@ -6,9 +6,7 @@ try:
     from concept_steerers import ConceptSteeringPipeline
 except ImportError:
     raise ImportError(
-        "ConceptSteerersWrapper requires 'concept-steerers' package.\n"
-        "Install it via: pip install -e packages/concept-steerers\n"
-        "Or from GitHub: pip install git+https://github.com/your-org/concept-steerers.git"
+        "ConceptSteerersWrapper requires the 'concept-steerers' package. Package not installed."
     )
 
 from ...registry import register_technique

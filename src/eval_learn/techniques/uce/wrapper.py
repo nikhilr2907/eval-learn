@@ -6,9 +6,7 @@ try:
     from uce import UCEPipeline
 except ImportError:
     raise ImportError(
-        "UCEWrapper requires 'uce' package.\n"
-        "Install it via: pip install -e packages/uce\n"
-        "Or from GitHub: pip install git+https://github.com/your-org/uce.git"
+        "UCEWrapper requires the 'uce' package. Package not installed."
     )
 
 from ...registry import register_technique

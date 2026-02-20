@@ -36,6 +36,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Technique packages (pip install from PyPI)
+esd = ["esd"]
+concept-steerers = ["concept-steerers"]
+uce = ["uce"]
+safree = ["safree"]
+# Metric extras
 asr = ["nudenet"]
 fid = ["torchvision"]
 dev = ["pytest", "ruff", "mypy"]

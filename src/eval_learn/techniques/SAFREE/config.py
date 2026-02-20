@@ -1,8 +1,6 @@
-from ...configs.base import BaseConfig
-from dataclasses import dataclass
-
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple, Optional
+from ...configs.base import BaseConfig
 
 @dataclass
 class SAFREEConfig(BaseConfig):
@@ -34,6 +32,4 @@ class SAFREEConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'SAFREEConfig':
-        data = dict(data)
-        data.pop("model_id", None)
         return super().from_dict(data)
