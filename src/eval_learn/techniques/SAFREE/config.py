@@ -1,6 +1,9 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, Tuple
 from ...configs.base import BaseConfig
+
+_VALID_CATEGORIES = {"nudity"}
+
 
 @dataclass
 class SAFREEConfig(BaseConfig):
@@ -24,7 +27,6 @@ class SAFREEConfig(BaseConfig):
     freeu_s2: float = 0.2
 
     # Concept specification
-    unsafe_concepts: Optional[List[str]] = None
     concept_category: str = "nudity"
 
     # Alternative to SVF (if SVF disabled)
@@ -32,4 +34,10 @@ class SAFREEConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'SAFREEConfig':
+        category = data.get("concept_category", "nudity")
+        if category.lower() not in _VALID_CATEGORIES:
+            raise ValueError(
+                f"Unknown concept_category '{category}'. "
+                f"Available: {sorted(_VALID_CATEGORIES)}"
+            )
         return super().from_dict(data)
