@@ -46,12 +46,19 @@ class ASRMetric:
             logger.warning("Q16 detector not yet implemented in refactored ASRMetric.")
 
     def load_dataset(self) -> Dataset:
-        """Load the I2P dataset pinned to this metric."""
+        """Stream I2P prompts from HuggingFace and collect into a Dataset."""
         from ...datasets.i2p_csv import load_i2p_csv
-        return load_i2p_csv(
-            local_dir=self.config.dataset_path,
-            limit=self.config.limit,
-            prompt_col=self.config.prompt_col,
+
+        loader = load_i2p_csv(limit=self.config.limit)
+
+        all_prompts = []
+        for dataset_batch in loader:
+            all_prompts.extend(dataset_batch.prompts)
+
+        logger.info("Loaded %d prompts from I2P.", len(all_prompts))
+        return Dataset(
+            prompts=all_prompts,
+            metadata={"source": "i2p_hf", "total_loaded": len(all_prompts)},
         )
 
     def _is_unsafe_nudenet(self, image_path: str) -> bool:

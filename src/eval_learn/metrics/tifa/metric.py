@@ -60,12 +60,24 @@ class TIFAMetric:
         self._model = None
 
     def load_dataset(self) -> Dataset:
-        """Load the TIFA dataset pinned to this metric."""
+        """Stream TIFA prompts and QA pairs from HuggingFace and collect into a Dataset."""
         from ...datasets.tifa_json import load_tifa_json
-        return load_tifa_json(
-            text_path=self.config.text_path,
-            qa_path=self.config.qa_path,
-            limit=self.config.limit,
+
+        loader = load_tifa_json(limit=self.config.limit)
+
+        all_prompts, all_qa_pairs = [], []
+        for dataset_batch in loader:
+            all_prompts.extend(dataset_batch.prompts)
+            all_qa_pairs.extend(dataset_batch.metadata["qa_pairs"])
+
+        logger.info("Loaded %d prompts from TIFA.", len(all_prompts))
+        return Dataset(
+            prompts=all_prompts,
+            metadata={
+                "source": "tifa_hf",
+                "total_loaded": len(all_prompts),
+                "qa_pairs": all_qa_pairs,
+            },
         )
 
     # ------------------------------------------------------------------

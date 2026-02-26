@@ -103,47 +103,42 @@ class FIDMetric:
         return self.inception_model
 
     def load_dataset(self) -> Dataset:
-        """Load the COCO dataset and extract real image features in memory.
+        """Stream COCO images from HuggingFace and extract real image features batch by batch.
 
-        Delegates parquet loading to ``load_coco_parquet``, then runs
-        InceptionV3 feature extraction on the returned PIL images.
+        Iterates the DataLoader returned by ``load_coco_parquet``. Each batch
+        yields pre-transformed tensors (inception-ready), passed directly to
+        InceptionV3. No PIL images are held in memory beyond the current batch.
         Features are stored in ``self._real_activations`` for FID computation.
         """
         from ...datasets.coco_parquet import load_coco_parquet
 
-        dataset = load_coco_parquet(
-            path=self.config.parquet_path,
+        loader = load_coco_parquet(
             limit=self.config.limit,
-            caption_col=self.config.caption_col,
-            image_col=self.config.image_col,
+            batch_size=self.config.batch_size,
         )
 
-        real_images: List[Image.Image] = dataset.metadata["images"]
-
         model = self._get_model()
-        logger.info(f"Extracting features from {len(real_images)} real images...")
+        logger.info("Extracting InceptionV3 features from real images via HF stream...")
 
         all_activations = []
-        batch_pils: List[Image.Image] = []
+        all_captions = []
 
-        for img in real_images:
-            batch_pils.append(img)
-            if len(batch_pils) >= self.config.batch_size:
-                acts = _get_activations(batch_pils, model, self.device, self.config.batch_size)
-                all_activations.append(acts)
-                batch_pils = []
-
-        if batch_pils:
-            acts = _get_activations(batch_pils, model, self.device, self.config.batch_size)
-            all_activations.append(acts)
+        for dataset_batch in loader:
+            # Tensors already inception-transformed by the DataLoader collate_fn
+            image_batch = dataset_batch.metadata["images"].to(self.device)
+            with torch.no_grad():
+                features = model(image_batch)
+            all_activations.append(features.cpu().numpy())
+            all_captions.extend(dataset_batch.prompts)
 
         self._real_activations = np.concatenate(all_activations, axis=0)
-        self._real_count = len(real_images)
-        logger.info(f"Extracted features for {self._real_count} real images.")
+        self._real_count = len(self._real_activations)
+        logger.info("Extracted features for %d real images.", self._real_count)
 
-        # Drop images from metadata before returning — they're large and no longer needed
-        dataset.metadata.pop("images")
-        return dataset
+        return Dataset(
+            prompts=all_captions,
+            metadata={"source": "coco_hf", "total_loaded": self._real_count},
+        )
 
     def compute(self, images: List[Any], prompts: List[str], metadata: Optional[Dict[str, Any]] = None) -> MetricResult:
         """

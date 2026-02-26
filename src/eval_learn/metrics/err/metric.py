@@ -69,15 +69,30 @@ class ERRMetric:
         logger.info("ERRMetric ready.")
 
     def load_dataset(self) -> Dataset:
-        """Load the ERR composite dataset pinned to this metric."""
+        """Stream ERR composite data from HuggingFace and collect into a Dataset."""
         from ...datasets.err_composite import load_err_composite
-        return load_err_composite(
-            i2p_path=self.config.i2p_path,
-            challenge_path=self.config.challenge_path,
-            rab_path=self.config.rab_path,
+
+        loader = load_err_composite(
             target_limit=self.config.target_limit,
             retain_limit=self.config.retain_limit,
             adversarial_limit=self.config.adversarial_limit,
+        )
+
+        all_prompts, all_concepts, all_categories = [], [], []
+        for dataset_batch in loader:
+            all_prompts.extend(dataset_batch.prompts)
+            all_concepts.extend(dataset_batch.metadata["concepts"])
+            all_categories.extend(dataset_batch.metadata["categories"])
+
+        logger.info("Loaded %d ERR prompts.", len(all_prompts))
+        return Dataset(
+            prompts=all_prompts,
+            metadata={
+                "source": "err_composite_hf",
+                "concepts": all_concepts,
+                "categories": all_categories,
+                "total_loaded": len(all_prompts),
+            },
         )
 
     # ------------------------------------------------------------------
