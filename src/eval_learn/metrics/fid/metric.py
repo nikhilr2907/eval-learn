@@ -1,4 +1,3 @@
-import io
 import os
 from typing import List, Any, Dict, Optional
 
@@ -106,42 +105,29 @@ class FIDMetric:
     def load_dataset(self) -> Dataset:
         """Load the COCO dataset and extract real image features in memory.
 
-        Reads image bytes directly from the parquet file — no images
-        are written to disk.  Features are extracted via InceptionV3 and
-        stored as a numpy array for later FID computation.
+        Delegates parquet loading to ``load_coco_parquet``, then runs
+        InceptionV3 feature extraction on the returned PIL images.
+        Features are stored in ``self._real_activations`` for FID computation.
         """
-        import pandas as pd
+        from ...datasets.coco_parquet import load_coco_parquet
 
-        path = self.config.parquet_path
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"COCO parquet not found at: {path}")
+        dataset = load_coco_parquet(
+            path=self.config.parquet_path,
+            limit=self.config.limit,
+            caption_col=self.config.caption_col,
+            image_col=self.config.image_col,
+        )
 
-        logger.info(f"Loading COCO parquet from {path}...")
-        df = pd.read_parquet(path)
+        real_images: List[Image.Image] = dataset.metadata["images"]
 
-        if self.config.caption_col not in df.columns:
-            raise ValueError(f"Column '{self.config.caption_col}' not found. Columns: {df.columns.tolist()}")
-        if self.config.image_col not in df.columns:
-            raise ValueError(f"Column '{self.config.image_col}' not found. Columns: {df.columns.tolist()}")
-
-        if self.config.limit:
-            df = df.head(self.config.limit)
-
-        captions = df[self.config.caption_col].tolist()
-
-        # Load real images from parquet bytes and extract features in batches
         model = self._get_model()
-        logger.info(f"Extracting features from {len(df)} real images...")
+        logger.info(f"Extracting features from {len(real_images)} real images...")
 
         all_activations = []
         batch_pils: List[Image.Image] = []
 
-        for _, row in df.iterrows():
-            img_data = row[self.config.image_col]
-            img_bytes = img_data["bytes"] if isinstance(img_data, dict) else img_data
-            img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        for img in real_images:
             batch_pils.append(img)
-
             if len(batch_pils) >= self.config.batch_size:
                 acts = _get_activations(batch_pils, model, self.device, self.config.batch_size)
                 all_activations.append(acts)
@@ -152,17 +138,12 @@ class FIDMetric:
             all_activations.append(acts)
 
         self._real_activations = np.concatenate(all_activations, axis=0)
-        self._real_count = len(df)
+        self._real_count = len(real_images)
         logger.info(f"Extracted features for {self._real_count} real images.")
 
-        return Dataset(
-            prompts=captions,
-            metadata={
-                "source": "coco_parquet",
-                "path": path,
-                "total_loaded": len(captions),
-            },
-        )
+        # Drop images from metadata before returning — they're large and no longer needed
+        dataset.metadata.pop("images")
+        return dataset
 
     def compute(self, images: List[Any], prompts: List[str], metadata: Optional[Dict[str, Any]] = None) -> MetricResult:
         """

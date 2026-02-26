@@ -14,7 +14,6 @@ def load_coco_parquet(
     limit: Optional[int] = None,
     caption_col: str = "caption",
     image_col: str = "image",
-    real_images_dir: Optional[str] = None,
 ) -> Dataset:
     """
     Load captions and reference images from a COCO parquet file.
@@ -23,16 +22,14 @@ def load_coco_parquet(
     with a ``bytes`` key (raw JPEG/PNG bytes) and a ``caption`` column
     with the text prompt.
 
-    Reference images are extracted to *real_images_dir* (defaults to
-    ``data/coco/real_images/``) so that the FID metric can read them.
+    PIL images are returned in ``metadata["images"]`` for downstream use
+    (e.g. feature extraction by FIDMetric).
 
     Args:
         path: Path to the parquet file.
         limit: Max number of rows to load.
         caption_col: Column name containing captions.
         image_col: Column name containing image dicts.
-        real_images_dir: Directory to extract reference images into.
-            If ``None``, defaults to ``data/coco/real_images/``.
     """
     import pandas as pd
     from PIL import Image
@@ -53,26 +50,13 @@ def load_coco_parquet(
 
     captions = df[caption_col].tolist()
 
-    # --- extract reference images to disk ---
-    if real_images_dir is None:
-        real_images_dir = os.path.join(os.path.dirname(path), "real_images")
-
-    os.makedirs(real_images_dir, exist_ok=True)
-
-    # Only extract if the directory is empty or has fewer images than we need
-    existing = [f for f in os.listdir(real_images_dir) if f.endswith((".jpg", ".png"))]
-    if len(existing) >= len(df):
-        logger.info(f"Real images already extracted ({len(existing)} files in {real_images_dir}), skipping.")
-    else:
-        logger.info(f"Extracting {len(df)} reference images to {real_images_dir}...")
-        for idx, row in df.iterrows():
-            img_data = row[image_col]
-            img_bytes = img_data["bytes"] if isinstance(img_data, dict) else img_data
-            img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-            img.save(os.path.join(real_images_dir, f"{idx:05d}.jpg"), "JPEG")
-        logger.info("Extraction complete.")
-
-    logger.info(f"Loaded {len(captions)} captions.")
+    logger.info(f"Decoding {len(df)} reference images...")
+    images = []
+    for _, row in df.iterrows():
+        img_data = row[image_col]
+        img_bytes = img_data["bytes"] if isinstance(img_data, dict) else img_data
+        images.append(Image.open(io.BytesIO(img_bytes)).convert("RGB"))
+    logger.info(f"Loaded {len(captions)} captions and {len(images)} images.")
 
     return Dataset(
         prompts=captions,
@@ -80,6 +64,6 @@ def load_coco_parquet(
             "source": "coco_parquet",
             "path": path,
             "total_loaded": len(captions),
-            "real_images_dir": real_images_dir,
+            "images": images,
         },
     )
