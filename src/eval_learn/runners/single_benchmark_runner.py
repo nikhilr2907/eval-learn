@@ -1,9 +1,9 @@
 import hashlib
 import json
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
-from ..types import Dataset, MetricResult
+from ..types import MetricResult
 from ..logging_utils import get_logger
 from ..registry import get_technique, get_metric
 from ..registry.entrypoints import load_entrypoints
@@ -36,9 +36,14 @@ class SingleBenchmarkRunner(BaseRunner):
     """
     Single technique x single metric benchmark runner.
 
-    Resolves technique and metric from the registry by name,
-    validates the configuration, then orchestrates image generation
-    and metric evaluation.
+    Metrics must implement the DataLoader interface:
+      - load_dataset() -> DataLoader  (batches of Dataset with prompts + metadata)
+      - update(images, prompts, metadata)  (called once per batch)
+      - compute() -> MetricResult  (called once to finalise the score)
+
+    The runner iterates the DataLoader, calls technique.generate() per batch,
+    feeds results to metric.update(), then finalises with metric.compute().
+    Images are accumulated across batches for artifact saving.
     """
 
     def __init__(
@@ -56,7 +61,6 @@ class SingleBenchmarkRunner(BaseRunner):
         self.technique_name = technique_name
         self.metric_name = metric_name
 
-        # Ensure registry is populated, then validate
         load_entrypoints()
         self._validate()
 
@@ -74,13 +78,42 @@ class SingleBenchmarkRunner(BaseRunner):
         self._log_phase("Initializing metric")
         metric = self.metric_factory(**self.metric_config)
 
-        # 2. Load Dataset (owned by the metric)
+        # 2. Load Dataset
         self._log_phase("Loading dataset")
-        dataset: Dataset = metric.load_dataset()
-        dataset_name = dataset.metadata.get("source", "unknown")
-        logger.info(f"Loaded {len(dataset.prompts)} prompts from '{dataset_name}'.")
+        loader = metric.load_dataset()
 
-        # Generate run_id now that we have dataset_name
+        # 3. Initialize Technique
+        self._log_phase("Initializing technique")
+        technique = self.technique_factory(**self.technique_config)
+
+        # 4+5. Generate and evaluate batch by batch
+        self._log_phase("Generating images and computing metrics")
+        all_images: List[Any] = []
+        dataset_name = "unknown"
+        total_generated = 0
+        accumulated_metadata: Dict[str, Any] = {}
+
+        for batch in loader:
+            dataset_name = batch.metadata.get("source", dataset_name)
+
+            batch_images = technique.generate(prompts=batch.prompts)
+            metric.update(batch_images, batch.prompts, batch.metadata)
+
+            all_images.extend(batch_images)
+            total_generated += len(batch_images)
+
+            for key, val in batch.metadata.items():
+                if isinstance(val, list):
+                    accumulated_metadata.setdefault(key, []).extend(val)
+                else:
+                    accumulated_metadata[key] = val
+
+        logger.info(f"Generated and evaluated {total_generated} images from '{dataset_name}'.")
+
+        # 6. Finalise metric
+        result: MetricResult = metric.compute()
+        logger.info(f"Metric Result ({result.name}): {result.value}")
+
         run_id = generate_run_id(
             technique_name=self.technique_name,
             technique_config=self.technique_config,
@@ -91,30 +124,14 @@ class SingleBenchmarkRunner(BaseRunner):
         )
         logger.info(f"Run ID: {run_id}")
 
-        # 3. Initialize Technique
-        self._log_phase("Initializing technique")
-        technique = self.technique_factory(**self.technique_config)
-
-        # 4. Generate Images
-        self._log_phase("Generating images")
-        images = technique.generate(prompts=dataset.prompts)
-        logger.info(f"Generated {len(images)} images.")
-
-        # 5. Compute Metrics
-        self._log_phase("Computing metrics")
-        result: MetricResult = metric.compute(
-            images=images, prompts=dataset.prompts, metadata=dataset.metadata
-        )
-        logger.info(f"Metric Result ({result.name}): {result.value}")
-
-        # 6. Prepare Report
+        # 7. Prepare Report
         report = self._build_base_report(
             run_id=run_id,
             timestamp=timestamp,
             technique_name=self.technique_name,
             metric_name=self.metric_name,
             dataset_name=dataset_name,
-            dataset_metadata=dataset.metadata,
+            dataset_metadata={**accumulated_metadata, "total_loaded": total_generated},
             technique_config=self.technique_config,
             metric_config=self.metric_config,
             metric_result={
@@ -124,14 +141,14 @@ class SingleBenchmarkRunner(BaseRunner):
             },
         )
 
-        # 7. Save Artifacts
+        # 8. Save Artifacts
         self.writer.save_run(
             run_id=run_id,
             technique_name=self.technique_name,
             metric_name=self.metric_name,
-            images=images,
+            images=all_images,
             report=report,
-            metadata=dataset.metadata,
+            metadata=accumulated_metadata,
         )
 
         logger.info("Benchmark run completed.")

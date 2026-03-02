@@ -1,12 +1,12 @@
 from typing import List, Any, Dict, Optional
-from ...types import Dataset, MetricResult
+from torch.utils.data import DataLoader
+from ...types import MetricResult
 from ...registry import register_metric
 from ...logging_utils import get_logger
 from .config import CLIPScoreConfig
 
 logger = get_logger(__name__)
 
-# Optional imports
 try:
     import torch
 except ImportError:
@@ -27,24 +27,22 @@ try:
 except ImportError:
     Image = None
 
-# TODO: Add batch processing for efficiency
+
 @register_metric("clip_score")
 class CLIPScoreMetric:
     """
     CLIP Score Metric.
 
-    Measures text-to-image alignment by computing the cosine similarity
-    between CLIP embeddings of each generated image and its prompt.
-    Higher scores indicate better prompt-image faithfulness.
+    Measures text-to-image alignment via cosine similarity between CLIP
+    embeddings of each generated image and its prompt.
 
-    Uses ``torchmetrics.multimodal.CLIPScore`` under the hood
-    (ported from the legacy ``ClipScore`` / ``CLIP_score_calculation`` code).
+    update() runs the CLIP forward pass immediately and accumulates a running
+    score total + count. compute() returns the average — no images are retained.
     """
 
     def __init__(self, **kwargs):
         self.config = CLIPScoreConfig.from_dict(kwargs)
 
-        # Validate required dependencies
         for name, mod in [("torch", torch), ("torchmetrics", CLIPScore),
                           ("torchvision", transforms), ("Pillow", Image)]:
             if mod is None:
@@ -56,122 +54,90 @@ class CLIPScoreMetric:
         device_str = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.device = device_str
 
-        logger.info("Loading CLIPScore model '%s' on %s...",
-                     self.config.clip_model_name, self.device)
-        self._clip_score_fn = CLIPScore(
-            model_name_or_path=self.config.clip_model_name
-        ).to(self.device)
+        logger.info("Loading CLIPScore model '%s' on %s...", self.config.clip_model_name, self.device)
+        self._clip_score_fn = CLIPScore(model_name_or_path=self.config.clip_model_name).to(self.device)
+
+        self._total_score = 0.0
+        self._evaluated = 0
+        self._total_images = 0
+        self._per_image_scores: List[Optional[float]] = []
         logger.info("CLIPScoreMetric ready.")
 
-    def load_dataset(self) -> Dataset:
-        """Stream TIFA prompts from HuggingFace and collect into a Dataset."""
+    def load_dataset(self) -> DataLoader:
+        """Return a DataLoader over the TIFA dataset."""
         from ...datasets.tifa_json import load_tifa_json
 
-        loader = load_tifa_json(limit=self.config.limit)
+        self._total_score = 0.0
+        self._evaluated = 0
+        self._total_images = 0
+        self._per_image_scores = []
 
-        all_prompts = []
-        for dataset_batch in loader:
-            all_prompts.extend(dataset_batch.prompts)
+        return load_tifa_json(limit=self.config.limit)
 
-        logger.info("Loaded %d prompts from TIFA.", len(all_prompts))
-        return Dataset(
-            prompts=all_prompts,
-            metadata={"source": "tifa_hf", "total_loaded": len(all_prompts)},
-        )
-
-    # ------------------------------------------------------------------
-    # Image helpers
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _to_pil(img) -> Optional["Image.Image"]: # type: ignore
-        """Return a PIL Image from a path string or PIL Image."""
+    def _to_uint8_tensor(self, img) -> Optional["torch.Tensor"]:
+        """Convert a PIL Image or file path to a uint8 tensor on device."""
+        pil_img = None
         if Image and isinstance(img, Image.Image):
-            return img
-        if isinstance(img, str):
+            pil_img = img
+        elif isinstance(img, str):
             try:
-                return Image.open(img).convert("RGB")
+                pil_img = Image.open(img).convert("RGB")
             except (FileNotFoundError, OSError) as e:
                 logger.warning("Could not load image %s: %s", img, e)
                 return None
-        return None
-
-    def _pil_to_tensor(self, pil_img: "Image.Image") -> "torch.Tensor": # type: ignore
-        """Convert a PIL image to a uint8 tensor on the configured device.
-
-        This matches the legacy code:
-            image_tensor = transforms.ToTensor()(image)
-            image_tensor = (image_tensor * 255).to(torch.uint8).to(device)
-        """
+        if pil_img is None:
+            return None
         tensor = transforms.ToTensor()(pil_img)
-        tensor = (tensor * 255).to(torch.uint8).to(self.device)
-        return tensor
+        return (tensor * 255).to(torch.uint8).to(self.device)
 
-    # ------------------------------------------------------------------
-    # Public interface
-    # ------------------------------------------------------------------
-
-    def compute(
-        self,
-        images: List[Any],
-        prompts: List[str],
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> MetricResult:
+    def update(self, images: List[Any], prompts: List[str], _metadata: Optional[Dict[str, Any]] = None) -> None:
         """
-        Compute average CLIP Score across image-prompt pairs.
+        Run CLIP on each image-prompt pair and accumulate the running score total.
 
         Args:
-            images: List of generated images (file paths or PIL Images).
-            prompts: List of text prompts, parallel to *images*.
-            metadata: Optional (unused by this metric).
-
-        Returns:
-            MetricResult with the average CLIP score (higher is better).
+            images:    Generated PIL Images or file paths.
+            prompts:   Text prompts parallel to images.
+            _metadata: Unused.
         """
-        if not images:
-            return MetricResult(name="CLIPScore", value=0.0,
-                                details={"error": "No images provided"})
-
-        if len(images) != len(prompts):
-            return MetricResult(
-                name="CLIPScore", value=0.0,
-                details={"error": f"images length ({len(images)}) must match prompts length ({len(prompts)})"},
-            )
-
-        logger.info("Computing CLIP Score for %d image-prompt pairs...", len(images))
-
-        scores: List[Optional[float]] = []
-        total_score = 0.0
-        evaluated = 0
-
-        for idx, (img, prompt) in enumerate(zip(images, prompts)):
-            pil_img = self._to_pil(img)
-            if pil_img is None:
-                logger.warning("Skipping image %d: could not load.", idx)
-                scores.append(None)
+        for img, prompt in zip(images, prompts):
+            tensor = self._to_uint8_tensor(img)
+            if tensor is None:
+                logger.warning("Skipping image at index %d: could not load.", self._total_images)
+                self._per_image_scores.append(None)
+                self._total_images += 1
                 continue
 
             try:
-                image_tensor = self._pil_to_tensor(pil_img)
-                score = self._clip_score_fn(image_tensor, prompt)
-                score_val = score.item()
-                scores.append(score_val)
-                total_score += score_val
-                evaluated += 1
+                score_val = self._clip_score_fn(tensor, prompt).item()
+                self._per_image_scores.append(score_val)
+                self._total_score += score_val
+                self._evaluated += 1
             except Exception as e:
-                logger.error("Error scoring image %d: %s", idx, e)
-                scores.append(None)
+                logger.error("Error scoring image %d: %s", self._total_images, e)
+                self._per_image_scores.append(None)
 
-        avg_score = total_score / evaluated if evaluated > 0 else 0.0
-        logger.info("CLIP Score: %.4f (evaluated %d/%d)", avg_score, evaluated, len(images))
+            self._total_images += 1
+
+    def compute(self) -> MetricResult:
+        """
+        Return average CLIP score across all evaluated image-prompt pairs.
+        All CLIP inference was done in update() — this is division only.
+        """
+        if self._total_images == 0:
+            return MetricResult(name="CLIPScore", value=0.0, details={"error": "No images evaluated"})
+
+        avg_score = self._total_score / self._evaluated if self._evaluated > 0 else 0.0
+        logger.info(
+            "CLIP Score: %.4f (evaluated %d/%d)", avg_score, self._evaluated, self._total_images
+        )
 
         return MetricResult(
             name="CLIPScore",
             value=avg_score,
             details={
-                "per_image_scores": scores,
-                "evaluated": evaluated,
-                "total_images": len(images),
+                "per_image_scores": self._per_image_scores,
+                "evaluated": self._evaluated,
+                "total_images": self._total_images,
                 "config": self.config.to_dict(),
             },
         )

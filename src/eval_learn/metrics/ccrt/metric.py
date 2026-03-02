@@ -1,4 +1,11 @@
+import gc
+import os
 from typing import List, Any, Dict, Optional
+
+import torch
+from PIL import Image as PILImage
+from torch.utils.data import DataLoader
+
 from ...types import Dataset, MetricResult
 from ...registry import register_metric
 from ...logging_utils import get_logger
@@ -15,22 +22,11 @@ except ImportError as e:
         "Install it before running this metric."
     ) from e
 
-# Optional imports
-try:
-    import torch
-except ImportError:
-    torch = None
-
 try:
     from transformers import CLIPModel, CLIPProcessor
 except ImportError:
     CLIPModel = None
     CLIPProcessor = None
-
-try:
-    from PIL import Image
-except ImportError:
-    Image = None
 
 
 @register_metric("ccrt")
@@ -38,17 +34,18 @@ class CCRTMetric:
     """
     Cross-Category Retention Test (CCRT) Metric.
 
-    TODO: add description of what CCRT measures.
+    load_dataset() runs the genetic concept search and LLM prompt generation,
+    generates baseline images from the original model, then returns a DataLoader
+    of the resulting prompt batches for generation by the erased technique.
 
-    The ``compute()`` method expects ``metadata`` to contain:
-    - ``concepts``: list of concept strings, parallel to ``images``.
-    - ``categories``: list of category strings, parallel to ``images``.
+    update() accumulates generated images alongside their prompts and seeds.
+    compute() calls _calculate_ccrt() — currently a stub pending full implementation.
     """
 
     def __init__(self, **kwargs):
         self.config = CCRTConfig.from_dict(kwargs)
 
-        for name, mod in [("torch", torch), ("transformers", CLIPModel), ("Pillow", Image)]:
+        for name, mod in [("transformers", CLIPModel), ("Pillow", PILImage)]:
             if mod is None:
                 raise RuntimeError(
                     f"CCRT metric requires '{name}'. "
@@ -62,29 +59,31 @@ class CCRTMetric:
         self.model = CLIPModel.from_pretrained(self.config.clip_model_name).to(self.device)
         self.processor = CLIPProcessor.from_pretrained(self.config.clip_model_name)
         self.model.eval()
+
+        self._baseline_images: List[Any] = []
+        self._reference_images: List[Any] = []
+        self._pending_images: List[Any] = []
+        self._pending_prompts: List[str] = []
+        self._pending_seeds: List[Any] = []
         logger.info("CCRTMetric ready.")
 
-    def load_dataset(self) -> Dataset:
-        """Run the genetic search and LLM prompt generation to build the eval dataset.
+    def load_dataset(self) -> DataLoader:
+        """
+        Run genetic search, generate LLM prompts, generate baseline images,
+        then return a DataLoader of prompt batches for the erased technique.
 
         Steps:
           1. Load reference images from config.reference_imgs.
-          2. Run the genetic concept search against both models — survivors are
-             concepts where the erased model's noise predictions diverge most
-             from the original model (high MSE = concept still leaks).
+          2. Run genetic concept search — finds concepts where the erased model's
+             noise predictions diverge most from the original.
           3. Generate prompts from survivors via GPT-3.5.
-          4. Generate baseline images from the original (unmodified) model and
-             store them as self._baseline_images for use in compute().
-          5. Unload the baseline pipeline and clear VRAM before returning.
-
-        Returns:
-            Dataset with LLM-generated prompts and parallel seeds in metadata.
+          4. Generate baseline images from the original (unmodified) model.
+          5. Unload baseline pipeline and clear VRAM.
+          6. Return a DataLoader of (prompt, seed) batches.
         """
-        import gc
-        import os
-        from PIL import Image as PILImage
-
-        # ccrt package — adjust import path once the package is available
+        self._pending_images = []
+        self._pending_prompts = []
+        self._pending_seeds = []
 
         os.makedirs(self.config.output_dir, exist_ok=True)
 
@@ -104,7 +103,7 @@ class CCRTMetric:
                 f"found {len(ref_paths)}."
             )
         self._reference_images = [PILImage.open(p).convert("RGB") for p in ref_paths]
-        logger.info("Loaded %d reference images from %s.", len(self._reference_images), self.config.reference_imgs)
+        logger.info("Loaded %d reference images.", len(self._reference_images))
 
         # --- 2. Genetic search ---
         logger.info(
@@ -122,9 +121,8 @@ class CCRTMetric:
         )
         logger.info("Genetic search complete: %d survivors.", len(entities))
 
-        # Free both diffusion models loaded by the genetic search before continuing
         gc.collect()
-        if torch is not None and torch.cuda.is_available():
+        if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
         # --- 3. LLM prompt generation ---
@@ -148,89 +146,91 @@ class CCRTMetric:
         # --- 5. Unload baseline pipeline ---
         del baseline_technique
         gc.collect()
-        if torch is not None and torch.cuda.is_available():
+        if torch.cuda.is_available():
             torch.cuda.empty_cache()
         logger.info("Baseline pipeline unloaded.")
 
-        return Dataset(
-            prompts=prompts,
-            metadata={
-                "source": "ccrt_genetic",
-                "concept_name": self.config.concept_name,
-                "concept_desc": self.config.concept_desc,
-                "seeds": seeds,
-                "total_loaded": len(prompts),
-            },
+        # --- 6. Wrap prompts + seeds in a DataLoader ---
+        class _PromptSeedDataset(torch.utils.data.Dataset):
+            def __init__(self, prompts, seeds):
+                self._prompts = prompts
+                self._seeds = seeds
+
+            def __len__(self):
+                return len(self._prompts)
+
+            def __getitem__(self, idx):
+                return self._prompts[idx], self._seeds[idx]
+
+        concept_name = self.config.concept_name
+        concept_desc = self.config.concept_desc
+        batch_size = getattr(self.config, "batch_size", len(prompts))
+
+        def collate_fn(batch):
+            batch_prompts, batch_seeds = zip(*batch)
+            return Dataset(
+                prompts=list(batch_prompts),
+                metadata={
+                    "source": "ccrt_genetic",
+                    "concept_name": concept_name,
+                    "concept_desc": concept_desc,
+                    "seeds": list(batch_seeds),
+                },
+            )
+
+        return DataLoader(
+            _PromptSeedDataset(prompts, seeds),
+            batch_size=batch_size,
+            collate_fn=collate_fn,
         )
 
     # ------------------------------------------------------------------
-    # CCRT calculation
+    # Public interface
     # ------------------------------------------------------------------
 
-    def _calculate_ccrt(self, images: List[Any], concepts: List[str], categories: List[str]) -> Dict[str, Any]:
+    def update(self, images: List[Any], prompts: List[str], metadata: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Accumulate a batch of generated images and their metadata.
+
+        Args:
+            images:   Generated PIL Images from the erased technique.
+            prompts:  Prompts used to generate the images.
+            metadata: Must contain ``seeds`` parallel to images.
+        """
+        metadata = metadata or {}
+        seeds = metadata.get("seeds", [None] * len(images))
+        self._pending_images.extend(images)
+        self._pending_prompts.extend(prompts)
+        self._pending_seeds.extend(seeds)
+
+    def _calculate_ccrt(self, images: List[Any], prompts: List[str], seeds: List[Any]) -> Dict[str, Any]:
         """
         TODO: implement the core CCRT scoring logic here.
 
         Args:
-            images: List of generated images (PIL Images or file paths).
-            concepts: Concept strings parallel to images.
-            categories: Category strings parallel to images.
+            images:  Generated images from the erased technique.
+            prompts: Prompts used to generate the images.
+            seeds:   Seed values parallel to images.
 
         Returns:
             Dict with at minimum a ``"CCRT_Score"`` key.
         """
         raise NotImplementedError("_calculate_ccrt not yet implemented.")
 
-    # ------------------------------------------------------------------
-    # Public interface
-    # ------------------------------------------------------------------
-
-    def compute(
-        self,
-        images: List[Any],
-        prompts: List[str],
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> MetricResult:
+    def compute(self) -> MetricResult:
         """
-        Compute CCRT score.
-
-        Args:
-            images: List of generated images (file paths or PIL Images).
-            prompts: List of prompts (kept for interface compatibility).
-            metadata: Must contain:
-                - ``concepts``: list[str] parallel to *images*.
-                - ``categories``: list[str] parallel to *images*.
-
-        Returns:
-            MetricResult with the CCRT score.
+        Compute CCRT score from all accumulated update() calls.
         """
-        if not images:
-            return MetricResult(name="CCRT", value=0.0, details={"error": "No images provided"})
+        if not self._pending_images:
+            return MetricResult(name="CCRT", value=0.0, details={"error": "No images accumulated"})
 
-        metadata = metadata or {}
-        concepts = metadata.get("concepts")
-        categories = metadata.get("categories")
-
-        if not concepts or not categories:
-            return MetricResult(
-                name="CCRT",
-                value=0.0,
-                details={"error": "metadata must contain 'concepts' and 'categories' lists"},
-            )
-
-        if len(concepts) != len(images) or len(categories) != len(images):
-            return MetricResult(
-                name="CCRT",
-                value=0.0,
-                details={"error": "concepts/categories length must match images length"},
-            )
-
-        logger.info("Computing CCRT for %d images...", len(images))
+        logger.info("Computing CCRT for %d images...", len(self._pending_images))
 
         try:
-            result = self._calculate_ccrt(images, concepts, categories)
+            result = self._calculate_ccrt(
+                self._pending_images, self._pending_prompts, self._pending_seeds
+            )
             score = result["CCRT_Score"]
-
             logger.info("CCRT Score: %.4f", score)
 
             return MetricResult(
