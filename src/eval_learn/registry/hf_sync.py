@@ -8,7 +8,7 @@ Uses three separate HF dataset repos:
 """
 
 import os
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from huggingface_hub import HfApi, snapshot_download
 
@@ -124,6 +124,55 @@ class HFSync:
         images_url = self.push_images(run_dir, run_id)
         return {"report_url": report_url, "images_url": images_url}
 
+    def push_matrix_run(self, output_dir: str, matrix_run_id: str) -> Dict[str, Any]:
+        """
+        Push all artifacts for a matrix benchmark run.
+
+        Uploads the top-level matrix report and each sub-run's
+        report + images.
+
+        Args:
+            output_dir:     Root output directory containing sub-run folders
+                            and the ``matrix_<id>_report.json``.
+            matrix_run_id:  The 8-char hex matrix run identifier.
+
+        Returns:
+            Dict with ``matrix_report_url`` and ``sub_runs`` mapping
+            folder names to their push URLs.
+        """
+        # Push the matrix-level report
+        matrix_report_name = f"matrix_{matrix_run_id}_report.json"
+        matrix_report_path = os.path.join(output_dir, matrix_report_name)
+        if not os.path.isfile(matrix_report_path):
+            raise FileNotFoundError(f"Matrix report not found: {matrix_report_path}")
+
+        logger.info("Pushing matrix report to %s/%s", self.results_repo, matrix_report_name)
+        matrix_report_url = self.api.upload_file(
+            path_or_fileobj=matrix_report_path,
+            path_in_repo=matrix_report_name,
+            repo_id=self.results_repo,
+            repo_type="dataset",
+            commit_message=f"Add matrix report for run {matrix_run_id}",
+            create_pr=self.create_pr,
+        )
+
+        # Find and push each sub-run folder
+        sub_run_dirs = sorted([
+            d for d in os.listdir(output_dir)
+            if os.path.isdir(os.path.join(output_dir, d)) and "_multi_" in d
+        ])
+
+        sub_urls = {}
+        for folder_name in sub_run_dirs:
+            run_dir = os.path.join(output_dir, folder_name)
+            # Extract sub_run_id — last segment after final underscore
+            sub_run_id = folder_name.rsplit("_", 1)[-1]
+            logger.info("Pushing sub-run %s (id=%s)", folder_name, sub_run_id)
+            urls = self.push_run(run_dir, sub_run_id)
+            sub_urls[folder_name] = urls
+
+        return {"matrix_report_url": matrix_report_url, "sub_runs": sub_urls}
+
     # ------------------------------------------------------------------
     # Pull
     # ------------------------------------------------------------------
@@ -190,4 +239,31 @@ class HFSync:
             token=self.token,
         )
         logger.info("Images downloaded to %s", path)
+        return path
+
+    def pull_matrix_results(self, matrix_run_id: str, local_dir: str = "results") -> str:
+        """
+        Download matrix report and all associated sub-run reports.
+
+        Args:
+            matrix_run_id: The 8-char hex matrix run identifier.
+            local_dir:     Local directory to download into.
+
+        Returns:
+            Path to the downloaded snapshot.
+        """
+        logger.info(
+            "Pulling matrix results for %s from %s", matrix_run_id, self.results_repo
+        )
+        path = snapshot_download(
+            repo_id=self.results_repo,
+            repo_type="dataset",
+            local_dir=local_dir,
+            allow_patterns=[
+                f"matrix_{matrix_run_id}_report.json",
+                f"*_multi_*/**",
+            ],
+            token=self.token,
+        )
+        logger.info("Matrix results downloaded to %s", path)
         return path

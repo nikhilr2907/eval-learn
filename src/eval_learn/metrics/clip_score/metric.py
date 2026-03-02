@@ -1,5 +1,5 @@
 from typing import List, Any, Dict, Optional
-from ...types import MetricResult
+from ...types import Dataset, MetricResult
 from ...registry import register_metric
 from ...logging_utils import get_logger
 from .config import CLIPScoreConfig
@@ -62,6 +62,15 @@ class CLIPScoreMetric:
             model_name_or_path=self.config.clip_model_name
         ).to(self.device)
         logger.info("CLIPScoreMetric ready.")
+
+    def load_dataset(self) -> Dataset:
+        """Load the TIFA dataset pinned to this metric (uses prompts only)."""
+        from ...datasets.tifa_json import load_tifa_json
+        return load_tifa_json(
+            text_path=self.config.text_path,
+            qa_path=self.config.qa_path,
+            limit=self.config.limit,
+        )
 
     # ------------------------------------------------------------------
     # Image helpers

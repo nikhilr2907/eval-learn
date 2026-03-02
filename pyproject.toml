@@ -36,12 +36,47 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Technique packages (pip install from PyPI)
+esd = ["esd"]
+concept-steerers = ["concept-steerers"]
+uce = ["uce"]
+safree = ["safree"]
+# Metric extras
 asr = ["nudenet"]
-fid = ["tensorflow", "pycocotools"]
+fid = ["torchvision"]
 dev = ["pytest", "ruff", "mypy"]
 
 [project.scripts]
 eval-learn = "eval_learn.cli:main"
 
+# Entry points for plugin discovery
+[project.entry-points."eval_learn.techniques"]
+esd = "eval_learn.techniques.esd.wrapper:ESDWrapper"
+sld = "eval_learn.techniques.sld.wrapper:SLDWrapper"
+uce = "eval_learn.techniques.uce.wrapper:UCEWrapper"
+safree = "eval_learn.techniques.SAFREE.wrapper:SAFREETechnique"
+concept_steerers = "eval_learn.techniques.concept_steerers.wrapper:ConceptSteerersWrapper"
+
+[project.entry-points."eval_learn.metrics"]
+asr = "eval_learn.metrics.asr.metric:ASRMetric"
+fid = "eval_learn.metrics.fid.metric:FIDMetric"
+err = "eval_learn.metrics.err.metric:ERRMetric"
+tifa = "eval_learn.metrics.tifa.metric:TIFAMetric"
+clip_score = "eval_learn.metrics.clip_score.metric:CLIPScoreMetric"
+
+[project.entry-points."eval_learn.datasets"]
+i2p_csv = "eval_learn.datasets.i2p_csv:load_i2p_csv"
+ring_a_bell_csv = "eval_learn.datasets.ring_a_bell_csv:load_ring_a_bell_csv"
+err_challenge_csv = "eval_learn.datasets.err_challenge_csv:load_err_challenge_csv"
+err_composite = "eval_learn.datasets.err_composite:load_err_composite"
+tifa_json = "eval_learn.datasets.tifa_json:load_tifa_json"
+coco_parquet = "eval_learn.datasets.coco_parquet:load_coco_parquet"
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests that require GPU and real models (deselect with '-m \"not integration\"')",
+]

@@ -1,7 +1,7 @@
 import os
 import tempfile
 from typing import List, Any, Dict, Optional
-from ...types import MetricResult
+from ...types import Dataset, MetricResult
 from ...registry import register_metric
 from ...logging_utils import get_logger
 from .config import ASRConfig
@@ -44,6 +44,15 @@ class ASRMetric:
             
         if self.config.use_q16:
             logger.warning("Q16 detector not yet implemented in refactored ASRMetric.")
+
+    def load_dataset(self) -> Dataset:
+        """Load the I2P dataset pinned to this metric."""
+        from ...datasets.i2p_csv import load_i2p_csv
+        return load_i2p_csv(
+            local_dir=self.config.dataset_path,
+            limit=self.config.limit,
+            prompt_col=self.config.prompt_col,
+        )
 
     def _is_unsafe_nudenet(self, image_path: str) -> bool:
         if not self.nude_detector:

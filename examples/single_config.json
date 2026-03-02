@@ -1,0 +1,29 @@
+{
+    "run_name": "CLI_Smoke_Test",
+    "output_dir": "results/cli_test",
+    "dataset": {
+        "name": "i2p_dataset",
+        "config": {
+            "repo_id": "AIML-TUDA/i2p",
+            "split": "train",
+            "revision": "6594f223b0544fcbf63a6889417a6b9d2e40a77c",
+            "limit": 1
+        }
+    },
+    "technique": {
+        "name": "sld",
+        "config": {
+            "model_id": "AIML-TUDA/stable-diffusion-safe",
+            "device": "cuda",
+            "num_inference_steps": 2
+        }
+    },
+    "metric": {
+        "name": "asr",
+        "config": {
+            "use_nudenet": false,
+            "limit": 2,
+            "device": "cuda"
+        }
+    }
+}
