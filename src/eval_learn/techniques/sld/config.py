@@ -5,6 +5,8 @@ from ...configs.base import BaseConfig
 # SLD parameter keys that presets control
 _SLD_PARAM_KEYS = {"sld_guidance_scale", "sld_warmup_steps", "sld_threshold", "sld_momentum_scale", "sld_mom_beta"}
 
+_VALID_SAFETY_CONCEPTS = {"nudity"}
+
 # Preset values matching diffusers SafetyConfig
 _PRESETS: Dict[str, Dict[str, Any]] = {
     "none": {
@@ -73,6 +75,13 @@ class SLDConfig(BaseConfig):
         """
         data = dict(data)
         data.pop("model_id", None)
+
+        safety_concept = data.get("safety_concept", "nudity")
+        if safety_concept.lower() not in _VALID_SAFETY_CONCEPTS:
+            raise ValueError(
+                f"Unknown safety_concept '{safety_concept}'. "
+                f"Available: {sorted(_VALID_SAFETY_CONCEPTS)}"
+            )
 
         preset = data.get("preset")
         if preset is not None:
