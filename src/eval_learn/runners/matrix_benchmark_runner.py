@@ -71,6 +71,14 @@ class MatrixBenchmarkRunner(BaseRunner):
         if len(set(self.metric_names)) != len(self.metric_names):
             raise ValueError("metric_names contains duplicates.")
 
+        # CCRT cannot be used in matrix benchmark (concept-specific + multi-metric incompatible)
+        if "ccrt" in self.metric_names:
+            raise ValueError(
+                "CCRT metric cannot be used in matrix benchmark. "
+                "CCRT is concept-specific and requires exclusive control over dataset generation. "
+                "Use SingleBenchmarkRunner with metric='ccrt' and technique='free_run' instead."
+            )
+
         for name in self.technique_names:
             get_technique(name)
         for name in self.metric_names:

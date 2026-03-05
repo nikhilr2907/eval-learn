@@ -6,7 +6,7 @@ import torch
 from PIL import Image as PILImage
 from torch.utils.data import DataLoader
 
-from ...types import Dataset, MetricResult
+from ...types import MetricResult
 from ...registry import register_metric
 from ...logging_utils import get_logger
 from .config import CCRTConfig
@@ -16,6 +16,7 @@ logger = get_logger(__name__)
 try:
     from ccrt.genetic.search import run_genetic_search
     from ccrt.genetic.llm_prompts import generate_prompts
+    from ccrt.scoring.llm_eval import evaluate_style
 except ImportError as e:
     raise RuntimeError(
         "CCRT metric requires the 'ccrt' package. "
@@ -150,38 +151,15 @@ class CCRTMetric:
             torch.cuda.empty_cache()
         logger.info("Baseline pipeline unloaded.")
 
-        # --- 6. Wrap prompts + seeds in a DataLoader ---
-        class _PromptSeedDataset(torch.utils.data.Dataset):
-            def __init__(self, prompts, seeds):
-                self._prompts = prompts
-                self._seeds = seeds
+        # --- 6. Build DataLoader via the datasets module ---
+        from ...datasets.ccrt_genetic import load_ccrt_genetic
 
-            def __len__(self):
-                return len(self._prompts)
-
-            def __getitem__(self, idx):
-                return self._prompts[idx], self._seeds[idx]
-
-        concept_name = self.config.concept_name
-        concept_desc = self.config.concept_desc
-        batch_size = getattr(self.config, "batch_size", len(prompts))
-
-        def collate_fn(batch):
-            batch_prompts, batch_seeds = zip(*batch)
-            return Dataset(
-                prompts=list(batch_prompts),
-                metadata={
-                    "source": "ccrt_genetic",
-                    "concept_name": concept_name,
-                    "concept_desc": concept_desc,
-                    "seeds": list(batch_seeds),
-                },
-            )
-
-        return DataLoader(
-            _PromptSeedDataset(prompts, seeds),
-            batch_size=batch_size,
-            collate_fn=collate_fn,
+        return load_ccrt_genetic(
+            prompts=prompts,
+            seeds=seeds,
+            concept_name=self.config.concept_name,
+            concept_desc=self.config.concept_desc,
+            batch_size=getattr(self.config, "batch_size", len(prompts)),
         )
 
     # ------------------------------------------------------------------
@@ -203,19 +181,64 @@ class CCRTMetric:
         self._pending_prompts.extend(prompts)
         self._pending_seeds.extend(seeds)
 
-    def _calculate_ccrt(self, images: List[Any], prompts: List[str], seeds: List[Any]) -> Dict[str, Any]:
+    def _calculate_ccrt(self, images: List[Any], _prompts: List[str], _seeds: List[Any]) -> Dict[str, Any]:
         """
-        TODO: implement the core CCRT scoring logic here.
+        Score concept erasure using GPT-4V style evaluation.
+
+        Calls evaluate_style() from the ccrt package, which asks GPT-4V whether
+        each generated image still visually exhibits the target concept's style,
+        using self._reference_images as few-shot exemplars.
+
+        CCRT_Score = 1 - style_precision
+          style_precision: fraction of images still showing the concept (lower = better erasure)
+          CCRT_Score:      fraction of images where the concept is successfully erased (higher = better)
 
         Args:
-            images:  Generated images from the erased technique.
-            prompts: Prompts used to generate the images.
-            seeds:   Seed values parallel to images.
+            images:   Generated PIL Images from the erased technique.
+            _prompts: Unused — scoring is purely visual via GPT-4V.
+            _seeds:   Unused.
 
         Returns:
-            Dict with at minimum a ``"CCRT_Score"`` key.
+            Dict with ``"CCRT_Score"`` and ``"style_precision"`` keys.
         """
-        raise NotImplementedError("_calculate_ccrt not yet implemented.")
+
+        pil_images = []
+        for img in images:
+            if isinstance(img, str):
+                pil_images.append(PILImage.open(img).convert("RGB"))
+            elif isinstance(img, PILImage.Image):
+                pil_images.append(img.convert("RGB"))
+            else:
+                logger.warning("Skipping image of unexpected type %s", type(img))
+
+        if not pil_images:
+            return {"CCRT_Score": 0.0, "style_precision": 0.0, "evaluated": 0}
+
+        logger.info(
+            "Running GPT-4V style evaluation on %d images for concept '%s'...",
+            len(pil_images), self.config.concept_name,
+        )
+
+        style_precision = evaluate_style(
+            generated_images=pil_images,
+            reference_images=self._reference_images,
+            concept_name=self.config.concept_name,
+            concept_desc=self.config.concept_desc,
+            api_key=self.config.llm_api_key,
+        )
+
+        ccrt_score = 1.0 - style_precision
+
+        logger.info(
+            "CCRT: style_precision=%.4f  →  CCRT_Score=%.4f",
+            style_precision, ccrt_score,
+        )
+
+        return {
+            "CCRT_Score": ccrt_score,
+            "style_precision": style_precision,
+            "evaluated": len(pil_images),
+        }
 
     def compute(self) -> MetricResult:
         """

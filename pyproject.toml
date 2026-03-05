@@ -45,6 +45,7 @@ safree = ["safree"]
 # Metric extras
 asr = ["nudenet"]
 fid = ["torchvision"]
+ccrt = ["ccrt"]
 dev = ["pytest", "ruff", "mypy"]
 
 [project.scripts]
@@ -64,12 +65,14 @@ fid = "eval_learn.metrics.fid.metric:FIDMetric"
 err = "eval_learn.metrics.err.metric:ERRMetric"
 tifa = "eval_learn.metrics.tifa.metric:TIFAMetric"
 clip_score = "eval_learn.metrics.clip_score.metric:CLIPScoreMetric"
+ccrt = "eval_learn.metrics.ccrt.metric:CCRTMetric"
 
 [project.entry-points."eval_learn.datasets"]
 i2p_csv = "eval_learn.datasets.i2p_csv:load_i2p_csv"
 err_composite = "eval_learn.datasets.err_composite:load_err_composite"
 tifa_json = "eval_learn.datasets.tifa_json:load_tifa_json"
 coco_parquet = "eval_learn.datasets.coco_parquet:load_coco_parquet"
+ccrt_genetic = "eval_learn.datasets.ccrt_genetic:load_ccrt_genetic"
 
 [tool.setuptools.packages.find]
 where = ["src"]

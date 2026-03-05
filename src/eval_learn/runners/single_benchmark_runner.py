@@ -69,6 +69,15 @@ class SingleBenchmarkRunner(BaseRunner):
         self.technique_factory = get_technique(self.technique_name)
         self.metric_factory = get_metric(self.metric_name)
 
+        # CCRT metric requires FreeRunTechnique
+        if self.metric_name == "ccrt" and self.technique_name != "free_run":
+            raise ValueError(
+                "CCRT metric can only be used with 'free_run' technique. "
+                f"Got technique='{self.technique_name}'. "
+                "CCRT requires generating from the original unmodified model (via load_dataset) "
+                "and then comparing against the erased technique."
+            )
+
     def run(self) -> Dict[str, Any]:
         """Execute single technique x single metric benchmark."""
         logger.info("Starting Benchmark Run...")

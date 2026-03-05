@@ -48,9 +48,9 @@ def load_vocab(vocab_dir: Optional[str]) -> Tuple[Dict, Dict, Dict, Dict]:
             for line in f:
                 parts = line.strip().split()
                 if len(parts) == 2:
-                    ancestor, descendant = parts
-                    ancestors_map.setdefault(ancestor, set()).add(descendant)
-                    descendants_map.setdefault(descendant, set()).add(ancestor)
+                    parent, child = parts
+                    ancestors_map.setdefault(child, set()).add(parent)
+                    descendants_map.setdefault(parent, set()).add(child)
 
     return class_map, gloss_map, ancestors_map, descendants_map
 

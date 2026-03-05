@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ccrt"
+version = "0.1.0"
+description = "Concept Containment and Residual Testing (CCRT) - concept erasure evaluation via genetic search and GPT-4V scoring"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Eval-Learn Team"}
+]
+keywords = ["diffusion", "stable-diffusion", "concept-erasure", "evaluation", "unlearning"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "torch>=2.0.0",
+    "diffusers>=0.21.0",
+    "transformers>=4.30.0",
+    "Pillow>=9.0.0",
+    "openai>=1.0.0",
+    "tqdm>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+]
+
+[tool.setuptools]
+packages = ["ccrt", "ccrt.genetic", "ccrt.scoring", "ccrt.vocab"]
+
+[tool.setuptools.package-dir]
+"" = "."

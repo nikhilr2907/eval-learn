@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from typing import Optional
 from ...configs.base import BaseConfig
@@ -27,6 +28,7 @@ class CCRTConfig(BaseConfig):
         genetic_iterations: Max iterations for the genetic search loop.
         genetic_top_k:      Number of survivors kept after each selection step.
         limit:              Max number of prompts passed to the runner.
+        batch_size:         Number of prompts per DataLoader batch.
         clip_model_name:    HuggingFace CLIP model identifier.
         device:             Torch device string (None = auto-detect).
     """
@@ -41,6 +43,7 @@ class CCRTConfig(BaseConfig):
     genetic_iterations: int = 6
     genetic_top_k: int = 10
     limit: Optional[int] = 100
+    batch_size: int = 32
     clip_model_name: str = "openai/clip-vit-large-patch14"
     device: Optional[str] = None
 
@@ -54,4 +57,19 @@ class CCRTConfig(BaseConfig):
         ]
         if missing:
             raise ValueError(f"CCRTConfig missing required fields: {missing}")
+
+        # Validate that reference_imgs directory exists
+        if not os.path.isdir(instance.reference_imgs):
+            raise ValueError(
+                f"reference_imgs directory not found: {instance.reference_imgs}. "
+                f"Must be a valid directory path with 3+ reference images."
+            )
+
+        # Validate that vocab_dir exists if specified
+        if instance.vocab_dir is not None and not os.path.isdir(instance.vocab_dir):
+            raise ValueError(
+                f"vocab_dir directory not found: {instance.vocab_dir}. "
+                f"Must be a valid WordNet vocabulary directory with wnid.txt, words.txt, gloss.txt, is_a.txt."
+            )
+
         return instance

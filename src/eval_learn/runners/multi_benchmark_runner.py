@@ -72,6 +72,24 @@ class MultiBenchmarkRunner(BaseRunner):
         if len(set(self.metric_names)) != len(self.metric_names):
             raise ValueError("metric_names contains duplicates.")
 
+        # CCRT cannot be used in multi-metric mode (concept-specific + DataLoader conflict)
+        if "ccrt" in self.metric_names:
+            raise ValueError(
+                "CCRT metric cannot be used in multi-metric mode. "
+                "CCRT is concept-specific and requires exclusive control over dataset generation. "
+                "Use SingleBenchmarkRunner with metric='ccrt' and technique='free_run' instead."
+            )
+
+        # FID must be first metric if used in multi-metric mode
+        # (it pre-extracts real COCO features; other metrics' load_dataset() are only called for side effects)
+        if "fid" in self.metric_names and self.metric_names[0] != "fid":
+            raise ValueError(
+                "FID metric must be the first metric in multi-metric mode. "
+                f"Got: {self.metric_names}. "
+                "FID requires pre-extracting real image features before generation begins. "
+                "Reorder metrics to: ['fid', ...other metrics...]"
+            )
+
         self.technique_factory = get_technique(self.technique_name)
         self.metric_factories = {}
         for name in self.metric_names:
