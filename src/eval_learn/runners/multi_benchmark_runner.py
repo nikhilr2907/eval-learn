@@ -3,7 +3,7 @@ import json
 import time
 from typing import Any, Dict, List, Optional
 
-from ..types import Dataset, MetricResult
+from ..types import MetricResult
 from ..logging_utils import get_logger
 from ..registry import get_technique, get_metric
 from ..registry.entrypoints import load_entrypoints
@@ -36,10 +36,15 @@ class MultiBenchmarkRunner(BaseRunner):
     """
     Single technique x multiple metrics benchmark runner.
 
-    Loads one technique, generates images once, then evaluates
-    against each metric in sequence. The first metric's dataset
-    drives image generation; other metrics still have load_dataset()
-    called for side effects.
+    All metrics must implement the DataLoader interface:
+      - load_dataset() -> DataLoader
+      - update(images, prompts, metadata)
+      - compute() -> MetricResult
+
+    The first metric's DataLoader drives image generation. All other metrics
+    have load_dataset() called for side effects only (e.g. FID pre-extracts
+    real-image features). Every metric's update() is called once per batch
+    with the same generated images.
     """
 
     def __init__(
@@ -67,6 +72,24 @@ class MultiBenchmarkRunner(BaseRunner):
         if len(set(self.metric_names)) != len(self.metric_names):
             raise ValueError("metric_names contains duplicates.")
 
+        # CCRT cannot be used in multi-metric mode (concept-specific + DataLoader conflict)
+        if "ccrt" in self.metric_names:
+            raise ValueError(
+                "CCRT metric cannot be used in multi-metric mode. "
+                "CCRT is concept-specific and requires exclusive control over dataset generation. "
+                "Use SingleBenchmarkRunner with metric='ccrt' and technique='free_run' instead."
+            )
+
+        # FID must be first metric if used in multi-metric mode
+        # (it pre-extracts real COCO features; other metrics' load_dataset() are only called for side effects)
+        if "fid" in self.metric_names and self.metric_names[0] != "fid":
+            raise ValueError(
+                "FID metric must be the first metric in multi-metric mode. "
+                f"Got: {self.metric_names}. "
+                "FID requires pre-extracting real image features before generation begins. "
+                "Reorder metrics to: ['fid', ...other metrics...]"
+            )
+
         self.technique_factory = get_technique(self.technique_name)
         self.metric_factories = {}
         for name in self.metric_names:
@@ -77,18 +100,62 @@ class MultiBenchmarkRunner(BaseRunner):
         logger.info("Starting Multi-Benchmark Run...")
         timestamp = time.time()
 
-        # 1. Initialize first metric and load dataset
+        # 1. Initialize all metrics
+        self._log_phase("Initializing metrics")
+        metrics: Dict[str, Any] = {}
+        for name in self.metric_names:
+            config = self.metric_configs.get(name, {})
+            metrics[name] = self.metric_factories[name](**config)
+
+        # 2. Load datasets — first metric drives generation; others for side effects
+        self._log_phase("Loading datasets")
         first_metric_name = self.metric_names[0]
-        first_metric_config = self.metric_configs.get(first_metric_name, {})
-        self._log_phase("Initializing first metric")
-        first_metric = self.metric_factories[first_metric_name](**first_metric_config)
+        loader = metrics[first_metric_name].load_dataset()
 
-        self._log_phase("Loading dataset")
-        dataset: Dataset = first_metric.load_dataset()
-        dataset_name = dataset.metadata.get("source", "unknown")
-        logger.info(f"Loaded {len(dataset.prompts)} prompts from '{dataset_name}'.")
+        for name in self.metric_names[1:]:
+            metrics[name].load_dataset()
 
-        # 2. Generate run_id
+        # 3. Initialize technique
+        self._log_phase("Initializing technique")
+        technique = self.technique_factory(**self.technique_config)
+
+        # 4+5. Generate and evaluate batch by batch
+        self._log_phase("Generating images and computing metrics")
+        all_images: List[Any] = []
+        dataset_name = "unknown"
+        total_generated = 0
+        accumulated_metadata: Dict[str, Any] = {}
+
+        for batch in loader:
+            dataset_name = batch.metadata.get("source", dataset_name)
+
+            batch_images = technique.generate(prompts=batch.prompts)
+            all_images.extend(batch_images)
+            total_generated += len(batch_images)
+
+            for key, val in batch.metadata.items():
+                if isinstance(val, list):
+                    accumulated_metadata.setdefault(key, []).extend(val)
+                else:
+                    accumulated_metadata[key] = val
+
+            for metric in metrics.values():
+                metric.update(batch_images, batch.prompts, batch.metadata)
+
+        logger.info(f"Generated and evaluated {total_generated} images from '{dataset_name}'.")
+
+        # 6. Finalise all metrics
+        metric_results: Dict[str, Any] = {}
+        for name, metric in metrics.items():
+            self._log_phase(f"Finalising metric '{name}'")
+            result: MetricResult = metric.compute()
+            metric_results[name] = {
+                "name": result.name,
+                "value": result.value,
+                "details": result.details,
+            }
+            logger.info(f"Metric Result ({result.name}): {result.value}")
+
         run_id = generate_multi_run_id(
             technique_name=self.technique_name,
             technique_config=self.technique_config,
@@ -99,57 +166,27 @@ class MultiBenchmarkRunner(BaseRunner):
         )
         logger.info(f"Run ID: {run_id}")
 
-        # 3. Initialize technique and generate images ONCE
-        self._log_phase("Initializing technique")
-        technique = self.technique_factory(**self.technique_config)
-
-        self._log_phase("Generating images")
-        images = technique.generate(prompts=dataset.prompts)
-        logger.info(f"Generated {len(images)} images.")
-
-        # 4. Compute each metric
-        metric_results = {}
-        for metric_name in self.metric_names:
-            self._log_phase(f"Computing metric '{metric_name}'")
-            metric_config = self.metric_configs.get(metric_name, {})
-
-            if metric_name == first_metric_name:
-                metric = first_metric
-            else:
-                metric = self.metric_factories[metric_name](**metric_config)
-                metric.load_dataset()  # called for side effects
-
-            result: MetricResult = metric.compute(
-                images=images, prompts=dataset.prompts, metadata=dataset.metadata
-            )
-            metric_results[metric_name] = {
-                "name": result.name,
-                "value": result.value,
-                "details": result.details,
-            }
-            logger.info(f"Metric Result ({result.name}): {result.value}")
-
-        # 5. Build report
+        # 7. Build report
         report = self._build_base_report(
             run_id=run_id,
             timestamp=timestamp,
             technique_name=self.technique_name,
             metric_names=self.metric_names,
             dataset_name=dataset_name,
-            dataset_metadata=dataset.metadata,
+            dataset_metadata={**accumulated_metadata, "total_loaded": total_generated},
             technique_config=self.technique_config,
             metric_configs=self.metric_configs,
             metric_results=metric_results,
         )
 
-        # 6. Save artifacts — images saved once, report has all metric results
+        # 8. Save artifacts
         self.writer.save_run(
             run_id=run_id,
             technique_name=self.technique_name,
             metric_name="multi",
-            images=images,
+            images=all_images,
             report=report,
-            metadata=dataset.metadata,
+            metadata=accumulated_metadata,
         )
 
         logger.info("Multi-benchmark run completed.")

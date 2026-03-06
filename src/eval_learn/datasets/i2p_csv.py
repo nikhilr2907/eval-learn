@@ -1,75 +1,54 @@
-from datasets import load_dataset
 from typing import Optional
+
+from torch.utils.data import DataLoader
+from datasets import load_dataset as hf_load_dataset
+
 from ..types import Dataset
 from ..registry import register_dataset
-from ..registry.hf_sync import HFSync
 from ..logging_utils import get_logger
+from .hf_stream import load_hf_config
 
 logger = get_logger(__name__)
+
+DEFAULT_BATCH_SIZE = 32
 
 
 @register_dataset("i2p_csv")
 def load_i2p_csv(
-    repo_id: str = "AIML-TUDA/i2p",
-    split: str = "train",
-    revision: Optional[str] = "6594f223b0544fcbf63a6889417a6b9d2e40a77c",
     limit: Optional[int] = None,
-    prompt_col: str = "prompt",
-    local_dir: str = "data/i2p",
+    batch_size: int = DEFAULT_BATCH_SIZE,
     token: Optional[str] = None,
-) -> Dataset:
+) -> DataLoader:
     """
-    Pulls the I2P dataset from Hugging Face to a local directory using HFSync,
-    then loads prompts from the local copy.
+    Stream prompts from the I2P dataset directly from HuggingFace.
+
+    Returns a DataLoader that yields Dataset batches. Each batch has:
+      - prompts: list of prompt strings
 
     Args:
-        repo_id:    HF dataset repo to pull from.
-        split:      Dataset split to load.
-        revision:   Commit hash / branch / tag to pin the version.
-        limit:      Max number of prompts to load.
-        prompt_col: Column name containing the prompts.
-        local_dir:  Local directory to cache the dataset snapshot.
+        limit:      Max number of rows to stream.
+        batch_size: Number of prompts per batch.
         token:      HF token (falls back to HF_TOKEN env var).
     """
-    logger.info("Pulling I2P dataset (%s) to local dir: %s ...", repo_id, local_dir)
+    cfg = load_hf_config("i2p")
+    caption_col = cfg["caption_col"]
 
-    # results_repo / images_repo are unused here but required by HFSync.__init__
-    syncer = HFSync(
-        datasets_repo=repo_id,
-        results_repo=repo_id,
-        images_repo=repo_id,
-        token=token,
+    logger.info(
+        "Setting up HF streaming for I2P (%s, split=%s)...",
+        cfg["repo_id"], cfg["split"],
     )
-    local_path = syncer.pull_datasets(local_dir=local_dir)
 
-    logger.info("Loading from local path: %s", local_path)
-    try:
-        hf_dataset = load_dataset(local_path, split=split)
-        df = hf_dataset.to_pandas()
-    except Exception as e:
-        logger.error("Failed to load dataset from local path: %s", e)
-        raise
+    hf_ds = hf_load_dataset(cfg["repo_id"], split=cfg["split"], streaming=True, token=token)
+    if limit is not None:
+        hf_ds = hf_ds.take(limit)
 
-    if prompt_col not in df.columns:
-        raise ValueError(
-            f"Column '{prompt_col}' not found in dataset. Columns: {df.columns.tolist()}"
+    def collate_fn(batch):
+        return Dataset(
+            prompts=[row[caption_col] for row in batch],
+            metadata={
+                "source": "i2p_hf",
+                "repo_id": cfg["repo_id"],
+            },
         )
 
-    prompts = df[prompt_col].tolist()
-
-    if limit:
-        prompts = prompts[:limit]
-
-    logger.info("Loaded %d prompts from local copy.", len(prompts))
-
-    return Dataset(
-        prompts=prompts,
-        metadata={
-            "source": "i2p_csv",
-            "repo_id": repo_id,
-            "split": split,
-            "revision": revision,
-            "local_dir": local_dir,
-            "total_loaded": len(prompts),
-        },
-    )
+    return DataLoader(hf_ds, batch_size=batch_size, collate_fn=collate_fn, num_workers=0)

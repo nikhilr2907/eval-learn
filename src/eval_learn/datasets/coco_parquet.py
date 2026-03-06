@@ -1,85 +1,89 @@
-import os
 import io
 from typing import Optional
+
+import torch
+from torch.utils.data import DataLoader
+from datasets import load_dataset as hf_load_dataset
+
 from ..types import Dataset
 from ..registry import register_dataset
 from ..logging_utils import get_logger
+from .hf_stream import load_hf_config
 
 logger = get_logger(__name__)
+
+DEFAULT_BATCH_SIZE = 32
 
 
 @register_dataset("coco_parquet")
 def load_coco_parquet(
-    path: str = "data/coco/coco_3k_sample.parquet",
     limit: Optional[int] = None,
-    caption_col: str = "caption",
-    image_col: str = "image",
-    real_images_dir: Optional[str] = None,
-) -> Dataset:
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    token: Optional[str] = None,
+) -> DataLoader:
     """
-    Load captions and reference images from a COCO parquet file.
+    Stream COCO images and captions directly from HuggingFace.
 
-    Each row is expected to have an ``image`` column containing a dict
-    with a ``bytes`` key (raw JPEG/PNG bytes) and a ``caption`` column
-    with the text prompt.
-
-    Reference images are extracted to *real_images_dir* (defaults to
-    ``data/coco/real_images/``) so that the FID metric can read them.
+    Returns a DataLoader that yields Dataset batches. Each batch has:
+      - prompts: list of caption strings
+      - metadata["images"]: (B, C, H, W) float tensor, preprocessed for InceptionV3
 
     Args:
-        path: Path to the parquet file.
-        limit: Max number of rows to load.
-        caption_col: Column name containing captions.
-        image_col: Column name containing image dicts.
-        real_images_dir: Directory to extract reference images into.
-            If ``None``, defaults to ``data/coco/real_images/``.
+        limit:      Max number of rows to stream.
+        batch_size: Number of images per batch.
+        token:      HF token (falls back to HF_TOKEN env var).
     """
-    import pandas as pd
+    from torchvision import transforms
     from PIL import Image
 
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"COCO parquet not found at: {path}")
+    cfg = load_hf_config("coco")
 
-    logger.info(f"Loading COCO parquet from {path}...")
-    df = pd.read_parquet(path)
+    _inception_transform = transforms.Compose([
+        transforms.Resize((299, 299)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+    ])
 
-    if caption_col not in df.columns:
-        raise ValueError(f"Column '{caption_col}' not found. Columns: {df.columns.tolist()}")
-    if image_col not in df.columns:
-        raise ValueError(f"Column '{image_col}' not found. Columns: {df.columns.tolist()}")
-
-    if limit:
-        df = df.head(limit)
-
-    captions = df[caption_col].tolist()
-
-    # --- extract reference images to disk ---
-    if real_images_dir is None:
-        real_images_dir = os.path.join(os.path.dirname(path), "real_images")
-
-    os.makedirs(real_images_dir, exist_ok=True)
-
-    # Only extract if the directory is empty or has fewer images than we need
-    existing = [f for f in os.listdir(real_images_dir) if f.endswith((".jpg", ".png"))]
-    if len(existing) >= len(df):
-        logger.info(f"Real images already extracted ({len(existing)} files in {real_images_dir}), skipping.")
-    else:
-        logger.info(f"Extracting {len(df)} reference images to {real_images_dir}...")
-        for idx, row in df.iterrows():
-            img_data = row[image_col]
-            img_bytes = img_data["bytes"] if isinstance(img_data, dict) else img_data
-            img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-            img.save(os.path.join(real_images_dir, f"{idx:05d}.jpg"), "JPEG")
-        logger.info("Extraction complete.")
-
-    logger.info(f"Loaded {len(captions)} captions.")
-
-    return Dataset(
-        prompts=captions,
-        metadata={
-            "source": "coco_parquet",
-            "path": path,
-            "total_loaded": len(captions),
-            "real_images_dir": real_images_dir,
-        },
+    logger.info(
+        "Setting up HF streaming for COCO (%s, split=%s)...",
+        cfg["repo_id"], cfg["split"],
     )
+
+    hf_ds = hf_load_dataset(cfg["repo_id"], split=cfg["split"], streaming=True, token=token)
+    if limit is not None:
+        hf_ds = hf_ds.take(limit)
+
+    image_col = cfg["image_col"]
+    caption_col = cfg["caption_col"]
+
+    def collate_fn(batch):
+        images = []
+        captions = []
+
+        for row in batch:
+            # Decode image from HF's various formats
+            img = row[image_col]
+            if isinstance(img, dict) and "bytes" in img:
+                img = Image.open(io.BytesIO(img["bytes"])).convert("RGB")
+            elif not isinstance(img, Image.Image):
+                img = Image.fromarray(img).convert("RGB")
+            else:
+                img = img.convert("RGB")
+            images.append(_inception_transform(img))
+
+            # COCO captions may be a list — take the first
+            caption = row[caption_col]
+            if isinstance(caption, list):
+                caption = caption[0]
+            captions.append(caption)
+
+        return Dataset(
+            prompts=captions,
+            metadata={
+                "source": "coco_hf",
+                "repo_id": cfg["repo_id"],
+                "images": torch.stack(images),  # (B, C, H, W)
+            },
+        )
+
+    return DataLoader(hf_ds, batch_size=batch_size, collate_fn=collate_fn, num_workers=0)

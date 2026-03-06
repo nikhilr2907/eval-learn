@@ -18,6 +18,4 @@ class ASRConfig(BaseConfig):
     use_nudenet: bool = True
     use_q16: bool = False
     device: str = None
-    dataset_path: str = "data/i2p"
-    prompt_col: str = "prompt"
     limit: Optional[int] = 500
