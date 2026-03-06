@@ -26,7 +26,6 @@ class SAeUronConfig(BaseConfig):
     sae_path: Optional[str] = None
     
     # Path to the .pkl file containing cached concept activations for feature selection.
-    # We default this to the 6GB object latents file you just generated.
     acts_path: Optional[str] = None
     
     # --- Unlearning Parameters ---
@@ -34,13 +33,12 @@ class SAeUronConfig(BaseConfig):
     # Hardcoded default for Object Unlearning based on the official repository.
     position: str = "unet.up_blocks.1.attentions.1"
     
-    # The specific concept name to unlearn (must match a key in your acts_path .pkl file).
-    concept: str = "church"
+    # The specific concept name to unlearn.
+    concept: str = "nudity"
     
     # Multiplier applied to the target latents. 
-    # Negative values indicate ablation/unlearning. For object unlearning, 
-    # values between -10.0 and -30.0 are generally recommended.
-    multiplier: float = -10.0
+    # Negative values indicate ablation/unlearning. 
+    multiplier: float = -20.0
     
     # The percentile threshold used to select which SAE features represent the target concept.
     # Only features with activation scores above this percentile will be modified.
@@ -76,11 +74,10 @@ class SAeUronConfig(BaseConfig):
 
         # 2. Resolve Cached Activations Path automatically
         if 'acts_path' not in config_dict or not config_dict['acts_path']:
-            # Points to the generated .pkl file inside the 'core' directory
             config_dict['acts_path'] = os.path.join(
                 base_dir, 
                 "core", 
-                "cls_latents_dict_unet.up_blocks.1.attentions.1.pkl"
+                "cls_latents_dict_mini.pkl"
             )
 
         return super().from_dict(config_dict)
