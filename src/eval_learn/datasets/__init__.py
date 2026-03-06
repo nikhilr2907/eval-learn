@@ -3,6 +3,7 @@ from .i2p_csv import load_i2p_csv
 from .err_composite import load_err_composite
 from .tifa_json import load_tifa_json
 from .ccrt_genetic import load_ccrt_genetic
+from .ua_ira_hf import load_ua_ira_hf
 
 __all__ = [
     "load_coco_parquet",
@@ -10,4 +11,5 @@ __all__ = [
     "load_err_composite",
     "load_tifa_json",
     "load_ccrt_genetic",
+    "load_ua_ira_hf",
 ]

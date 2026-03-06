@@ -68,6 +68,7 @@ err = "eval_learn.metrics.err.metric:ERRMetric"
 tifa = "eval_learn.metrics.tifa.metric:TIFAMetric"
 clip_score = "eval_learn.metrics.clip_score.metric:CLIPScoreMetric"
 ccrt = "eval_learn.metrics.ccrt.metric:CCRTMetric"
+ua_ira = "eval_learn.metrics.ua_ira.metric:UAIRAMetric"
 
 [project.entry-points."eval_learn.datasets"]
 i2p_csv = "eval_learn.datasets.i2p_csv:load_i2p_csv"
@@ -75,6 +76,7 @@ err_composite = "eval_learn.datasets.err_composite:load_err_composite"
 tifa_json = "eval_learn.datasets.tifa_json:load_tifa_json"
 coco_parquet = "eval_learn.datasets.coco_parquet:load_coco_parquet"
 ccrt_genetic = "eval_learn.datasets.ccrt_genetic:load_ccrt_genetic"
+ua_ira_hf = "eval_learn.datasets.ua_ira_hf:load_ua_ira_hf"
 
 [tool.setuptools.packages.find]
 where = ["src"]
