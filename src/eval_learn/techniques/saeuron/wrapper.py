@@ -6,10 +6,12 @@ from PIL import Image
 from ...registry import register_technique
 from ...logging_utils import get_logger
 
-# Import the SAeUron-specific components we just built
+# Import the SAeUron-specific components from the installed package
+from saeuron.core.model import SparseAutoencoder
+from saeuron.core.utils import get_target_latents
+
+# Import local integration config
 from .config import SAeUronConfig
-from .core.model import SparseAutoencoder
-from .core.utils import get_target_latents
 
 logger = get_logger(__name__)
 

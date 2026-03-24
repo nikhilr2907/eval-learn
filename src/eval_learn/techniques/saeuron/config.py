@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Optional, Any, Dict, List
 
+import saeuron
 from ...configs.base import BaseConfig
 
 @dataclass
@@ -60,23 +61,23 @@ class SAeUronConfig(BaseConfig):
         """
         config_dict = dict(config_dict)
         
-        # Pop model_id to let the global evaluation pipeline manage it if needed, 
+        # Pop model_id to let the global evaluation pipeline manage it if needed,
         # or fall back to the dataclass default.
         config_dict.pop("model_id", None)
 
-        # Get the absolute path of the directory containing this config.py file
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+        # Get the absolute path of the saeuron package
+        saeuron_pkg_path = os.path.dirname(saeuron.__file__)
 
         # 1. Resolve SAE Checkpoint Path automatically
         if 'sae_path' not in config_dict or not config_dict['sae_path']:
-            # Points to the 'checkpoints' folder where cfg.json and sae.safetensors are stored
-            config_dict['sae_path'] = os.path.join(base_dir, "checkpoints")
+            # Points to the 'checkpoints' folder in the saeuron package
+            config_dict['sae_path'] = os.path.join(saeuron_pkg_path, "checkpoints")
 
         # 2. Resolve Cached Activations Path automatically
         if 'acts_path' not in config_dict or not config_dict['acts_path']:
             config_dict['acts_path'] = os.path.join(
-                base_dir, 
-                "core", 
+                saeuron_pkg_path,
+                "core",
                 "cls_latents_dict_mini.pkl"
             )
 
