@@ -1,6 +1,0 @@
-include README.md
-include LICENSE
-include INSTALL.md
-include pyproject.toml
-recursive-include src/uce *.py
-recursive-include src/uce/weights *.safetensors

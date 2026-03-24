@@ -9,15 +9,13 @@ class UCEWeightCreator:
     """
     Create custom UCE weights for erasing specific concepts.
 
-    This class provides a wrapper around the original UCE training code
-    from: https://github.com/rohitgandikota/unified-concept-editing
+    Uses the bundled UCE training script included in this package.
     """
 
     def __init__(
         self,
         model_id: str = "CompVis/stable-diffusion-v1-4",
         device: str = "cuda",
-        uce_repo_path: Optional[str] = None,
     ):
         """
         Initialize weight creator.
@@ -25,43 +23,19 @@ class UCEWeightCreator:
         Args:
             model_id: Base Stable Diffusion model to modify.
             device: Device for training ('cuda' recommended).
-            uce_repo_path: Path to cloned UCE repo. If None, will clone automatically.
         """
         self.model_id = model_id
         self.device = device
 
-        # Determine UCE repo path
-        if uce_repo_path and Path(uce_repo_path).exists():
-            self.uce_repo_path = Path(uce_repo_path)
-        else:
-            # Clone to default location
-            default_path = Path.home() / ".cache" / "uce" / "unified-concept-editing"
-            if not default_path.exists():
-                print(f"Cloning UCE repository to {default_path}...")
-                self._clone_uce_repo(default_path)
-            self.uce_repo_path = default_path
+        # Get bundled training script
+        package_dir = Path(__file__).parent
+        self.train_script = package_dir / "training" / "uce_sd_erase.py"
 
-        # Verify training script exists
-        self.train_script = self.uce_repo_path / "trainscripts" / "uce_sd_erase.py"
         if not self.train_script.exists():
             raise FileNotFoundError(
                 f"UCE training script not found at {self.train_script}\n"
-                "Make sure the UCE repository is properly cloned."
+                "The training script should be bundled with the package."
             )
-
-    @staticmethod
-    def _clone_uce_repo(target_path: Path):
-        """Clone the UCE repository."""
-        target_path.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            [
-                "git", "clone",
-                "https://github.com/rohitgandikota/unified-concept-editing.git",
-                str(target_path)
-            ],
-            check=True
-        )
-        print("UCE repository cloned successfully.")
 
     def create_weights(
         self,
@@ -101,14 +75,15 @@ class UCEWeightCreator:
                     "--concept_type", concept_type,
                     "--save_dir", str(temp_save_dir),
                     "--exp_name", f"uce_{concept}",
+                    "--model_id", self.model_id,
+                    "--device", self.device,
                 ],
                 check=True,
-                cwd=str(self.uce_repo_path)
             )
 
             # Move created weights to final location
-            # UCE creates: {save_dir}/{exp_name}/diffusion_pytorch_model.safetensors
-            created_weight = temp_save_dir / f"uce_{concept}" / "diffusion_pytorch_model.safetensors"
+            # UCE creates: {save_dir}/{exp_name}.safetensors
+            created_weight = temp_save_dir / f"uce_{concept}.safetensors"
             if created_weight.exists():
                 shutil.move(str(created_weight), str(output_path))
                 print(f"✓ Weights created successfully: {output_path}")

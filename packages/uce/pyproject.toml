@@ -37,10 +37,6 @@ dev = [
     "pytest>=7.0.0",
     "black>=23.0.0",
 ]
-# For creating new weights (optional, requires cloning external repo)
-weight-creation = [
-    "GitPython>=3.1.0",
-]
 
 [project.urls]
 Homepage = "https://github.com/rohitgandikota/unified-concept-editing"
@@ -49,7 +45,7 @@ Documentation = "https://github.com/your-org/uce#readme"
 
 [tool.setuptools]
 packages = ["uce"]
-package-data = {"uce" = ["weights/*.safetensors"]}
+package-data = {"uce" = ["weights/*.safetensors", "training/*.py"]}
 
 [tool.setuptools.package-dir]
 "" = "src"
