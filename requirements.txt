@@ -19,8 +19,10 @@ tensorflow==2.20.0
 pycocotools==2.0.11
 torchvision==0.25.0
 
-git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=safree
-git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=concept-steerers
-git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=esd
-git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=uce
+git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=packages/ccrt
+git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=packages/uce
+git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=packages/esd
+git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=packages/mace
+git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=packages/concept-steerers
+
 --extra-index-url https://download.pytorch.org/whl/cu126
