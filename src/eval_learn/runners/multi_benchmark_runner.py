@@ -95,11 +95,21 @@ class MultiBenchmarkRunner(BaseRunner):
         self._log_phase("Initializing technique")
         technique = self.technique_factory(**self.technique_config)
 
+        # Generate run_id early (needed for artifact saving)
+        run_id = generate_multi_run_id(
+            technique_name=self.technique_name,
+            technique_config=self.technique_config,
+            metric_names=self.metric_names,
+            metric_configs=self.metric_configs,
+            dataset_name="multi_metric",
+            timestamp=timestamp,
+        )
+        logger.info(f"Run ID: {run_id}")
+
         # 3. Run each metric with its own dataset and generation pass
         self._log_phase("Generating images and computing metrics")
         metric_results: Dict[str, Any] = {}
-        all_metric_images: Dict[str, List[Any]] = {}
-        all_metric_metadata: Dict[str, Dict[str, Any]] = {}
+        metric_datasets: Dict[str, str] = {}
 
         for metric_name in self.metric_names:
             self._log_phase(f"Running metric '{metric_name}' with its dataset")
@@ -129,9 +139,10 @@ class MultiBenchmarkRunner(BaseRunner):
                 # Evaluate this batch with this metric
                 metric.update(batch_images, batch.prompts, batch.metadata)
 
+            dataset_source = metric_metadata.get("source", "unknown")
             logger.info(
                 f"Generated and evaluated {total_generated} images for metric '{metric_name}' "
-                f"from dataset '{metric_metadata.get('source', 'unknown')}'"
+                f"from dataset '{dataset_source}'"
             )
 
             # Finalize this metric
@@ -144,21 +155,21 @@ class MultiBenchmarkRunner(BaseRunner):
             }
             logger.info(f"Metric Result ({result.name}): {result.value}")
 
-            # Store images and metadata per metric
-            all_metric_images[metric_name] = metric_images
-            all_metric_metadata[metric_name] = metric_metadata
+            # Track dataset source for report
+            metric_datasets[metric_name] = dataset_source
 
-        run_id = generate_multi_run_id(
-            technique_name=self.technique_name,
-            technique_config=self.technique_config,
-            metric_names=self.metric_names,
-            metric_configs=self.metric_configs,
-            dataset_name="multi_metric",
-            timestamp=timestamp,
-        )
-        logger.info(f"Run ID: {run_id}")
+            # Save images immediately (don't keep in memory)
+            self._log_phase(f"Saving artifacts for metric '{metric_name}'")
+            self.writer.save_run(
+                run_id=run_id,
+                technique_name=self.technique_name,
+                metric_name=metric_name,
+                images=metric_images,
+                report={},  # Minimal report at save time
+                metadata=metric_metadata,
+            )
 
-        # 4. Build report
+        # 4. Build final report
         report = self._build_base_report(
             run_id=run_id,
             timestamp=timestamp,
@@ -166,26 +177,12 @@ class MultiBenchmarkRunner(BaseRunner):
             metric_names=self.metric_names,
             dataset_name="multi_metric",
             dataset_metadata={
-                "metric_datasets": {
-                    name: meta.get("source", "unknown")
-                    for name, meta in all_metric_metadata.items()
-                }
+                "metric_datasets": metric_datasets
             },
             technique_config=self.technique_config,
             metric_configs=self.metric_configs,
             metric_results=metric_results,
         )
-
-        # 5. Save artifacts (per-metric images)
-        for metric_name in self.metric_names:
-            self.writer.save_run(
-                run_id=run_id,
-                technique_name=self.technique_name,
-                metric_name=metric_name,
-                images=all_metric_images[metric_name],
-                report=report,
-                metadata=all_metric_metadata[metric_name],
-            )
 
         logger.info("Multi-benchmark run completed.")
         return report

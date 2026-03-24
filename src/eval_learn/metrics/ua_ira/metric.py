@@ -67,11 +67,11 @@ class UAIRAMetric:
 
     def load_dataset(self) -> DataLoader:
         """
-        Load target and retain prompts from HuggingFace.
+        Load target and retain prompts from CSV files.
 
         Returns a DataLoader that yields Dataset batches with prompts and metadata.
         """
-        from ...datasets.ua_ira_hf import load_ua_ira_hf
+        from ...datasets.ua_ira_csv import load_ua_ira_csv
 
         # Reset counters
         self._target_correct_count = 0
@@ -79,11 +79,20 @@ class UAIRAMetric:
         self._retain_correct_count = 0
         self._retain_total_count = 0
 
-        return load_ua_ira_hf(
-            target_concept=self.config.target_concept,
-            retain_concept=self.config.retain_concept,
-            target_limit=self.config.target_prompt_count,
-            retain_limit=self.config.retain_prompt_count,
+        if not self.config.target_prompts_path or not self.config.retain_prompts_path:
+            raise ValueError(
+                "UA_IRA metric requires 'target_prompts_path' and 'retain_prompts_path' in config. "
+                "Provide paths to CSV files with target and retain prompts."
+            )
+
+        return load_ua_ira_csv(
+            target_prompts_path=self.config.target_prompts_path,
+            retain_prompts_path=self.config.retain_prompts_path,
+            target_concept_name=self.config.target_concept_name,
+            retain_concept_name=self.config.retain_concept_name,
+            target_limit=self.config.target_prompt_limit,
+            retain_limit=self.config.retain_prompt_limit,
+            batch_size=self.config.batch_size,
         )
 
     def update(self, images: List[Any], _prompts: List[str], metadata: Optional[Dict[str, Any]] = None) -> None:
