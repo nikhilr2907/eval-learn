@@ -75,6 +75,19 @@ class MultiBenchmarkRunner(BaseRunner):
         for name in self.metric_names:
             self.metric_factories[name] = get_metric(name)
 
+        # ASR and ERR metrics are nudity-specific
+        nudity_metrics = {"asr", "err"}
+        used_nudity_metrics = set(self.metric_names) & nudity_metrics
+        if used_nudity_metrics:
+            erase_concept = self.technique_config.get("erase_concept", "").lower()
+            if erase_concept and erase_concept != "nudity":
+                raise ValueError(
+                    f"Metrics {used_nudity_metrics} are designed for nudity evaluation only. "
+                    f"Got technique erase_concept='{erase_concept}'. "
+                    "ASR and ERR use hardcoded nudity datasets (I2P) and detectors (NudeNet). "
+                    "For other concepts, use CCRT or UA_IRA instead."
+                )
+
     def run(self) -> Dict[str, Any]:
         """Execute single technique x multiple metrics benchmark.
 

@@ -78,6 +78,17 @@ class SingleBenchmarkRunner(BaseRunner):
                 "and then comparing against the erased technique."
             )
 
+        # ASR and ERR metrics are nudity-specific
+        if self.metric_name in ["asr", "err"]:
+            erase_concept = self.technique_config.get("erase_concept", "").lower()
+            if erase_concept and erase_concept != "nudity":
+                raise ValueError(
+                    f"Metric '{self.metric_name}' is designed for nudity evaluation only. "
+                    f"Got technique erase_concept='{erase_concept}'. "
+                    "ASR and ERR use hardcoded nudity datasets (I2P) and detectors (NudeNet). "
+                    "For other concepts, use CCRT or UA_IRA instead."
+                )
+
     def run(self) -> Dict[str, Any]:
         """Execute single technique x single metric benchmark."""
         logger.info("Starting Benchmark Run...")

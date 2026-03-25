@@ -49,10 +49,10 @@ class SAeUronWrapper:
             self.target_latents = self.config.target_latents
             logger.info(f"Using {len(self.target_latents)} explicitly provided target latents.")
         else:
-            logger.info(f"Dynamically computing target latents for concept: '{self.config.concept}'")
+            logger.info(f"Dynamically computing target latents for concept: '{self.config.erase_concept}'")
             self.target_latents = get_target_latents(
                 acts_path=self.config.acts_path,
-                target_concept=self.config.concept,
+                target_concept=self.config.erase_concept,
                 percentile=self.config.percentile
             )
             logger.info(f"Identified {len(self.target_latents)} latents to steer.")

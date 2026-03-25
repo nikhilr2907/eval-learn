@@ -31,3 +31,8 @@ class UCEConfig(BaseConfig):
                 "UCE requires either a 'preset' (e.g. 'nudity') "
                 "or an explicit 'uce_weights_path'."
             )
+
+    @property
+    def erase_concept(self) -> Optional[str]:
+        """Return the erase_concept corresponding to the preset for runner validation."""
+        return self.preset.lower() if self.preset else None

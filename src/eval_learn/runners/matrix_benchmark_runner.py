@@ -71,13 +71,32 @@ class MatrixBenchmarkRunner(BaseRunner):
         if len(set(self.metric_names)) != len(self.metric_names):
             raise ValueError("metric_names contains duplicates.")
 
-        # CCRT cannot be used in matrix benchmark (concept-specific + multi-metric incompatible)
+        # CCRT can only be used in matrix benchmark if all techniques are free_run
         if "ccrt" in self.metric_names:
-            raise ValueError(
-                "CCRT metric cannot be used in matrix benchmark. "
-                "CCRT is concept-specific and requires exclusive control over dataset generation. "
-                "Use SingleBenchmarkRunner with metric='ccrt' and technique='free_run' instead."
-            )
+            non_free_run = [t for t in self.technique_names if t != "free_run"]
+            if non_free_run:
+                raise ValueError(
+                    f"CCRT metric can only be used with 'free_run' technique. "
+                    f"Got techniques: {self.technique_names}. "
+                    "CCRT requires specifying original_model_id and erased_model_id, "
+                    "which only free_run supports. "
+                    "For other techniques, use UA_IRA or other concept-agnostic metrics."
+                )
+
+        # ASR and ERR metrics are nudity-specific
+        nudity_metrics = {"asr", "err"}
+        used_nudity_metrics = set(self.metric_names) & nudity_metrics
+        if used_nudity_metrics:
+            for technique_name in self.technique_names:
+                tech_config = self.technique_configs.get(technique_name, {})
+                erase_concept = tech_config.get("erase_concept", "").lower()
+                if erase_concept and erase_concept != "nudity":
+                    raise ValueError(
+                        f"Metrics {used_nudity_metrics} are designed for nudity evaluation only. "
+                        f"Got technique '{technique_name}' with erase_concept='{erase_concept}'. "
+                        "ASR and ERR use hardcoded nudity datasets (I2P) and detectors (NudeNet). "
+                        "For other concepts, use CCRT or UA_IRA instead."
+                    )
 
         for name in self.technique_names:
             get_technique(name)

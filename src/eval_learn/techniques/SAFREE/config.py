@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Tuple
 from ...configs.base import BaseConfig
 
-_VALID_CATEGORIES = {"nudity"}
+_VALID_ERASE_CONCEPTS = {"nudity"}
 
 
 @dataclass
@@ -26,18 +26,19 @@ class SAFREEConfig(BaseConfig):
     freeu_s1: float = 0.9
     freeu_s2: float = 0.2
 
-    # Concept specification
-    concept_category: str = "nudity"
+    # Concept specification (SAFREE only supports nudity)
+    erase_concept: str = "nudity"
 
     # Alternative to SVF (if SVF disabled)
     re_attn_timestep_range: Tuple[int, int] = (-1, 1001)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'SAFREEConfig':
-        category = data.get("concept_category", "nudity")
-        if category.lower() not in _VALID_CATEGORIES:
+        erase_concept = data.get("erase_concept", "nudity")
+        if erase_concept.lower() not in _VALID_ERASE_CONCEPTS:
             raise ValueError(
-                f"Unknown concept_category '{category}'. "
-                f"Available: {sorted(_VALID_CATEGORIES)}"
+                f"SAFREE only supports nudity concept erasure. "
+                f"Got erase_concept='{erase_concept}'. "
+                f"Available: {sorted(_VALID_ERASE_CONCEPTS)}"
             )
         return super().from_dict(data)

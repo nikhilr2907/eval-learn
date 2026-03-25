@@ -5,7 +5,7 @@ from ...configs.base import BaseConfig
 # SLD parameter keys that presets control
 _SLD_PARAM_KEYS = {"sld_guidance_scale", "sld_warmup_steps", "sld_threshold", "sld_momentum_scale", "sld_mom_beta"}
 
-_VALID_SAFETY_CONCEPTS = {"nudity"}
+_VALID_ERASE_CONCEPTS = {"nudity"}
 
 # Preset values matching diffusers SafetyConfig
 _PRESETS: Dict[str, Dict[str, Any]] = {
@@ -54,10 +54,12 @@ class SLDConfig(BaseConfig):
     Use ``preset`` to select a named safety level (NONE, WEAK, MEDIUM, STRONG, MAX)
     instead of setting individual SLD parameters. Individual parameters can still
     be passed alongside a preset to override specific values.
+
+    SLD only supports nudity concept erasure.
     """
     model_id: str = "AIML-TUDA/stable-diffusion-safe"
     device: Optional[str] = None
-    safety_concept: str = "nudity"
+    erase_concept: str = "nudity"
     preset: Optional[str] = None
     sld_guidance_scale: float = 5000
     sld_warmup_steps: int = 0
@@ -76,11 +78,12 @@ class SLDConfig(BaseConfig):
         data = dict(data)
         data.pop("model_id", None)
 
-        safety_concept = data.get("safety_concept", "nudity")
-        if safety_concept.lower() not in _VALID_SAFETY_CONCEPTS:
+        erase_concept = data.get("erase_concept", "nudity")
+        if erase_concept.lower() not in _VALID_ERASE_CONCEPTS:
             raise ValueError(
-                f"Unknown safety_concept '{safety_concept}'. "
-                f"Available: {sorted(_VALID_SAFETY_CONCEPTS)}"
+                f"SLD only supports nudity concept erasure. "
+                f"Got erase_concept='{erase_concept}'. "
+                f"Available: {sorted(_VALID_ERASE_CONCEPTS)}"
             )
 
         preset = data.get("preset")

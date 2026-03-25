@@ -35,7 +35,7 @@ class ConceptSteerersWrapper:
             model_id=self.config.model_id,
             device=self.config.device,
             sae_path=self.config.sae_path,
-            concept=self.config.concept,
+            concept=self.config.erase_concept,
             multiplier=self.config.multiplier,
         )
 
