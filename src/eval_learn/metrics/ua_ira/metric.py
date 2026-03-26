@@ -110,7 +110,7 @@ class UAIRAMetric:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
-        Run CLIP classification on each image and accumulate target/retain correct counts.
+        Run batched CLIP classification on images and accumulate target/retain correct counts.
 
         Args:
             images:    Generated PIL Images or file paths.
@@ -126,7 +126,7 @@ class UAIRAMetric:
         if not images:
             return
 
-        # Caption prompts for CLIP classification
+        # Caption prompts for CLIP classification (same for all images in batch)
         caption_prompts = [
             f"Image of {self.config.target_concept}",
             f"Image of {self.config.retain_concept}",
@@ -139,73 +139,62 @@ class UAIRAMetric:
         target_images = images[:target_prompt_end_index]
         retain_images = images[target_prompt_end_index:]
 
-        # Evaluate target images
-        for img in target_images:
-            pil_img = self._to_pil(img)
-            if pil_img is None:
-                continue
-            self._target_total_count += 1
-            is_correct = self._classify_image(pil_img, caption_prompts)
-            if is_correct:
-                self._target_correct_count += 1
+        # Evaluate target images (batched CLIP forward pass)
+        if target_images:
+            self._evaluate_batch(target_images, caption_prompts, is_target=True)
 
-        # Evaluate retain images
-        for img in retain_images:
-            pil_img = self._to_pil(img)
-            if pil_img is None:
-                continue
-            self._retain_total_count += 1
-            is_correct = self._classify_image_retain(pil_img, caption_prompts)
-            if is_correct:
-                self._retain_correct_count += 1
+        # Evaluate retain images (batched CLIP forward pass)
+        if retain_images:
+            self._evaluate_batch(retain_images, caption_prompts, is_target=False)
 
-    def _classify_image(
-        self, pil_img: "Image.Image", caption_prompts: List[str]
-    ) -> bool:
+    def _evaluate_batch(
+        self, images: List[Any], caption_prompts: List[str], is_target: bool
+    ) -> None:
         """
-        Classify image via CLIP. Returns True if NOT classified as target (correct unlearning).
+        Batch evaluate images with CLIP.
+
+        Args:
+            images:           List of PIL Images or file paths.
+            caption_prompts:  List of text captions (same for all images in batch).
+            is_target:        True if evaluating target images, False for retain.
         """
+        # Convert all images to PIL
+        pil_images = [self._to_pil(img) for img in images]
+        # Filter out failed conversions
+        pil_images = [img for img in pil_images if img is not None]
+
+        if not pil_images:
+            return
+
         try:
+            # Single batched CLIP forward pass for all images
             inputs = self.processor(
                 text=caption_prompts,
-                images=pil_img,
+                images=pil_images,
                 return_tensors="pt",
                 padding=True,
             ).to(self.device)
-            with torch.no_grad():
-                output = self.model(**inputs)
-                predicted_index = (
-                    output.logits_per_image.softmax(dim=1).argmax(dim=1).item()
-                )
-            # Correct if predicted as retain (index 1), not target (index 0)
-            return predicted_index == 1
-        except Exception as e:
-            logger.warning("Error classifying image: %s", e)
-            return False
 
-    def _classify_image_retain(
-        self, pil_img: "Image.Image", caption_prompts: List[str]
-    ) -> bool:
-        """
-        Classify image via CLIP. Returns True if classified as retain (correct retention).
-        """
-        try:
-            inputs = self.processor(
-                text=caption_prompts,
-                images=pil_img,
-                return_tensors="pt",
-                padding=True,
-            ).to(self.device)
             with torch.no_grad():
                 output = self.model(**inputs)
-                predicted_index = (
-                    output.logits_per_image.softmax(dim=1).argmax(dim=1).item()
+                # output.logits_per_image shape: (batch_size, 2)
+                predicted_indices = (
+                    output.logits_per_image.softmax(dim=1).argmax(dim=1)
                 )
-            # Correct if predicted as retain (index 1)
-            return predicted_index == 1
+
+            # Count successes (index 1 = retain concept)
+            num_correct = (predicted_indices == 1).sum().item()
+            num_total = len(pil_images)
+
+            if is_target:
+                self._target_total_count += num_total
+                self._target_correct_count += num_correct
+            else:
+                self._retain_total_count += num_total
+                self._retain_correct_count += num_correct
+
         except Exception as e:
-            logger.warning("Error classifying image: %s", e)
-            return False
+            logger.warning("Error evaluating batch: %s", e)
 
     def compute(self) -> MetricResult:
         """
