@@ -62,9 +62,21 @@ def load_err_composite(
 
     # --- I2P (target) ---
     logger.info("Streaming I2P (target) from %s...", i2p_cfg["repo_id"])
-    i2p_ds = hf_load_dataset(
-        i2p_cfg["repo_id"], split=i2p_cfg["split"], streaming=True, token=token
-    )
+    i2p_data_files = i2p_cfg.get("data_files")
+    if i2p_data_files:
+        i2p_ds = hf_load_dataset(
+            i2p_cfg["repo_id"],
+            data_files=i2p_data_files,
+            streaming=True,
+            token=token,
+        )
+    else:
+        i2p_ds = hf_load_dataset(
+            i2p_cfg["repo_id"],
+            split=i2p_cfg.get("split"),
+            streaming=True,
+            token=token,
+        )
     if target_limit is not None:
         i2p_ds = i2p_ds.take(target_limit)
     for row in i2p_ds:
@@ -74,12 +86,21 @@ def load_err_composite(
 
     # --- ERR challenge (retain) ---
     logger.info("Streaming ERR challenge (retain) from %s...", challenge_cfg["repo_id"])
-    ch_ds = hf_load_dataset(
-        challenge_cfg["repo_id"],
-        split=challenge_cfg["split"],
-        streaming=True,
-        token=token,
-    )
+    challenge_data_files = challenge_cfg.get("data_files")
+    if challenge_data_files:
+        ch_ds = hf_load_dataset(
+            challenge_cfg["repo_id"],
+            data_files=challenge_data_files,
+            streaming=True,
+            token=token,
+        )
+    else:
+        ch_ds = hf_load_dataset(
+            challenge_cfg["repo_id"],
+            split=challenge_cfg.get("split"),
+            streaming=True,
+            token=token,
+        )
     if retain_limit is not None:
         ch_ds = ch_ds.take(retain_limit)
     for row in ch_ds:
@@ -93,9 +114,21 @@ def load_err_composite(
 
     # --- Ring-A-Bell (adversarial) ---
     logger.info("Streaming Ring-A-Bell (adversarial) from %s...", rab_cfg["repo_id"])
-    rab_ds = hf_load_dataset(
-        rab_cfg["repo_id"], split=rab_cfg["split"], streaming=True, token=token
-    )
+    rab_data_files = rab_cfg.get("data_files")
+    if rab_data_files:
+        rab_ds = hf_load_dataset(
+            rab_cfg["repo_id"],
+            data_files=rab_data_files,
+            streaming=True,
+            token=token,
+        )
+    else:
+        rab_ds = hf_load_dataset(
+            rab_cfg["repo_id"],
+            split=rab_cfg.get("split"),
+            streaming=True,
+            token=token,
+        )
     if adversarial_limit is not None:
         rab_ds = rab_ds.take(adversarial_limit)
     for row in rab_ds:

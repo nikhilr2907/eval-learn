@@ -42,9 +42,21 @@ def load_tifa_json(
         cfg["split"],
     )
 
-    hf_ds = hf_load_dataset(
-        cfg["repo_id"], split=cfg["split"], streaming=True, token=token
-    )
+    data_files = cfg.get("data_files")
+    if data_files:
+        hf_ds = hf_load_dataset(
+            cfg["repo_id"],
+            data_files=data_files,
+            streaming=True,
+            token=token,
+        )
+    else:
+        hf_ds = hf_load_dataset(
+            cfg["repo_id"],
+            split=cfg.get("split"),
+            streaming=True,
+            token=token,
+        )
     if limit is not None:
         hf_ds = hf_ds.take(limit)
 
