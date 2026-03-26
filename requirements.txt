@@ -24,6 +24,7 @@ git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=uce
 git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=esd
 git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=mace
 git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=concept-steerers
+git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=safree
 git+https://huggingface.co/datasets/Unlearningltd/packages.git#subdirectory=saeuron
 
 --extra-index-url https://download.pytorch.org/whl/cu126
