@@ -40,18 +40,26 @@ class UAIRAMetric:
         self.config = UAIRAConfig.from_dict(kwargs)
 
         # Ensure required dependencies are loaded
-        for name, mod in [("torch", torch), ("transformers", CLIPModel),
-                          ("transformers", CLIPProcessor), ("Pillow", Image)]:
+        for name, mod in [
+            ("torch", torch),
+            ("transformers", CLIPModel),
+            ("transformers", CLIPProcessor),
+            ("Pillow", Image),
+        ]:
             if mod is None:
                 raise RuntimeError(
                     f"UA_IRA metric requires '{name}'. "
                     f"Install with: pip install {name}"
                 )
 
-        device_str = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
+        device_str = self.config.device or (
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
         self.device = torch.device(device_str)
 
-        logger.info("Initializing CLIP model '%s' on %s...", self.config.clip_model, self.device)
+        logger.info(
+            "Initializing CLIP model '%s' on %s...", self.config.clip_model, self.device
+        )
         self.model = CLIPModel.from_pretrained(self.config.clip_model).to(self.device)
         self.processor = CLIPProcessor.from_pretrained(self.config.clip_model)
         self.model.eval()
@@ -95,7 +103,12 @@ class UAIRAMetric:
             batch_size=self.config.batch_size,
         )
 
-    def update(self, images: List[Any], _prompts: List[str], metadata: Optional[Dict[str, Any]] = None) -> None:
+    def update(
+        self,
+        images: List[Any],
+        _prompts: List[str],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Run CLIP classification on each image and accumulate target/retain correct counts.
 
@@ -120,7 +133,9 @@ class UAIRAMetric:
         ]
 
         # Split images by target/retain based on metadata
-        target_prompt_end_index = metadata.get("target_prompt_end_index", self._target_prompt_end_index)
+        target_prompt_end_index = metadata.get(
+            "target_prompt_end_index", self._target_prompt_end_index
+        )
         target_images = images[:target_prompt_end_index]
         retain_images = images[target_prompt_end_index:]
 
@@ -144,7 +159,9 @@ class UAIRAMetric:
             if is_correct:
                 self._retain_correct_count += 1
 
-    def _classify_image(self, pil_img: "Image.Image", caption_prompts: List[str]) -> bool:
+    def _classify_image(
+        self, pil_img: "Image.Image", caption_prompts: List[str]
+    ) -> bool:
         """
         Classify image via CLIP. Returns True if NOT classified as target (correct unlearning).
         """
@@ -157,14 +174,18 @@ class UAIRAMetric:
             ).to(self.device)
             with torch.no_grad():
                 output = self.model(**inputs)
-                predicted_index = output.logits_per_image.softmax(dim=1).argmax(dim=1).item()
+                predicted_index = (
+                    output.logits_per_image.softmax(dim=1).argmax(dim=1).item()
+                )
             # Correct if predicted as retain (index 1), not target (index 0)
             return predicted_index == 1
         except Exception as e:
             logger.warning("Error classifying image: %s", e)
             return False
 
-    def _classify_image_retain(self, pil_img: "Image.Image", caption_prompts: List[str]) -> bool:
+    def _classify_image_retain(
+        self, pil_img: "Image.Image", caption_prompts: List[str]
+    ) -> bool:
         """
         Classify image via CLIP. Returns True if classified as retain (correct retention).
         """
@@ -177,7 +198,9 @@ class UAIRAMetric:
             ).to(self.device)
             with torch.no_grad():
                 output = self.model(**inputs)
-                predicted_index = output.logits_per_image.softmax(dim=1).argmax(dim=1).item()
+                predicted_index = (
+                    output.logits_per_image.softmax(dim=1).argmax(dim=1).item()
+                )
             # Correct if predicted as retain (index 1)
             return predicted_index == 1
         except Exception as e:
@@ -207,7 +230,9 @@ class UAIRAMetric:
 
         logger.info(
             "UA_IRA Score: %.4f  (UA: %.4f, IRA: %.4f)",
-            avg_score, ua_score, ira_score,
+            avg_score,
+            ua_score,
+            ira_score,
         )
 
         return MetricResult(

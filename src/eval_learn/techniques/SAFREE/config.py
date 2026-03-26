@@ -33,7 +33,7 @@ class SAFREEConfig(BaseConfig):
     re_attn_timestep_range: Tuple[int, int] = (-1, 1001)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'SAFREEConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "SAFREEConfig":
         erase_concept = data.get("erase_concept", "nudity")
         if erase_concept.lower() not in _VALID_ERASE_CONCEPTS:
             raise ValueError(

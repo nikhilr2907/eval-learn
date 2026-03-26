@@ -6,4 +6,11 @@ from .clip_score.metric import CLIPScoreMetric
 from .ua_ira.metric import UAIRAMetric
 
 
-__all__ = ["ASRMetric", "FIDMetric", "ERRMetric", "TIFAMetric", "CLIPScoreMetric", "UAIRAMetric"]
+__all__ = [
+    "ASRMetric",
+    "FIDMetric",
+    "ERRMetric",
+    "TIFAMetric",
+    "CLIPScoreMetric",
+    "UAIRAMetric",
+]

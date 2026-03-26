@@ -1,11 +1,4 @@
-"""
-hf_sync.py — Hugging Face Hub integration for syncing datasets, results, and images.
-
-Uses three separate HF dataset repos:
-  - datasets_repo: raw input data (CSVs, JSONs, parquets)
-  - results_repo:  run report JSONs only (lightweight)
-  - images_repo:   generated images organised by run (heavy)
-"""
+"""Hugging Face Hub integration for syncing datasets, results, and images."""
 
 import os
 from typing import Any, Dict, List, Optional
@@ -18,15 +11,7 @@ logger = get_logger(__name__)
 
 
 class HFSync:
-    """
-    Syncs benchmark artifacts with Hugging Face Hub dataset repositories.
-
-    Folder mapping::
-
-        Local results/sld_asr_<id>/          →  results repo:  sld_asr_<id>/<id>_report.json
-                                              →  images repo:   sld_asr_<id>/0.png ...
-        Local data/                          ←  datasets repo: (full snapshot)
-    """
+    """Syncs benchmark artifacts with Hugging Face Hub dataset repositories."""
 
     def __init__(
         self,
@@ -48,17 +33,7 @@ class HFSync:
     # ------------------------------------------------------------------
 
     def push_report(self, run_dir: str, run_id: str) -> str:
-        """
-        Upload a run's report JSON to the results repo.
-
-        Args:
-            run_dir: Local path to the run folder
-                     (e.g. ``results/sld_asr_a1b2c3d4``).
-            run_id:  The 8-char hex run identifier.
-
-        Returns:
-            URL of the uploaded file on the Hub.
-        """
+        """Upload run report JSON to results repo."""
         report_path = os.path.join(run_dir, f"{run_id}_report.json")
         if not os.path.isfile(report_path):
             raise FileNotFoundError(f"Report not found: {report_path}")
@@ -79,18 +54,7 @@ class HFSync:
         return url
 
     def push_images(self, run_dir: str, run_id: str) -> str:
-        """
-        Upload a run's images folder to the images repo.
-
-        Preserves subdirectory structure (e.g. target/, retain/ for ERR).
-
-        Args:
-            run_dir: Local path to the run folder.
-            run_id:  The 8-char hex run identifier.
-
-        Returns:
-            URL of the uploaded folder on the Hub.
-        """
+        """Upload run images folder to images repo."""
         images_dir = os.path.join(run_dir, "images")
         if not os.path.isdir(images_dir):
             raise FileNotFoundError(f"Images directory not found: {images_dir}")
@@ -110,43 +74,22 @@ class HFSync:
         return url
 
     def push_run(self, run_dir: str, run_id: str) -> Dict[str, str]:
-        """
-        Push both report and images for a completed run.
-
-        Args:
-            run_dir: Local path to the run folder.
-            run_id:  The 8-char hex run identifier.
-
-        Returns:
-            Dict with ``report_url`` and ``images_url``.
-        """
+        """Push both report and images for a completed run."""
         report_url = self.push_report(run_dir, run_id)
         images_url = self.push_images(run_dir, run_id)
         return {"report_url": report_url, "images_url": images_url}
 
     def push_matrix_run(self, output_dir: str, matrix_run_id: str) -> Dict[str, Any]:
-        """
-        Push all artifacts for a matrix benchmark run.
-
-        Uploads the top-level matrix report and each sub-run's
-        report + images.
-
-        Args:
-            output_dir:     Root output directory containing sub-run folders
-                            and the ``matrix_<id>_report.json``.
-            matrix_run_id:  The 8-char hex matrix run identifier.
-
-        Returns:
-            Dict with ``matrix_report_url`` and ``sub_runs`` mapping
-            folder names to their push URLs.
-        """
+        """Push all artifacts for a matrix benchmark run."""
         # Push the matrix-level report
         matrix_report_name = f"matrix_{matrix_run_id}_report.json"
         matrix_report_path = os.path.join(output_dir, matrix_report_name)
         if not os.path.isfile(matrix_report_path):
             raise FileNotFoundError(f"Matrix report not found: {matrix_report_path}")
 
-        logger.info("Pushing matrix report to %s/%s", self.results_repo, matrix_report_name)
+        logger.info(
+            "Pushing matrix report to %s/%s", self.results_repo, matrix_report_name
+        )
         matrix_report_url = self.api.upload_file(
             path_or_fileobj=matrix_report_path,
             path_in_repo=matrix_report_name,
@@ -157,10 +100,13 @@ class HFSync:
         )
 
         # Find and push each sub-run folder
-        sub_run_dirs = sorted([
-            d for d in os.listdir(output_dir)
-            if os.path.isdir(os.path.join(output_dir, d)) and "_multi_" in d
-        ])
+        sub_run_dirs = sorted(
+            [
+                d
+                for d in os.listdir(output_dir)
+                if os.path.isdir(os.path.join(output_dir, d)) and "_multi_" in d
+            ]
+        )
 
         sub_urls = {}
         for folder_name in sub_run_dirs:
@@ -178,15 +124,7 @@ class HFSync:
     # ------------------------------------------------------------------
 
     def pull_datasets(self, local_dir: str = "data") -> str:
-        """
-        Download all datasets from the HF datasets repo.
-
-        Args:
-            local_dir: Local directory to download into (default ``data/``).
-
-        Returns:
-            Path to the downloaded snapshot.
-        """
+        """Download all datasets from HF datasets repo."""
         logger.info("Pulling datasets from %s to %s/", self.datasets_repo, local_dir)
         path = snapshot_download(
             repo_id=self.datasets_repo,
@@ -198,15 +136,7 @@ class HFSync:
         return path
 
     def pull_results(self, local_dir: str = "results") -> str:
-        """
-        Download all report JSONs from the results repo.
-
-        Args:
-            local_dir: Local directory to download into (default ``results/``).
-
-        Returns:
-            Path to the downloaded snapshot.
-        """
+        """Download all report JSONs from results repo."""
         logger.info("Pulling results from %s to %s/", self.results_repo, local_dir)
         path = snapshot_download(
             repo_id=self.results_repo,
@@ -218,19 +148,8 @@ class HFSync:
         return path
 
     def pull_run_images(self, folder_name: str, local_dir: str = "results") -> str:
-        """
-        Download images for a single run only.
-
-        Args:
-            folder_name: Run folder name (e.g. ``sld_asr_a1b2c3d4``).
-            local_dir:   Local directory to download into.
-
-        Returns:
-            Path to the downloaded snapshot.
-        """
-        logger.info(
-            "Pulling images for %s from %s", folder_name, self.images_repo
-        )
+        """Download images for a single run."""
+        logger.info("Pulling images for %s from %s", folder_name, self.images_repo)
         path = snapshot_download(
             repo_id=self.images_repo,
             repo_type="dataset",
@@ -241,17 +160,10 @@ class HFSync:
         logger.info("Images downloaded to %s", path)
         return path
 
-    def pull_matrix_results(self, matrix_run_id: str, local_dir: str = "results") -> str:
-        """
-        Download matrix report and all associated sub-run reports.
-
-        Args:
-            matrix_run_id: The 8-char hex matrix run identifier.
-            local_dir:     Local directory to download into.
-
-        Returns:
-            Path to the downloaded snapshot.
-        """
+    def pull_matrix_results(
+        self, matrix_run_id: str, local_dir: str = "results"
+    ) -> str:
+        """Download matrix report and all associated sub-run reports."""
         logger.info(
             "Pulling matrix results for %s from %s", matrix_run_id, self.results_repo
         )

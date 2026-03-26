@@ -64,7 +64,9 @@ def load_ccrt_genetic(
 
     logger.info(
         "Building CCRT DataLoader: %d prompts, batch_size=%d, concept='%s'.",
-        len(prompts), batch_size, concept_name,
+        len(prompts),
+        batch_size,
+        concept_name,
     )
 
     _concept_name = concept_name

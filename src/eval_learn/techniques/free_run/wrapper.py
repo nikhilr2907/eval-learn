@@ -37,7 +37,9 @@ class FreeRunTechnique:
                 else ("mps" if torch.backends.mps.is_available() else "cpu")
             )
 
-        logger.info(f"Initializing FreeRun on {self.device} with model {self.config.model_id}")
+        logger.info(
+            f"Initializing FreeRun on {self.device} with model {self.config.model_id}"
+        )
 
         hf_token = os.getenv("HF_TOKEN")
         if hf_token:
@@ -54,9 +56,13 @@ class FreeRunTechnique:
                 requires_safety_checker=False,
             ).to(self.device)
         except Exception as e:
-            raise RuntimeError(f"Failed to load model '{self.config.model_id}': {e}") from e
+            raise RuntimeError(
+                f"Failed to load model '{self.config.model_id}': {e}"
+            ) from e
 
-    def generate(self, prompts: List[str], seed: Optional[int] = None, **kwargs) -> List[Any]:
+    def generate(
+        self, prompts: List[str], seed: Optional[int] = None, **kwargs
+    ) -> List[Any]:
         generator = None
         if seed is not None:
             generator = torch.Generator(device=self.device).manual_seed(seed)

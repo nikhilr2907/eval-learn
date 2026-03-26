@@ -16,7 +16,7 @@ class UCEConfig(BaseConfig):
     guidance_scale: float = 7.5
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'UCEConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "UCEConfig":
         preset = data.get("preset")
         if preset is not None and preset.lower() not in _VALID_PRESETS:
             raise ValueError(

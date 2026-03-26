@@ -61,7 +61,9 @@ def load_ua_ira_csv(
     except FileNotFoundError:
         raise FileNotFoundError(f"Target prompts file not found: {target_prompts_path}")
     except Exception as e:
-        raise RuntimeError(f"Error loading target prompts from {target_prompts_path}: {e}")
+        raise RuntimeError(
+            f"Error loading target prompts from {target_prompts_path}: {e}"
+        )
 
     # Load retain prompts
     retain_prompts = []
@@ -78,9 +80,13 @@ def load_ua_ira_csv(
     except FileNotFoundError:
         raise FileNotFoundError(f"Retain prompts file not found: {retain_prompts_path}")
     except Exception as e:
-        raise RuntimeError(f"Error loading retain prompts from {retain_prompts_path}: {e}")
+        raise RuntimeError(
+            f"Error loading retain prompts from {retain_prompts_path}: {e}"
+        )
 
-    logger.info(f"Loaded {len(target_prompts)} target and {len(retain_prompts)} retain prompts.")
+    logger.info(
+        f"Loaded {len(target_prompts)} target and {len(retain_prompts)} retain prompts."
+    )
 
     if not target_prompts or not retain_prompts:
         raise ValueError(

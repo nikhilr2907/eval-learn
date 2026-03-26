@@ -44,14 +44,20 @@ class TIFAMetric:
     def __init__(self, **kwargs):
         self.config = TIFAConfig.from_dict(kwargs)
 
-        for name, mod in [("torch", torch), ("transformers", Blip2Processor), ("Pillow", Image)]:
+        for name, mod in [
+            ("torch", torch),
+            ("transformers", Blip2Processor),
+            ("Pillow", Image),
+        ]:
             if mod is None:
                 raise RuntimeError(
                     f"TIFA metric requires '{name}'. "
                     f"Install with: pip install {name}"
                 )
 
-        device_str = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
+        device_str = self.config.device or (
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
         self.device = device_str
 
         self._processor = None
@@ -81,7 +87,11 @@ class TIFAMetric:
         """Lazy-load the BLIP-2 VQA model."""
         if self._model is not None:
             return
-        logger.info("Loading BLIP-2 VQA model '%s' on %s...", self.config.vqa_model_name, self.device)
+        logger.info(
+            "Loading BLIP-2 VQA model '%s' on %s...",
+            self.config.vqa_model_name,
+            self.device,
+        )
         self._processor = Blip2Processor.from_pretrained(self.config.vqa_model_name)
         self._model = Blip2ForConditionalGeneration.from_pretrained(
             self.config.vqa_model_name,
@@ -96,16 +106,25 @@ class TIFAMetric:
         if pil_image.mode != "RGB":
             pil_image = pil_image.convert("RGB")
         inputs = self._processor(
-            images=pil_image, text=question, return_tensors="pt",
+            images=pil_image,
+            text=question,
+            return_tensors="pt",
         ).to(self.device, torch.float16)
         generated_ids = self._model.generate(**inputs, max_new_tokens=max_new_tokens)
-        return self._processor.decode(generated_ids[0], skip_special_tokens=True).strip()
+        return self._processor.decode(
+            generated_ids[0], skip_special_tokens=True
+        ).strip()
 
     # ------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------
 
-    def update(self, images: List[Any], _prompts: List[str], metadata: Optional[Dict[str, Any]] = None) -> None:
+    def update(
+        self,
+        images: List[Any],
+        _prompts: List[str],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Run BLIP-2 VQA on each image against its QA pairs and accumulate
         correct/total question counts.
@@ -146,7 +165,9 @@ class TIFAMetric:
                     self._correct_count += 1
                     img_correct += 1
 
-            self._per_image_scores.append(img_correct / img_total if img_total > 0 else None)
+            self._per_image_scores.append(
+                img_correct / img_total if img_total > 0 else None
+            )
             self._total_images += 1
 
     def compute(self) -> MetricResult:
@@ -155,11 +176,18 @@ class TIFAMetric:
         All VQA inference was done in update() — this is division only.
         """
         if self._total_images == 0:
-            return MetricResult(name="TIFA", value=0.0, details={"error": "No images evaluated"})
+            return MetricResult(
+                name="TIFA", value=0.0, details={"error": "No images evaluated"}
+            )
 
-        tifa_score = self._correct_count / self._total_count if self._total_count > 0 else 0.0
+        tifa_score = (
+            self._correct_count / self._total_count if self._total_count > 0 else 0.0
+        )
         logger.info(
-            "TIFA Score: %.4f (%d/%d correct)", tifa_score, self._correct_count, self._total_count
+            "TIFA Score: %.4f (%d/%d correct)",
+            tifa_score,
+            self._correct_count,
+            self._total_count,
         )
 
         return MetricResult(

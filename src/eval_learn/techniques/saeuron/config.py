@@ -56,7 +56,7 @@ class SAeUronConfig(BaseConfig):
     target_latents: List[int] = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> 'SAeUronConfig':
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "SAeUronConfig":
         """
         Creates a SAeUronConfig instance from a dictionary.
 
@@ -84,16 +84,14 @@ class SAeUronConfig(BaseConfig):
         saeuron_pkg_path = os.path.dirname(saeuron.__file__)
 
         # 1. Resolve SAE Checkpoint Path automatically
-        if 'sae_path' not in config_dict or not config_dict['sae_path']:
+        if "sae_path" not in config_dict or not config_dict["sae_path"]:
             # Points to the 'checkpoints' folder in the saeuron package
-            config_dict['sae_path'] = os.path.join(saeuron_pkg_path, "checkpoints")
+            config_dict["sae_path"] = os.path.join(saeuron_pkg_path, "checkpoints")
 
         # 2. Resolve Cached Activations Path automatically
-        if 'acts_path' not in config_dict or not config_dict['acts_path']:
-            config_dict['acts_path'] = os.path.join(
-                saeuron_pkg_path,
-                "core",
-                "cls_latents_dict_mini.pkl"
+        if "acts_path" not in config_dict or not config_dict["acts_path"]:
+            config_dict["acts_path"] = os.path.join(
+                saeuron_pkg_path, "core", "cls_latents_dict_mini.pkl"
             )
 
         return super().from_dict(config_dict)

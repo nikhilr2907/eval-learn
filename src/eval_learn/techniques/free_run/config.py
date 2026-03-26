@@ -7,6 +7,7 @@ from ...configs.base import BaseConfig
 @dataclass
 class FreeRunConfig(BaseConfig):
     """Configuration for the free run technique — any HF text-to-image model."""
+
     model_id: str = ""
     device: Optional[str] = None
 

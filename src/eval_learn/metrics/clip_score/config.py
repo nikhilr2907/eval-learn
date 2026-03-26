@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from ...configs.base import BaseConfig
 
+
 @dataclass
 class CLIPScoreConfig(BaseConfig):
     """
@@ -12,6 +13,7 @@ class CLIPScoreConfig(BaseConfig):
         device: Torch device string (default: None, auto-detect).
         limit: Max number of prompts to stream from HuggingFace.
     """
+
     clip_model_name: str = "openai/clip-vit-base-patch32"
     device: Optional[str] = None
     limit: Optional[int] = 300

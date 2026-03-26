@@ -3,7 +3,13 @@ from typing import Dict, Any, Optional
 from ...configs.base import BaseConfig
 
 # SLD parameter keys that presets control
-_SLD_PARAM_KEYS = {"sld_guidance_scale", "sld_warmup_steps", "sld_threshold", "sld_momentum_scale", "sld_mom_beta"}
+_SLD_PARAM_KEYS = {
+    "sld_guidance_scale",
+    "sld_warmup_steps",
+    "sld_threshold",
+    "sld_momentum_scale",
+    "sld_mom_beta",
+}
 
 _VALID_ERASE_CONCEPTS = {"nudity"}
 
@@ -46,6 +52,7 @@ _PRESETS: Dict[str, Dict[str, Any]] = {
     },
 }
 
+
 @dataclass
 class SLDConfig(BaseConfig):
     """
@@ -57,6 +64,7 @@ class SLDConfig(BaseConfig):
 
     SLD only supports nudity concept erasure.
     """
+
     model_id: str = "AIML-TUDA/stable-diffusion-safe"
     device: Optional[str] = None
     erase_concept: str = "nudity"
@@ -68,7 +76,7 @@ class SLDConfig(BaseConfig):
     sld_mom_beta: float = 0.7
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'SLDConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "SLDConfig":
         """Create config from a dict, resolving preset values first.
 
         If ``preset`` is provided, its parameter values are used as defaults.

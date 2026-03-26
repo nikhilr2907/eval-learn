@@ -1,21 +1,11 @@
-"""
-Helpers for loading HuggingFace dataset configs and building streaming DataLoaders.
-"""
+"""Helpers for loading HuggingFace dataset configs and building streaming DataLoaders."""
 
 from pathlib import Path
 from typing import Any, Dict
 
 
 def load_hf_config(key: str) -> Dict[str, Any]:
-    """
-    Load a dataset config entry from config/hf_datasets.yaml.
-
-    Args:
-        key: Dataset key, e.g. "coco", "i2p", "tifa".
-
-    Returns:
-        Dict with repo_id, split, and column names for that dataset.
-    """
+    """Load a dataset config entry from config/hf_datasets.yaml."""
     import yaml
 
     config_path = Path(__file__).parents[3] / "config" / "hf_datasets.yaml"

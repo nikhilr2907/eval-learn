@@ -10,6 +10,7 @@ from ..registry import get_technique, get_metric
 from ..registry.entrypoints import load_entrypoints
 from .core.base_runner import BaseRunner
 from .multi_benchmark_runner import MultiBenchmarkRunner
+from .validation import validate_technique_metric_matrix, ValidationError
 
 logger = get_logger(__name__)
 
@@ -22,13 +23,16 @@ def generate_matrix_run_id(
     timestamp: float,
 ) -> str:
     """Generate a short hash from matrix benchmark run configuration."""
-    payload = json.dumps({
-        "technique_names": sorted(technique_names),
-        "technique_configs": technique_configs,
-        "metric_names": sorted(metric_names),
-        "metric_configs": metric_configs,
-        "timestamp": timestamp,
-    }, sort_keys=True)
+    payload = json.dumps(
+        {
+            "technique_names": sorted(technique_names),
+            "technique_configs": technique_configs,
+            "metric_names": sorted(metric_names),
+            "metric_configs": metric_configs,
+            "timestamp": timestamp,
+        },
+        sort_keys=True,
+    )
     return hashlib.sha256(payload.encode()).hexdigest()[:8]
 
 
@@ -61,7 +65,8 @@ class MatrixBenchmarkRunner(BaseRunner):
         self._validate()
 
     def _validate(self):
-        """Fast-fail: verify all names exist in the registry."""
+        """Validate all technique-metric pairs in the matrix."""
+        # 1. Basic checks
         if not self.technique_names:
             raise ValueError("technique_names must not be empty.")
         if not self.metric_names:
@@ -71,37 +76,23 @@ class MatrixBenchmarkRunner(BaseRunner):
         if len(set(self.metric_names)) != len(self.metric_names):
             raise ValueError("metric_names contains duplicates.")
 
-        # CCRT can only be used in matrix benchmark if all techniques are free_run
-        if "ccrt" in self.metric_names:
-            non_free_run = [t for t in self.technique_names if t != "free_run"]
-            if non_free_run:
-                raise ValueError(
-                    f"CCRT metric can only be used with 'free_run' technique. "
-                    f"Got techniques: {self.technique_names}. "
-                    "CCRT requires specifying original_model_id and erased_model_id, "
-                    "which only free_run supports. "
-                    "For other techniques, use UA_IRA or other concept-agnostic metrics."
-                )
-
-        # ASR and ERR metrics are nudity-specific
-        nudity_metrics = {"asr", "err"}
-        used_nudity_metrics = set(self.metric_names) & nudity_metrics
-        if used_nudity_metrics:
-            for technique_name in self.technique_names:
-                tech_config = self.technique_configs.get(technique_name, {})
-                erase_concept = tech_config.get("erase_concept", "").lower()
-                if erase_concept and erase_concept != "nudity":
-                    raise ValueError(
-                        f"Metrics {used_nudity_metrics} are designed for nudity evaluation only. "
-                        f"Got technique '{technique_name}' with erase_concept='{erase_concept}'. "
-                        "ASR and ERR use hardcoded nudity datasets (I2P) and detectors (NudeNet). "
-                        "For other concepts, use CCRT or UA_IRA instead."
-                    )
-
+        # 2. Check factories exist
         for name in self.technique_names:
             get_technique(name)
         for name in self.metric_names:
             get_metric(name)
+
+        # 3. Validate all technique-metric pairs
+        try:
+            validate_technique_metric_matrix(
+                technique_names=self.technique_names,
+                metric_names=self.metric_names,
+                technique_configs=self.technique_configs,
+                metric_configs=self.metric_configs,
+            )
+        except ValidationError as e:
+            logger.error(f"Invalid matrix configuration: {e}")
+            raise ValueError(str(e))
 
     def run(self) -> Dict[str, Any]:
         """Execute N techniques x M metrics benchmark matrix."""
@@ -165,7 +156,9 @@ class MatrixBenchmarkRunner(BaseRunner):
             for technique_name, report in technique_reports.items():
                 metric_results = report.get("metric_results", {})
                 if metric_name in metric_results:
-                    comparison[metric_name][technique_name] = metric_results[metric_name]["value"]
+                    comparison[metric_name][technique_name] = metric_results[
+                        metric_name
+                    ]["value"]
                 else:
                     comparison[metric_name][technique_name] = None
         return comparison
@@ -184,6 +177,7 @@ class MatrixBenchmarkRunner(BaseRunner):
         gc.collect()
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 logger.info("VRAM cleared.")

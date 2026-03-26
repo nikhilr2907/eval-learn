@@ -5,15 +5,14 @@ from PIL import Image
 try:
     from uce import UCEPipeline
 except ImportError:
-    raise ImportError(
-        "UCEWrapper requires the 'uce' package. Package not installed."
-    )
+    raise ImportError("UCEWrapper requires the 'uce' package. Package not installed.")
 
 from ...registry import register_technique
 from ...logging_utils import get_logger
 from .config import UCEConfig
 
 logger = get_logger(__name__)
+
 
 @register_technique("uce")
 class UCEWrapper:
@@ -38,7 +37,9 @@ class UCEWrapper:
             weights_path=self.config.uce_weights_path,
         )
 
-    def generate(self, prompts: List[str], seed: Optional[int] = None, **kwargs) -> List[Image.Image]:
+    def generate(
+        self, prompts: List[str], seed: Optional[int] = None, **kwargs
+    ) -> List[Image.Image]:
         """
         Generate images using UCE with concept erased.
 
@@ -50,7 +51,9 @@ class UCEWrapper:
         Returns:
             List of PIL Images.
         """
-        num_inference_steps = kwargs.pop("num_inference_steps", self.config.num_inference_steps)
+        num_inference_steps = kwargs.pop(
+            "num_inference_steps", self.config.num_inference_steps
+        )
         guidance_scale = kwargs.pop("guidance_scale", self.config.guidance_scale)
 
         logger.info(f"Generating {len(prompts)} images with UCE")
@@ -60,5 +63,5 @@ class UCEWrapper:
             seed=seed,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
-            **kwargs
+            **kwargs,
         )

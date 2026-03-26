@@ -38,10 +38,13 @@ def load_tifa_json(
 
     logger.info(
         "Setting up HF streaming for TIFA (%s, split=%s)...",
-        cfg["repo_id"], cfg["split"],
+        cfg["repo_id"],
+        cfg["split"],
     )
 
-    hf_ds = hf_load_dataset(cfg["repo_id"], split=cfg["split"], streaming=True, token=token)
+    hf_ds = hf_load_dataset(
+        cfg["repo_id"], split=cfg["split"], streaming=True, token=token
+    )
     if limit is not None:
         hf_ds = hf_ds.take(limit)
 
@@ -55,4 +58,6 @@ def load_tifa_json(
             },
         )
 
-    return DataLoader(hf_ds, batch_size=batch_size, collate_fn=collate_fn, num_workers=0)
+    return DataLoader(
+        hf_ds, batch_size=batch_size, collate_fn=collate_fn, num_workers=0
+    )

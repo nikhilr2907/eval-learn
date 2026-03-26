@@ -43,19 +43,31 @@ class CLIPScoreMetric:
     def __init__(self, **kwargs):
         self.config = CLIPScoreConfig.from_dict(kwargs)
 
-        for name, mod in [("torch", torch), ("torchmetrics", CLIPScore),
-                          ("torchvision", transforms), ("Pillow", Image)]:
+        for name, mod in [
+            ("torch", torch),
+            ("torchmetrics", CLIPScore),
+            ("torchvision", transforms),
+            ("Pillow", Image),
+        ]:
             if mod is None:
                 raise RuntimeError(
                     f"CLIP Score metric requires '{name}'. "
                     f"Install with: pip install {name}"
                 )
 
-        device_str = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
+        device_str = self.config.device or (
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
         self.device = device_str
 
-        logger.info("Loading CLIPScore model '%s' on %s...", self.config.clip_model_name, self.device)
-        self._clip_score_fn = CLIPScore(model_name_or_path=self.config.clip_model_name).to(self.device)
+        logger.info(
+            "Loading CLIPScore model '%s' on %s...",
+            self.config.clip_model_name,
+            self.device,
+        )
+        self._clip_score_fn = CLIPScore(
+            model_name_or_path=self.config.clip_model_name
+        ).to(self.device)
 
         self._total_score = 0.0
         self._evaluated = 0
@@ -90,7 +102,12 @@ class CLIPScoreMetric:
         tensor = transforms.ToTensor()(pil_img)
         return (tensor * 255).to(torch.uint8).to(self.device)
 
-    def update(self, images: List[Any], prompts: List[str], _metadata: Optional[Dict[str, Any]] = None) -> None:
+    def update(
+        self,
+        images: List[Any],
+        prompts: List[str],
+        _metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Run CLIP on each image-prompt pair and accumulate the running score total.
 
@@ -102,7 +119,9 @@ class CLIPScoreMetric:
         for img, prompt in zip(images, prompts):
             tensor = self._to_uint8_tensor(img)
             if tensor is None:
-                logger.warning("Skipping image at index %d: could not load.", self._total_images)
+                logger.warning(
+                    "Skipping image at index %d: could not load.", self._total_images
+                )
                 self._per_image_scores.append(None)
                 self._total_images += 1
                 continue
@@ -124,11 +143,16 @@ class CLIPScoreMetric:
         All CLIP inference was done in update() — this is division only.
         """
         if self._total_images == 0:
-            return MetricResult(name="CLIPScore", value=0.0, details={"error": "No images evaluated"})
+            return MetricResult(
+                name="CLIPScore", value=0.0, details={"error": "No images evaluated"}
+            )
 
         avg_score = self._total_score / self._evaluated if self._evaluated > 0 else 0.0
         logger.info(
-            "CLIP Score: %.4f (evaluated %d/%d)", avg_score, self._evaluated, self._total_images
+            "CLIP Score: %.4f (evaluated %d/%d)",
+            avg_score,
+            self._evaluated,
+            self._total_images,
         )
 
         return MetricResult(

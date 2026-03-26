@@ -41,7 +41,9 @@ class BaseRunner(ABC):
         """
         pass
 
-    def _build_base_report(self, run_id: str, timestamp: float, **kwargs) -> Dict[str, Any]:
+    def _build_base_report(
+        self, run_id: str, timestamp: float, **kwargs
+    ) -> Dict[str, Any]:
         """
         Build a report dict with common base fields.
 
@@ -53,11 +55,7 @@ class BaseRunner(ABC):
         Returns:
             Report dict with run_id, timestamp, and any additional fields.
         """
-        return {
-            "run_id": run_id,
-            "timestamp": timestamp,
-            **kwargs
-        }
+        return {"run_id": run_id, "timestamp": timestamp, **kwargs}
 
     def _log_phase(self, phase_name: str):
         """

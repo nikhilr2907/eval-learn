@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from ...configs.base import BaseConfig
 
+
 @dataclass
 class TIFAConfig(BaseConfig):
     """
@@ -12,6 +13,7 @@ class TIFAConfig(BaseConfig):
         device: Torch device string (default: None, auto-detect).
         limit: Max number of prompts to stream from HuggingFace.
     """
+
     vqa_model_name: str = "Salesforce/blip2-flan-t5-xl"
     device: Optional[str] = None
     limit: Optional[int] = 200

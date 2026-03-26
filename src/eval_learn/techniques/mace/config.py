@@ -17,6 +17,7 @@ class MACEConfig(BaseConfig):
       (better preservation of unrelated concepts, weaker erasure).
       Lower = more aggressive erasure, but may affect unrelated content.
     """
+
     # Model settings
     model_id: str = "CompVis/stable-diffusion-v1-4"
     device: Optional[str] = None
@@ -24,7 +25,9 @@ class MACEConfig(BaseConfig):
     # Concept erasure settings — accepts a single string or a list of strings.
     # List example: ["nudity", "naked", "bare skin"] erases all synonyms at once.
     erase_concept: Union[str, List[str]] = "nudity"
-    erase_from: Optional[Union[str, List[str]]] = None  # Defaults to "" (fully erase to neutral)
+    erase_from: Optional[Union[str, List[str]]] = (
+        None  # Defaults to "" (fully erase to neutral)
+    )
 
     # CFR regularization (core MACE hyperparameter)
     lambda_cfr: float = 0.1
@@ -37,7 +40,7 @@ class MACEConfig(BaseConfig):
     guidance_scale: float = 7.5
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'MACEConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "MACEConfig":
         """Create config from a dict."""
         data = dict(data)
         data.pop("model_id", None)

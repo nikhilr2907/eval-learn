@@ -15,6 +15,7 @@ from .config import ConceptSteerersConfig
 
 logger = get_logger(__name__)
 
+
 @register_technique("concept_steerers")
 class ConceptSteerersWrapper:
     """
@@ -39,7 +40,9 @@ class ConceptSteerersWrapper:
             multiplier=self.config.multiplier,
         )
 
-    def generate(self, prompts: List[str], seed: Optional[int] = None, **kwargs) -> List[Image.Image]:
+    def generate(
+        self, prompts: List[str], seed: Optional[int] = None, **kwargs
+    ) -> List[Image.Image]:
         """
         Generate images using concept steering.
 
@@ -51,5 +54,7 @@ class ConceptSteerersWrapper:
         Returns:
             List of PIL Images.
         """
-        logger.info(f"Generating {len(prompts)} images with concept steering (strength: {self.config.multiplier})")
+        logger.info(
+            f"Generating {len(prompts)} images with concept steering (strength: {self.config.multiplier})"
+        )
         return self.pipeline.generate(prompts, seed=seed, **kwargs)

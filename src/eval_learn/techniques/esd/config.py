@@ -21,13 +21,16 @@ class ESDConfig(BaseConfig):
     - ESD-u (train_method='full'/'noxattn'): Fine-tunes broader layers
       Best for general concepts like nudity, violence
     """
+
     # Model settings
     model_id: str = "CompVis/stable-diffusion-v1-4"
     device: Optional[str] = None
 
     # Concept erasure settings
     erase_concept: str = "nudity"
-    erase_from: Optional[str] = None  # Target concept to erase from (defaults to erase_concept)
+    erase_from: Optional[str] = (
+        None  # Target concept to erase from (defaults to erase_concept)
+    )
     train_method: str = "xattn"
     negative_guidance: float = 2.0
 
@@ -44,7 +47,7 @@ class ESDConfig(BaseConfig):
     guidance_scale: float = 7.5
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ESDConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "ESDConfig":
         """Create config from a dict, validating train_method."""
         data = dict(data)
         data.pop("model_id", None)
@@ -52,7 +55,6 @@ class ESDConfig(BaseConfig):
         train_method = data.get("train_method", "xattn")
         if train_method not in TRAIN_METHODS:
             raise ValueError(
-                f"Unknown train_method '{train_method}'. "
-                f"Available: {TRAIN_METHODS}"
+                f"Unknown train_method '{train_method}'. " f"Available: {TRAIN_METHODS}"
             )
         return super().from_dict(data)

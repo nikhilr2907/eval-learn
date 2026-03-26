@@ -8,6 +8,7 @@ from ..logging_utils import get_logger
 from ..registry import get_technique, get_metric
 from ..registry.entrypoints import load_entrypoints
 from .core.base_runner import BaseRunner
+from .validation import validate_technique_metric_pair, ValidationError
 
 logger = get_logger(__name__)
 
@@ -21,14 +22,17 @@ def generate_multi_run_id(
     timestamp: float,
 ) -> str:
     """Generate a short hash from multi-benchmark run configuration."""
-    payload = json.dumps({
-        "technique": technique_name,
-        "technique_config": technique_config,
-        "metric_names": sorted(metric_names),
-        "metric_configs": metric_configs,
-        "dataset": dataset_name,
-        "timestamp": timestamp,
-    }, sort_keys=True)
+    payload = json.dumps(
+        {
+            "technique": technique_name,
+            "technique_config": technique_config,
+            "metric_names": sorted(metric_names),
+            "metric_configs": metric_configs,
+            "dataset": dataset_name,
+            "timestamp": timestamp,
+        },
+        sort_keys=True,
+    )
     return hashlib.sha256(payload.encode()).hexdigest()[:8]
 
 
@@ -64,29 +68,34 @@ class MultiBenchmarkRunner(BaseRunner):
         self._validate()
 
     def _validate(self):
-        """Resolve factories from registry. Raises ValueError on failure."""
+        """Validate technique and all metric combinations."""
+        # 1. Basic checks
         if not self.metric_names:
             raise ValueError("metric_names must not be empty.")
         if len(set(self.metric_names)) != len(self.metric_names):
             raise ValueError("metric_names contains duplicates.")
 
+        # 2. Check factories exist
         self.technique_factory = get_technique(self.technique_name)
         self.metric_factories = {}
         for name in self.metric_names:
             self.metric_factories[name] = get_metric(name)
 
-        # ASR and ERR metrics are nudity-specific
-        nudity_metrics = {"asr", "err"}
-        used_nudity_metrics = set(self.metric_names) & nudity_metrics
-        if used_nudity_metrics:
-            erase_concept = self.technique_config.get("erase_concept", "").lower()
-            if erase_concept and erase_concept != "nudity":
-                raise ValueError(
-                    f"Metrics {used_nudity_metrics} are designed for nudity evaluation only. "
-                    f"Got technique erase_concept='{erase_concept}'. "
-                    "ASR and ERR use hardcoded nudity datasets (I2P) and detectors (NudeNet). "
-                    "For other concepts, use CCRT or UA_IRA instead."
+        # 3. Validate each metric against the technique
+        for metric_name in self.metric_names:
+            metric_config = self.metric_configs.get(metric_name, {})
+            try:
+                validate_technique_metric_pair(
+                    technique_name=self.technique_name,
+                    technique_config=self.technique_config,
+                    metric_name=metric_name,
+                    metric_config=metric_config,
                 )
+            except ValidationError as e:
+                logger.error(
+                    f"Incompatible metric '{metric_name}' for technique '{self.technique_name}': {e}"
+                )
+                raise ValueError(str(e))
 
     def run(self) -> Dict[str, Any]:
         """Execute single technique x multiple metrics benchmark.
@@ -189,9 +198,7 @@ class MultiBenchmarkRunner(BaseRunner):
             technique_name=self.technique_name,
             metric_names=self.metric_names,
             dataset_name="multi_metric",
-            dataset_metadata={
-                "metric_datasets": metric_datasets
-            },
+            dataset_metadata={"metric_datasets": metric_datasets},
             technique_config=self.technique_config,
             metric_configs=self.metric_configs,
             metric_results=metric_results,
