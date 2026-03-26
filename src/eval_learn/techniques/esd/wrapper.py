@@ -5,9 +5,7 @@ from PIL import Image
 try:
     from esd import ESDPipeline
 except ImportError:
-    raise ImportError(
-        "ESDWrapper requires the 'esd' package. Package not installed."
-    )
+    raise ImportError("ESDWrapper requires the 'esd' package. Package not installed.")
 
 from ...registry import register_technique
 from ...logging_utils import get_logger
@@ -45,7 +43,9 @@ class ESDWrapper:
             save_path=self.config.save_path,
         )
 
-    def generate(self, prompts: List[str], seed: Optional[int] = None, **kwargs) -> List[Image.Image]:
+    def generate(
+        self, prompts: List[str], seed: Optional[int] = None, **kwargs
+    ) -> List[Image.Image]:
         """
         Generate images using the concept-erased model.
 
@@ -57,10 +57,14 @@ class ESDWrapper:
         Returns:
             List of PIL Images.
         """
-        num_inference_steps = kwargs.pop("num_inference_steps", self.config.num_inference_steps)
+        num_inference_steps = kwargs.pop(
+            "num_inference_steps", self.config.num_inference_steps
+        )
         guidance_scale = kwargs.pop("guidance_scale", self.config.guidance_scale)
 
-        logger.info(f"Generating {len(prompts)} images ('{self.config.erase_concept}' erased)")
+        logger.info(
+            f"Generating {len(prompts)} images ('{self.config.erase_concept}' erased)"
+        )
 
         return self.pipeline.generate(
             prompts,

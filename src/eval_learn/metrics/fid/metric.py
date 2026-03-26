@@ -16,11 +16,13 @@ from .config import FIDConfig
 
 logger = get_logger(__name__)
 
-_inception_transform = transforms.Compose([
-    transforms.Resize((299, 299)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
-])
+_inception_transform = transforms.Compose(
+    [
+        transforms.Resize((299, 299)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+    ]
+)
 
 
 def _load_inception(device: str) -> nn.Module:
@@ -46,7 +48,9 @@ def _calculate_fid(mu1, sigma1, mu2, sigma2, eps=1e-6) -> float:
             return float("inf")
         covmean = covmean.real
 
-    return float(diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2 * np.trace(covmean))
+    return float(
+        diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2 * np.trace(covmean)
+    )
 
 
 @register_metric("fid")
@@ -89,10 +93,10 @@ class FIDMetric:
         activations = []
         model = self._get_model()
         for i in range(0, len(images), self.config.batch_size):
-            batch_pils = images[i: i + self.config.batch_size]
-            batch = torch.stack([
-                _inception_transform(img.convert("RGB")) for img in batch_pils
-            ]).to(self.device)
+            batch_pils = images[i : i + self.config.batch_size]
+            batch = torch.stack(
+                [_inception_transform(img.convert("RGB")) for img in batch_pils]
+            ).to(self.device)
             activations.append(model(batch).cpu().numpy())
         return np.concatenate(activations, axis=0)
 
@@ -157,7 +161,12 @@ class FIDMetric:
             collate_fn=collate_fn,
         )
 
-    def update(self, images: List[Any], _prompts: List[str], _metadata: Optional[Dict[str, Any]] = None) -> None:
+    def update(
+        self,
+        images: List[Any],
+        _prompts: List[str],
+        _metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Extract InceptionV3 features from a batch of generated images and
         accumulate them for the final FID computation.
@@ -186,11 +195,14 @@ class FIDMetric:
         this computes mean, covariance, and Fréchet distance only.
         """
         if self._real_activations is None:
-            raise RuntimeError("Real features not available. Call load_dataset() first.")
+            raise RuntimeError(
+                "Real features not available. Call load_dataset() first."
+            )
 
         if not self._gen_activations:
             return MetricResult(
-                name="FID", value=float("inf"),
+                name="FID",
+                value=float("inf"),
                 details={"error": "No generated images evaluated"},
             )
 
@@ -199,11 +211,18 @@ class FIDMetric:
 
         if gen_count < 2:
             return MetricResult(
-                name="FID", value=float("inf"),
-                details={"error": "At least 2 generated images required to compute FID"},
+                name="FID",
+                value=float("inf"),
+                details={
+                    "error": "At least 2 generated images required to compute FID"
+                },
             )
 
-        logger.info("Computing FID: %d real vs %d generated images...", self._real_count, gen_count)
+        logger.info(
+            "Computing FID: %d real vs %d generated images...",
+            self._real_count,
+            gen_count,
+        )
 
         try:
             mu_real = np.mean(self._real_activations, axis=0)
@@ -226,6 +245,7 @@ class FIDMetric:
         except Exception as e:
             logger.exception("FID computation failed.")
             return MetricResult(
-                name="FID", value=float("inf"),
+                name="FID",
+                value=float("inf"),
                 details={"error": str(e)},
             )

@@ -8,6 +8,7 @@ from ..logging_utils import get_logger
 from ..registry import get_technique, get_metric
 from ..registry.entrypoints import load_entrypoints
 from .core.base_runner import BaseRunner
+from .validation import validate_technique_metric_pair, ValidationError
 
 logger = get_logger(__name__)
 
@@ -21,14 +22,17 @@ def generate_run_id(
     timestamp: float,
 ) -> str:
     """Generate a short hash from run configuration and timestamp."""
-    payload = json.dumps({
-        "technique": technique_name,
-        "technique_config": technique_config,
-        "metric": metric_name,
-        "metric_config": metric_config,
-        "dataset": dataset_name,
-        "timestamp": timestamp,
-    }, sort_keys=True)
+    payload = json.dumps(
+        {
+            "technique": technique_name,
+            "technique_config": technique_config,
+            "metric": metric_name,
+            "metric_config": metric_config,
+            "dataset": dataset_name,
+            "timestamp": timestamp,
+        },
+        sort_keys=True,
+    )
     return hashlib.sha256(payload.encode()).hexdigest()[:8]
 
 
@@ -65,18 +69,22 @@ class SingleBenchmarkRunner(BaseRunner):
         self._validate()
 
     def _validate(self):
-        """Resolve factories from registry. Raises ValueError on failure."""
+        """Resolve factories from registry and validate technique-metric compatibility."""
+        # 1. Check factories exist
         self.technique_factory = get_technique(self.technique_name)
         self.metric_factory = get_metric(self.metric_name)
 
-        # CCRT metric requires FreeRunTechnique
-        if self.metric_name == "ccrt" and self.technique_name != "free_run":
-            raise ValueError(
-                "CCRT metric can only be used with 'free_run' technique. "
-                f"Got technique='{self.technique_name}'. "
-                "CCRT requires generating from the original unmodified model (via load_dataset) "
-                "and then comparing against the erased technique."
+        # 2. Validate technique-metric pair
+        try:
+            validate_technique_metric_pair(
+                technique_name=self.technique_name,
+                technique_config=self.technique_config,
+                metric_name=self.metric_name,
+                metric_config=self.metric_config,
             )
+        except ValidationError as e:
+            logger.error(f"Invalid technique-metric pair: {e}")
+            raise ValueError(str(e))
 
     def run(self) -> Dict[str, Any]:
         """Execute single technique x single metric benchmark."""
@@ -117,7 +125,9 @@ class SingleBenchmarkRunner(BaseRunner):
                 else:
                     accumulated_metadata[key] = val
 
-        logger.info(f"Generated and evaluated {total_generated} images from '{dataset_name}'.")
+        logger.info(
+            f"Generated and evaluated {total_generated} images from '{dataset_name}'."
+        )
 
         # 6. Finalise metric
         result: MetricResult = metric.compute()

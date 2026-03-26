@@ -16,7 +16,7 @@ class UCEConfig(BaseConfig):
     guidance_scale: float = 7.5
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'UCEConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "UCEConfig":
         preset = data.get("preset")
         if preset is not None and preset.lower() not in _VALID_PRESETS:
             raise ValueError(
@@ -31,3 +31,8 @@ class UCEConfig(BaseConfig):
                 "UCE requires either a 'preset' (e.g. 'nudity') "
                 "or an explicit 'uce_weights_path'."
             )
+
+    @property
+    def erase_concept(self) -> Optional[str]:
+        """Return the erase_concept corresponding to the preset for runner validation."""
+        return self.preset.lower() if self.preset else None

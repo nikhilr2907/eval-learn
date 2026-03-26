@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from ...configs.base import BaseConfig
 
+
 @dataclass
 class ERRConfig(BaseConfig):
     """
@@ -14,6 +15,7 @@ class ERRConfig(BaseConfig):
         retain_limit: Max retain prompts to stream from ERR challenge.
         adversarial_limit: Max adversarial prompts to stream from Ring-A-Bell.
     """
+
     clip_model_name: str = "openai/clip-vit-large-patch14"
     device: Optional[str] = None
     target_limit: Optional[int] = 100

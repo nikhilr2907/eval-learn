@@ -1,5 +1,10 @@
 import sys
-from .local import register_technique, register_metric, register_dataset, register_benchmark
+from .local import (
+    register_technique,
+    register_metric,
+    register_dataset,
+    register_benchmark,
+)
 from ..logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -10,6 +15,7 @@ if sys.version_info < (3, 10):
 else:
     from importlib.metadata import entry_points
 
+
 def load_entrypoints():
     """
     Discover and load plugins from entry points.
@@ -18,11 +24,11 @@ def load_entrypoints():
         "eval_learn.techniques": register_technique,
         "eval_learn.metrics": register_metric,
         "eval_learn.datasets": register_dataset,
-        "eval_learn.benchmarks": register_benchmark
+        "eval_learn.benchmarks": register_benchmark,
     }
 
     logger.info("Loading plugins from entry points...")
-    
+
     for group_name, decorator in groups.items():
         # In Python 3.10+, entry_points(group=...) returns a generic collection
         try:
@@ -30,7 +36,7 @@ def load_entrypoints():
         except TypeError:
             # Fallback for older importlib_metadata or Python < 3.10 behavior if needed
             all_eps = entry_points()
-            if hasattr(all_eps, 'select'):
+            if hasattr(all_eps, "select"):
                 eps = all_eps.select(group=group_name)
             else:
                 eps = all_eps.get(group_name, [])
@@ -42,14 +48,14 @@ def load_entrypoints():
                 # Apply the registration decorator
                 # The name in the entry point (ep.name) overrides the name in the code if we want,
                 # but usually the decorator handles it.
-                # However, our local decorators take a name argument. 
+                # However, our local decorators take a name argument.
                 # If the object is already decorated, re-decorating might be redundant but safe if idempotent.
                 # If it's NOT decorated, we register it with the entry point name.
-                
+
                 # Check if it's already registered via side-effect of import?
                 # Actually, simply loading it might have triggered the decorator if it was used in the file.
                 # But if the user exposes a raw class/function without decorator, we register it manually.
-                
+
                 decorator(ep.name)(plugin_obj)
                 logger.info(f"Registered plugin '{ep.name}' ({group_name})")
             except Exception as e:

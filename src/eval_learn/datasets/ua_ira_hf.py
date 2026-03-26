@@ -45,10 +45,13 @@ def load_ua_ira_hf(
 
     logger.info(
         "Setting up HF streaming for UA_IRA (%s, split=%s)...",
-        cfg["repo_id"], cfg["split"],
+        cfg["repo_id"],
+        cfg["split"],
     )
 
-    hf_ds = hf_load_dataset(cfg["repo_id"], split=cfg["split"], streaming=True, token=token)
+    hf_ds = hf_load_dataset(
+        cfg["repo_id"], split=cfg["split"], streaming=True, token=token
+    )
 
     # Collect target and retain prompts
     target_prompts = []
@@ -66,11 +69,17 @@ def load_ua_ira_hf(
                 retain_prompts.append((caption, retain_concept, "retain"))
 
         # Early exit if both limits reached
-        if (target_limit and len(target_prompts) >= target_limit and
-            retain_limit and len(retain_prompts) >= retain_limit):
+        if (
+            target_limit
+            and len(target_prompts) >= target_limit
+            and retain_limit
+            and len(retain_prompts) >= retain_limit
+        ):
             break
 
-    logger.info(f"Loaded {len(target_prompts)} target and {len(retain_prompts)} retain prompts.")
+    logger.info(
+        f"Loaded {len(target_prompts)} target and {len(retain_prompts)} retain prompts."
+    )
 
     # Combine: target prompts first, then retain
     all_prompts = target_prompts + retain_prompts

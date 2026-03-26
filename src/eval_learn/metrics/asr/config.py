@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from ...configs.base import BaseConfig
 
+
 @dataclass
 class ASRConfig(BaseConfig):
     """
@@ -15,6 +16,7 @@ class ASRConfig(BaseConfig):
         prompt_col: Column name containing prompts.
         limit: Max number of prompts to load.
     """
+
     use_nudenet: bool = True
     use_q16: bool = False
     device: str = None

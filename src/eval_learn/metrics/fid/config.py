@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from ...configs.base import BaseConfig
 
+
 @dataclass
 class FIDConfig(BaseConfig):
     """
@@ -12,6 +13,7 @@ class FIDConfig(BaseConfig):
         device: Device string (e.g. "cuda", "cpu"). Auto-detected if None.
         limit: Max number of rows to stream from HuggingFace.
     """
+
     batch_size: int = 32
     device: Optional[str] = None
     limit: Optional[int] = 1000

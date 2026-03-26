@@ -40,18 +40,26 @@ class UAIRAMetric:
         self.config = UAIRAConfig.from_dict(kwargs)
 
         # Ensure required dependencies are loaded
-        for name, mod in [("torch", torch), ("transformers", CLIPModel),
-                          ("transformers", CLIPProcessor), ("Pillow", Image)]:
+        for name, mod in [
+            ("torch", torch),
+            ("transformers", CLIPModel),
+            ("transformers", CLIPProcessor),
+            ("Pillow", Image),
+        ]:
             if mod is None:
                 raise RuntimeError(
                     f"UA_IRA metric requires '{name}'. "
                     f"Install with: pip install {name}"
                 )
 
-        device_str = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
+        device_str = self.config.device or (
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
         self.device = torch.device(device_str)
 
-        logger.info("Initializing CLIP model '%s' on %s...", self.config.clip_model, self.device)
+        logger.info(
+            "Initializing CLIP model '%s' on %s...", self.config.clip_model, self.device
+        )
         self.model = CLIPModel.from_pretrained(self.config.clip_model).to(self.device)
         self.processor = CLIPProcessor.from_pretrained(self.config.clip_model)
         self.model.eval()
@@ -67,11 +75,11 @@ class UAIRAMetric:
 
     def load_dataset(self) -> DataLoader:
         """
-        Load target and retain prompts from HuggingFace.
+        Load target and retain prompts from CSV files.
 
         Returns a DataLoader that yields Dataset batches with prompts and metadata.
         """
-        from ...datasets.ua_ira_hf import load_ua_ira_hf
+        from ...datasets.ua_ira_csv import load_ua_ira_csv
 
         # Reset counters
         self._target_correct_count = 0
@@ -79,16 +87,30 @@ class UAIRAMetric:
         self._retain_correct_count = 0
         self._retain_total_count = 0
 
-        return load_ua_ira_hf(
-            target_concept=self.config.target_concept,
-            retain_concept=self.config.retain_concept,
-            target_limit=self.config.target_prompt_count,
-            retain_limit=self.config.retain_prompt_count,
+        if not self.config.target_prompts_path or not self.config.retain_prompts_path:
+            raise ValueError(
+                "UA_IRA metric requires 'target_prompts_path' and 'retain_prompts_path' in config. "
+                "Provide paths to CSV files with target and retain prompts."
+            )
+
+        return load_ua_ira_csv(
+            target_prompts_path=self.config.target_prompts_path,
+            retain_prompts_path=self.config.retain_prompts_path,
+            target_concept_name=self.config.target_concept_name,
+            retain_concept_name=self.config.retain_concept_name,
+            target_limit=self.config.target_prompt_limit,
+            retain_limit=self.config.retain_prompt_limit,
+            batch_size=self.config.batch_size,
         )
 
-    def update(self, images: List[Any], _prompts: List[str], metadata: Optional[Dict[str, Any]] = None) -> None:
+    def update(
+        self,
+        images: List[Any],
+        _prompts: List[str],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
-        Run CLIP classification on each image and accumulate target/retain correct counts.
+        Run batched CLIP classification on images and accumulate target/retain correct counts.
 
         Args:
             images:    Generated PIL Images or file paths.
@@ -104,76 +126,75 @@ class UAIRAMetric:
         if not images:
             return
 
-        # Caption prompts for CLIP classification
+        # Caption prompts for CLIP classification (same for all images in batch)
         caption_prompts = [
             f"Image of {self.config.target_concept}",
             f"Image of {self.config.retain_concept}",
         ]
 
         # Split images by target/retain based on metadata
-        target_prompt_end_index = metadata.get("target_prompt_end_index", self._target_prompt_end_index)
+        target_prompt_end_index = metadata.get(
+            "target_prompt_end_index", self._target_prompt_end_index
+        )
         target_images = images[:target_prompt_end_index]
         retain_images = images[target_prompt_end_index:]
 
-        # Evaluate target images
-        for img in target_images:
-            pil_img = self._to_pil(img)
-            if pil_img is None:
-                continue
-            self._target_total_count += 1
-            is_correct = self._classify_image(pil_img, caption_prompts)
-            if is_correct:
-                self._target_correct_count += 1
+        # Evaluate target images (batched CLIP forward pass)
+        if target_images:
+            self._evaluate_batch(target_images, caption_prompts, is_target=True)
 
-        # Evaluate retain images
-        for img in retain_images:
-            pil_img = self._to_pil(img)
-            if pil_img is None:
-                continue
-            self._retain_total_count += 1
-            is_correct = self._classify_image_retain(pil_img, caption_prompts)
-            if is_correct:
-                self._retain_correct_count += 1
+        # Evaluate retain images (batched CLIP forward pass)
+        if retain_images:
+            self._evaluate_batch(retain_images, caption_prompts, is_target=False)
 
-    def _classify_image(self, pil_img: "Image.Image", caption_prompts: List[str]) -> bool:
+    def _evaluate_batch(
+        self, images: List[Any], caption_prompts: List[str], is_target: bool
+    ) -> None:
         """
-        Classify image via CLIP. Returns True if NOT classified as target (correct unlearning).
+        Batch evaluate images with CLIP.
+
+        Args:
+            images:           List of PIL Images or file paths.
+            caption_prompts:  List of text captions (same for all images in batch).
+            is_target:        True if evaluating target images, False for retain.
         """
+        # Convert all images to PIL
+        pil_images = [self._to_pil(img) for img in images]
+        # Filter out failed conversions
+        pil_images = [img for img in pil_images if img is not None]
+
+        if not pil_images:
+            return
+
         try:
+            # Single batched CLIP forward pass for all images
             inputs = self.processor(
                 text=caption_prompts,
-                images=pil_img,
+                images=pil_images,
                 return_tensors="pt",
                 padding=True,
             ).to(self.device)
-            with torch.no_grad():
-                output = self.model(**inputs)
-                predicted_index = output.logits_per_image.softmax(dim=1).argmax(dim=1).item()
-            # Correct if predicted as retain (index 1), not target (index 0)
-            return predicted_index == 1
-        except Exception as e:
-            logger.warning("Error classifying image: %s", e)
-            return False
 
-    def _classify_image_retain(self, pil_img: "Image.Image", caption_prompts: List[str]) -> bool:
-        """
-        Classify image via CLIP. Returns True if classified as retain (correct retention).
-        """
-        try:
-            inputs = self.processor(
-                text=caption_prompts,
-                images=pil_img,
-                return_tensors="pt",
-                padding=True,
-            ).to(self.device)
             with torch.no_grad():
                 output = self.model(**inputs)
-                predicted_index = output.logits_per_image.softmax(dim=1).argmax(dim=1).item()
-            # Correct if predicted as retain (index 1)
-            return predicted_index == 1
+                # output.logits_per_image shape: (batch_size, 2)
+                predicted_indices = (
+                    output.logits_per_image.softmax(dim=1).argmax(dim=1)
+                )
+
+            # Count successes (index 1 = retain concept)
+            num_correct = (predicted_indices == 1).sum().item()
+            num_total = len(pil_images)
+
+            if is_target:
+                self._target_total_count += num_total
+                self._target_correct_count += num_correct
+            else:
+                self._retain_total_count += num_total
+                self._retain_correct_count += num_correct
+
         except Exception as e:
-            logger.warning("Error classifying image: %s", e)
-            return False
+            logger.warning("Error evaluating batch: %s", e)
 
     def compute(self) -> MetricResult:
         """
@@ -198,7 +219,9 @@ class UAIRAMetric:
 
         logger.info(
             "UA_IRA Score: %.4f  (UA: %.4f, IRA: %.4f)",
-            avg_score, ua_score, ira_score,
+            avg_score,
+            ua_score,
+            ira_score,
         )
 
         return MetricResult(

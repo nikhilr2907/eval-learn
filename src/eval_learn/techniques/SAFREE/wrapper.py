@@ -24,12 +24,11 @@ except ImportError as e:
 logger = get_logger(__name__)
 
 
-
 @register_technique("safree")
-class SAFREETechnique():
+class SAFREETechnique:
     def __init__(self, **kwargs):
         self.config = SAFREEConfig.from_dict(kwargs)
-        
+
         hf_token = os.getenv("HF_TOKEN")
         if hf_token:
             try:
@@ -40,11 +39,9 @@ class SAFREETechnique():
 
         try:
             self.pipe = SAFREEPipeline.from_pretrained(
-                self.config.model_id,
-                safety_checker=None,
-                requires_safety_checker=False
+                self.config.model_id, safety_checker=None, requires_safety_checker=False
             ).to(self.config.device)
-            
+
             # Register LRA hooks if enabled
             if self.config.enable_lra:
                 self.pipe.enable_lra(
@@ -54,16 +51,18 @@ class SAFREETechnique():
                     s1=self.config.freeu_s1,
                     s2=self.config.freeu_s2,
                 )
-                
+
         except Exception as e:
             raise RuntimeError(f"Failed to load SAFREE model: {e}")
-    
-    def generate(self, prompts: List[str], seed: Optional[int] = None, **kwargs) -> List[Any]:
+
+    def generate(
+        self, prompts: List[str], seed: Optional[int] = None, **kwargs
+    ) -> List[Any]:
         if seed is not None:
             generator = torch.Generator(self.config.device).manual_seed(seed)
         else:
             generator = None
-            
+
         images = []
         for prompt in prompts:
             try:

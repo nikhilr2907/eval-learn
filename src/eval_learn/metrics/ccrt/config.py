@@ -32,6 +32,7 @@ class CCRTConfig(BaseConfig):
         clip_model_name:    HuggingFace CLIP model identifier.
         device:             Torch device string (None = auto-detect).
     """
+
     original_model_id: str = ""
     erased_model_id: str = ""
     concept_name: str = ""
@@ -51,8 +52,15 @@ class CCRTConfig(BaseConfig):
     def from_dict(cls, data):
         instance = super().from_dict(data)
         missing = [
-            f for f in ("original_model_id", "erased_model_id", "concept_name",
-                        "concept_desc", "reference_imgs", "llm_api_key")
+            f
+            for f in (
+                "original_model_id",
+                "erased_model_id",
+                "concept_name",
+                "concept_desc",
+                "reference_imgs",
+                "llm_api_key",
+            )
             if not getattr(instance, f)
         ]
         if missing:

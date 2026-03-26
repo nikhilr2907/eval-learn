@@ -53,11 +53,19 @@ class CCRTMetric:
                     f"Install with: pip install {name}"
                 )
 
-        device_str = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
+        device_str = self.config.device or (
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
         self.device = torch.device(device_str)
 
-        logger.info("Initializing CLIP model '%s' on %s...", self.config.clip_model_name, self.device)
-        self.model = CLIPModel.from_pretrained(self.config.clip_model_name).to(self.device)
+        logger.info(
+            "Initializing CLIP model '%s' on %s...",
+            self.config.clip_model_name,
+            self.device,
+        )
+        self.model = CLIPModel.from_pretrained(self.config.clip_model_name).to(
+            self.device
+        )
         self.processor = CLIPProcessor.from_pretrained(self.config.clip_model_name)
         self.model.eval()
 
@@ -93,11 +101,13 @@ class CCRTMetric:
             raise FileNotFoundError(
                 f"reference_imgs directory not found: {self.config.reference_imgs}"
             )
-        ref_paths = sorted([
-            os.path.join(self.config.reference_imgs, f)
-            for f in os.listdir(self.config.reference_imgs)
-            if f.lower().endswith((".jpg", ".jpeg", ".png"))
-        ])
+        ref_paths = sorted(
+            [
+                os.path.join(self.config.reference_imgs, f)
+                for f in os.listdir(self.config.reference_imgs)
+                if f.lower().endswith((".jpg", ".jpeg", ".png"))
+            ]
+        )
         if len(ref_paths) < 3:
             raise ValueError(
                 f"At least 3 reference images required in {self.config.reference_imgs}, "
@@ -109,7 +119,9 @@ class CCRTMetric:
         # --- 2. Genetic search ---
         logger.info(
             "Running genetic search: original=%s, erased=%s, concept=%s",
-            self.config.original_model_id, self.config.erased_model_id, self.config.concept_name,
+            self.config.original_model_id,
+            self.config.erased_model_id,
+            self.config.concept_name,
         )
         entities = run_genetic_search(
             original_model_id=self.config.original_model_id,
@@ -137,7 +149,10 @@ class CCRTMetric:
         logger.info("Generated %d prompts.", len(prompts))
 
         # --- 4. Baseline image generation ---
-        logger.info("Generating baseline images from original model %s...", self.config.original_model_id)
+        logger.info(
+            "Generating baseline images from original model %s...",
+            self.config.original_model_id,
+        )
         from ...techniques.free_run.wrapper import FreeRunTechnique
 
         baseline_technique = FreeRunTechnique(model_id=self.config.original_model_id)
@@ -166,7 +181,12 @@ class CCRTMetric:
     # Public interface
     # ------------------------------------------------------------------
 
-    def update(self, images: List[Any], prompts: List[str], metadata: Optional[Dict[str, Any]] = None) -> None:
+    def update(
+        self,
+        images: List[Any],
+        prompts: List[str],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Accumulate a batch of generated images and their metadata.
 
@@ -181,7 +201,9 @@ class CCRTMetric:
         self._pending_prompts.extend(prompts)
         self._pending_seeds.extend(seeds)
 
-    def _calculate_ccrt(self, images: List[Any], _prompts: List[str], _seeds: List[Any]) -> Dict[str, Any]:
+    def _calculate_ccrt(
+        self, images: List[Any], _prompts: List[str], _seeds: List[Any]
+    ) -> Dict[str, Any]:
         """
         Score concept erasure using GPT-4V style evaluation.
 
@@ -216,7 +238,8 @@ class CCRTMetric:
 
         logger.info(
             "Running GPT-4V style evaluation on %d images for concept '%s'...",
-            len(pil_images), self.config.concept_name,
+            len(pil_images),
+            self.config.concept_name,
         )
 
         style_precision = evaluate_style(
@@ -231,7 +254,8 @@ class CCRTMetric:
 
         logger.info(
             "CCRT: style_precision=%.4f  →  CCRT_Score=%.4f",
-            style_precision, ccrt_score,
+            style_precision,
+            ccrt_score,
         )
 
         return {
@@ -245,7 +269,9 @@ class CCRTMetric:
         Compute CCRT score from all accumulated update() calls.
         """
         if not self._pending_images:
-            return MetricResult(name="CCRT", value=0.0, details={"error": "No images accumulated"})
+            return MetricResult(
+                name="CCRT", value=0.0, details={"error": "No images accumulated"}
+            )
 
         logger.info("Computing CCRT for %d images...", len(self._pending_images))
 

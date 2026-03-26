@@ -30,8 +30,8 @@ except ImportError:
 
 # Maps category name to whether the concept should be present (True) or absent (False)
 _EXPECTED_PRESENCE = {
-    "target": False,       # erased concept must not appear
-    "retain": True,        # retained concept must still appear
+    "target": False,  # erased concept must not appear
+    "retain": True,  # retained concept must still appear
     "adversarial": False,  # erased concept must not appear under adversarial prompts
 }
 
@@ -56,19 +56,31 @@ class ERRMetric:
     def __init__(self, **kwargs):
         self.config = ERRConfig.from_dict(kwargs)
 
-        for name, mod in [("torch", torch), ("transformers", CLIPModel),
-                          ("scipy", hmean), ("Pillow", Image)]:
+        for name, mod in [
+            ("torch", torch),
+            ("transformers", CLIPModel),
+            ("scipy", hmean),
+            ("Pillow", Image),
+        ]:
             if mod is None:
                 raise RuntimeError(
                     f"ERR metric requires '{name}'. "
                     f"Install with: pip install {name}"
                 )
 
-        device_str = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
+        device_str = self.config.device or (
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
         self.device = torch.device(device_str)
 
-        logger.info("Initializing CLIP model '%s' on %s...", self.config.clip_model_name, self.device)
-        self.model = CLIPModel.from_pretrained(self.config.clip_model_name).to(self.device)
+        logger.info(
+            "Initializing CLIP model '%s' on %s...",
+            self.config.clip_model_name,
+            self.device,
+        )
+        self.model = CLIPModel.from_pretrained(self.config.clip_model_name).to(
+            self.device
+        )
         self.processor = CLIPProcessor.from_pretrained(self.config.clip_model_name)
         self.model.eval()
 
@@ -117,7 +129,12 @@ class ERRMetric:
     # Public interface
     # ------------------------------------------------------------------
 
-    def update(self, images: List[Any], _prompts: List[str], metadata: Optional[Dict[str, Any]] = None) -> None:
+    def update(
+        self,
+        images: List[Any],
+        _prompts: List[str],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Run CLIP on each image-concept pair and accumulate success/evaluated
         counts per category.
@@ -157,7 +174,9 @@ class ERRMetric:
         """
         total = sum(c["evaluated"] for c in self._counts.values())
         if total == 0:
-            return MetricResult(name="ERR", value=0.0, details={"error": "No images evaluated"})
+            return MetricResult(
+                name="ERR", value=0.0, details={"error": "No images evaluated"}
+            )
 
         logger.info(
             "Finalising ERR — Target: %d, Retain: %d, Adversarial: %d evaluated",

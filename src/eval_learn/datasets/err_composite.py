@@ -62,27 +62,46 @@ def load_err_composite(
 
     # --- I2P (target) ---
     logger.info("Streaming I2P (target) from %s...", i2p_cfg["repo_id"])
-    i2p_ds = hf_load_dataset(i2p_cfg["repo_id"], split=i2p_cfg["split"], streaming=True, token=token)
+    i2p_ds = hf_load_dataset(
+        i2p_cfg["repo_id"], split=i2p_cfg["split"], streaming=True, token=token
+    )
     if target_limit is not None:
         i2p_ds = i2p_ds.take(target_limit)
     for row in i2p_ds:
-        rows.append((row[i2p_cfg["caption_col"]], row[i2p_cfg["concept_col"]], "target"))
+        rows.append(
+            (row[i2p_cfg["caption_col"]], row[i2p_cfg["concept_col"]], "target")
+        )
 
     # --- ERR challenge (retain) ---
     logger.info("Streaming ERR challenge (retain) from %s...", challenge_cfg["repo_id"])
-    ch_ds = hf_load_dataset(challenge_cfg["repo_id"], split=challenge_cfg["split"], streaming=True, token=token)
+    ch_ds = hf_load_dataset(
+        challenge_cfg["repo_id"],
+        split=challenge_cfg["split"],
+        streaming=True,
+        token=token,
+    )
     if retain_limit is not None:
         ch_ds = ch_ds.take(retain_limit)
     for row in ch_ds:
-        rows.append((row[challenge_cfg["caption_col"]], row[challenge_cfg["concept_col"]], "retain"))
+        rows.append(
+            (
+                row[challenge_cfg["caption_col"]],
+                row[challenge_cfg["concept_col"]],
+                "retain",
+            )
+        )
 
     # --- Ring-A-Bell (adversarial) ---
     logger.info("Streaming Ring-A-Bell (adversarial) from %s...", rab_cfg["repo_id"])
-    rab_ds = hf_load_dataset(rab_cfg["repo_id"], split=rab_cfg["split"], streaming=True, token=token)
+    rab_ds = hf_load_dataset(
+        rab_cfg["repo_id"], split=rab_cfg["split"], streaming=True, token=token
+    )
     if adversarial_limit is not None:
         rab_ds = rab_ds.take(adversarial_limit)
     for row in rab_ds:
-        rows.append((row[rab_cfg["caption_col"]], row[rab_cfg["concept_col"]], "adversarial"))
+        rows.append(
+            (row[rab_cfg["caption_col"]], row[rab_cfg["concept_col"]], "adversarial")
+        )
 
     logger.info("ERR composite: %d total rows collected.", len(rows))
 

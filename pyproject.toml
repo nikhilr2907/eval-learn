@@ -37,29 +37,30 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Technique packages (pip install from PyPI)
-esd = ["esd"]
-mace = ["mace"]
-concept-steerers = ["concept-steerers"]
-uce = ["uce"]
-safree = ["safree"]
-# Metric extras
+# Metric extras (PyPI packages)
 asr = ["nudenet"]
 fid = ["torchvision"]
-ccrt = ["ccrt"]
+tifa = ["tensorflow"]
+coco = ["pycocotools"]
+# Development
 dev = ["pytest", "ruff", "mypy"]
+
+# Note: Technique packages (esd, mace, uce, safree, sld, saeuron, ccrt)
+# are git dependencies declared in requirements.txt only
 
 [project.scripts]
 eval-learn = "eval_learn.cli:main"
 
 # Entry points for plugin discovery
 [project.entry-points."eval_learn.techniques"]
+free_run = "eval_learn.techniques.free_run.wrapper:FreeRunTechnique"
 esd = "eval_learn.techniques.esd.wrapper:ESDWrapper"
 mace = "eval_learn.techniques.mace.wrapper:MACEWrapper"
 sld = "eval_learn.techniques.sld.wrapper:SLDWrapper"
 uce = "eval_learn.techniques.uce.wrapper:UCEWrapper"
 safree = "eval_learn.techniques.SAFREE.wrapper:SAFREETechnique"
 concept_steerers = "eval_learn.techniques.concept_steerers.wrapper:ConceptSteerersWrapper"
+saeuron = "eval_learn.techniques.saeuron.wrapper:SAeUronWrapper"
 
 [project.entry-points."eval_learn.metrics"]
 asr = "eval_learn.metrics.asr.metric:ASRMetric"
