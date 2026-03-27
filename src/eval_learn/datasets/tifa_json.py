@@ -50,13 +50,11 @@ def load_tifa_json(
         text_ds = hf_load_dataset(
             cfg["repo_id"],
             data_files=text_file,
-            streaming=True,
             token=token,
         )
         qa_ds = hf_load_dataset(
             cfg["repo_id"],
             data_files=qa_file,
-            streaming=True,
             token=token,
         )
         # Merge: assume rows are aligned by index
@@ -72,13 +70,11 @@ def load_tifa_json(
             hf_ds = hf_load_dataset(
                 cfg["repo_id"],
                 data_files=data_files,
-                streaming=True,
                 token=token,
             )
         else:
             hf_ds = hf_load_dataset(
                 cfg["repo_id"],
-                streaming=True,
                 token=token,
             )
     if limit is not None:
