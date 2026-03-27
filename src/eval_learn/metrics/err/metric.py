@@ -193,7 +193,7 @@ class ERRMetric:
         a_ret = _ratio("retain")
         a_adv = _ratio("adversarial")
 
-        valid = [v for v in [a_fgt, a_ret, a_adv] if v is not None and v > 0]
+        valid = [v for v in [a_fgt, a_ret, a_adv] if v is not None]
         final_err = float(hmean(valid)) if valid else 0.0
 
         logger.info(

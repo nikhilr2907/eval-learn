@@ -183,7 +183,7 @@ class MultiBenchmarkRunner(BaseRunner):
                 technique_name=self.technique_name,
                 metric_name=metric_name,
                 images=metric_images,
-                report={},  # Minimal report at save time
+                report=None,  # Report will be saved after all metrics computed
                 metadata=metric_metadata,
             )
 

@@ -30,7 +30,7 @@ class ArtifactWriter:
         technique_name: str,
         metric_name: str,
         images: List[Any],
-        report: Dict[str, Any],
+        report: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
@@ -41,13 +41,13 @@ class ArtifactWriter:
             technique_name: Name of the technique (e.g. ``"sld"``).
             metric_name: Name of the metric (e.g. ``"asr"``).
             images: List of generated PIL images.
-            report: Result dictionary to persist as JSON.
+            report: Result dictionary to persist as JSON. If None, no report is saved.
             metadata: Dataset metadata. If it contains a ``categories``
                 key (list parallel to *images*), images are saved into
                 per-category subdirectories.
 
         Returns:
-            Path to the saved report JSON.
+            Path to the saved report JSON (or where it would be saved).
         """
         metadata = metadata or {}
         categories = metadata.get("categories")
@@ -81,17 +81,19 @@ class ArtifactWriter:
         # Filter out None (failed saves)
         image_paths = [p for p in image_paths if p is not None]
 
-        # Update report and save
-        report["image_paths"] = image_paths
-        report["run_id"] = run_id
-
+        # Save report only if provided
         report_path = os.path.join(run_dir, f"{run_id}_report.json")
-        try:
-            with open(report_path, "w") as f:
-                json.dump(report, f, indent=4)
-            logger.info(f"Report saved to {report_path}")
-        except Exception as e:
-            logger.error(f"Failed to save report: {e}")
+        if report is not None:
+            report["image_paths"] = image_paths
+            report["run_id"] = run_id
+            try:
+                with open(report_path, "w") as f:
+                    json.dump(report, f, indent=4)
+                logger.info(f"Report saved to {report_path}")
+            except Exception as e:
+                logger.error(f"Failed to save report: {e}")
+        else:
+            logger.info(f"Skipping report save (not provided)")
 
         return report_path
 

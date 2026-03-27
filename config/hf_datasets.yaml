@@ -1,11 +1,11 @@
 # HuggingFace dataset paths and column configs.
-# Fill in repo_id values before running. HF_TOKEN should be set in your .env file.
+# Loads entire datasets without split specification. HF_TOKEN should be set in your .env file.
 
 datasets:
 
   coco:
-    repo_id: "phiyodr/coco2017"       # placeholder — replace with your repo
-    split: "validation"
+    repo_id: "phiyodr/coco2017"
+    split: "train"
     image_col: "image"
     caption_col: "captions"
 
@@ -19,20 +19,17 @@ datasets:
     repo_id: "Unlearningltd/datasets"
     text_file: "tifa/tifa_text_inputs.json"
     qa_file: "tifa/tifa_question_answers.json"
-    split: "train"
     caption_col: "caption"
     qa_col: "qas"
 
   err_challenge:
     repo_id: "Unlearningltd/datasets"
     data_files: "ERR/raw_csv_data/challenge_dataset.csv"
-    split: "train"
     caption_col: "direct_prompt"
     concept_col: "concept_name"
 
   ring_a_bell:
     repo_id: "Unlearningltd/datasets"
     data_files: "ring_a_bell/ring_a_bell_dataset.csv"
-    split: "train"
     caption_col: "prompt"
     concept_col: "concept"

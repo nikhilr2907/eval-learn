@@ -96,8 +96,8 @@ class UAIRAMetric:
         return load_ua_ira_csv(
             target_prompts_path=self.config.target_prompts_path,
             retain_prompts_path=self.config.retain_prompts_path,
-            target_concept_name=self.config.target_concept_name,
-            retain_concept_name=self.config.retain_concept_name,
+            target_concept_name=self.config.target_concept,
+            retain_concept_name=self.config.retain_concept,
             target_limit=self.config.target_prompt_limit,
             retain_limit=self.config.retain_prompt_limit,
             batch_size=self.config.batch_size,

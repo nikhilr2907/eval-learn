@@ -37,26 +37,50 @@ def load_tifa_json(
     qa_col = cfg["qa_col"]
 
     logger.info(
-        "Setting up HF streaming for TIFA (%s, split=%s)...",
+        "Setting up HF streaming for TIFA (%s)...",
         cfg["repo_id"],
-        cfg["split"],
     )
 
-    data_files = cfg.get("data_files")
-    if data_files:
-        hf_ds = hf_load_dataset(
+    # Try loading from separate text and QA files if specified
+    text_file = cfg.get("text_file")
+    qa_file = cfg.get("qa_file")
+
+    if text_file and qa_file:
+        logger.info("Loading TIFA from separate files: %s, %s", text_file, qa_file)
+        text_ds = hf_load_dataset(
             cfg["repo_id"],
-            data_files=data_files,
+            data_files=text_file,
             streaming=True,
             token=token,
         )
+        qa_ds = hf_load_dataset(
+            cfg["repo_id"],
+            data_files=qa_file,
+            streaming=True,
+            token=token,
+        )
+        # Merge: assume rows are aligned by index
+        def merge_datasets(text_data, qa_data):
+            for t_row, q_row in zip(text_data, qa_data):
+                merged = {**t_row, **q_row}
+                yield merged
+        hf_ds = merge_datasets(text_ds, qa_ds)
     else:
-        hf_ds = hf_load_dataset(
-            cfg["repo_id"],
-            split=cfg.get("split"),
-            streaming=True,
-            token=token,
-        )
+        # Fallback to single data_files or no specification
+        data_files = cfg.get("data_files")
+        if data_files:
+            hf_ds = hf_load_dataset(
+                cfg["repo_id"],
+                data_files=data_files,
+                streaming=True,
+                token=token,
+            )
+        else:
+            hf_ds = hf_load_dataset(
+                cfg["repo_id"],
+                streaming=True,
+                token=token,
+            )
     if limit is not None:
         hf_ds = hf_ds.take(limit)
 

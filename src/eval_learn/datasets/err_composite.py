@@ -73,7 +73,6 @@ def load_err_composite(
     else:
         i2p_ds = hf_load_dataset(
             i2p_cfg["repo_id"],
-            split=i2p_cfg.get("split"),
             streaming=True,
             token=token,
         )
@@ -97,7 +96,6 @@ def load_err_composite(
     else:
         ch_ds = hf_load_dataset(
             challenge_cfg["repo_id"],
-            split=challenge_cfg.get("split"),
             streaming=True,
             token=token,
         )
@@ -125,7 +123,6 @@ def load_err_composite(
     else:
         rab_ds = hf_load_dataset(
             rab_cfg["repo_id"],
-            split=rab_cfg.get("split"),
             streaming=True,
             token=token,
         )

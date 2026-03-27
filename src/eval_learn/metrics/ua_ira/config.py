@@ -20,10 +20,10 @@ class UAIRAConfig(BaseConfig):
     device: Optional[str] = None
     target_prompts_path: str = ""  # Path to CSV with target prompts (concept to erase)
     retain_prompts_path: str = ""  # Path to CSV with retain prompts (concept to keep)
-    target_concept_name: str = (
+    target_concept: str = (
         "target_concept"  # How to refer to target in CLIP ("nudity", "Mickey Mouse", etc.)
     )
-    retain_concept_name: str = (
+    retain_concept: str = (
         "retain_concept"  # How to refer to retain in CLIP ("person", "Minnie Mouse", etc.)
     )
     target_prompt_limit: Optional[int] = None  # Max target prompts to load
