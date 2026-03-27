@@ -1,6 +1,6 @@
 numpy>=2.4.0
 scipy>=1.17.0
-tqdm>=4.67.0
+tqdm==4.66.5
 requests>=2.28.1
 filelock>=3.25.0
 fsspec>=2026.2.0
@@ -14,7 +14,7 @@ Pillow>=12.1.0
 python-dotenv>=1.2.2
 torch==2.11.0+cu126
 transformers>=5.3.0
-datasets>=4.8.0
+datasets
 tensorflow>=2.21.0
 pycocotools>=2.0.11
 torchvision>=0.26.0
