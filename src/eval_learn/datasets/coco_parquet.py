@@ -2,8 +2,10 @@ import io
 from typing import Optional
 
 import torch
+import requests
 from torch.utils.data import DataLoader
 from datasets import load_dataset as hf_load_dataset
+from PIL import Image
 
 from ..types import Dataset
 from ..registry import register_dataset
@@ -34,7 +36,6 @@ def load_coco_parquet(
         token:      HF token (falls back to HF_TOKEN env var).
     """
     from torchvision import transforms
-    from PIL import Image
 
     cfg = load_hf_config("coco")
 
@@ -58,38 +59,53 @@ def load_coco_parquet(
     if limit is not None:
         hf_ds = hf_ds.take(limit)
 
-    image_col = cfg["image_col"]
     caption_col = cfg["caption_col"]
+    url_col = cfg["url_col"]
 
     def collate_fn(batch):
         images = []
         captions = []
 
         for row in batch:
-            # Decode image from HF's various formats
-            img = row[image_col]
-            if isinstance(img, dict) and "bytes" in img:
-                img = Image.open(io.BytesIO(img["bytes"])).convert("RGB")
-            elif not isinstance(img, Image.Image):
-                img = Image.fromarray(img).convert("RGB")
-            else:
-                img = img.convert("RGB")
+            # Download image from COCO URL
+            try:
+                response = requests.get(row[url_col], stream=True, timeout=10)
+                response.raise_for_status()
+                img = Image.open(io.BytesIO(response.content)).convert("RGB")
+            except Exception as e:
+                logger.warning(
+                    f"Failed to load image from {row[url_col]}: {e}"
+                )
+                continue
+
             images.append(_inception_transform(img))
 
-            # COCO captions may be a list — take the first
+            # COCO captions are a list — take the first
             caption = row[caption_col]
             if isinstance(caption, list):
                 caption = caption[0]
             captions.append(caption)
 
-        return Dataset(
-            prompts=captions,
-            metadata={
-                "source": "coco_hf",
-                "repo_id": cfg["repo_id"],
-                "images": torch.stack(images),  # (B, C, H, W)
-            },
-        )
+        if images:
+            return Dataset(
+                prompts=captions,
+                metadata={
+                    "source": "coco_hf",
+                    "repo_id": cfg["repo_id"],
+                    "images": torch.stack(images),  # (B, C, H, W)
+                },
+            )
+        else:
+            # All images in batch failed — return empty batch
+            logger.warning("All images in batch failed to load")
+            return Dataset(
+                prompts=[],
+                metadata={
+                    "source": "coco_hf",
+                    "repo_id": cfg["repo_id"],
+                    "images": torch.empty((0, 3, 299, 299)),
+                },
+            )
 
     return DataLoader(
         hf_ds, batch_size=batch_size, collate_fn=collate_fn, num_workers=0

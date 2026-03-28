@@ -6,8 +6,8 @@ datasets:
   coco:
     repo_id: "phiyodr/coco2017"
     split: "train"
-    image_col: "image"
     caption_col: "captions"
+    url_col: "coco_url"
 
   i2p:
     repo_id: "AIML-TUDA/i2p"
