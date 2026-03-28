@@ -23,8 +23,8 @@ class SAeUronConfig(BaseConfig):
     """
 
     # --- Base Model Parameters ---
-    # Identifier for the base diffusion model (must match the one used for SAE training)
-    model_id: str = "CompVis/stable-diffusion-v1-4"
+    # Fixed: SAE was trained on SD 1.4 and is not compatible with other models.
+    model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     # Target computation device
     device: str = "cuda"
 
@@ -67,8 +67,7 @@ class SAeUronConfig(BaseConfig):
         """
         config_dict = dict(config_dict)
 
-        # Pop model_id to let the global evaluation pipeline manage it if needed,
-        # or fall back to the dataclass default.
+        # model_id is fixed — silently drop any user-supplied value.
         config_dict.pop("model_id", None)
 
         # Validate erase_concept

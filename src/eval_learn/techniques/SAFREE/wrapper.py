@@ -72,8 +72,8 @@ class SAFREETechnique:
                     guidance_scale=kwargs.get("guidance_scale", 7.5),
                     generator=generator,
                     # SAFREE params
-                    unsafe_concepts=self.config.unsafe_concepts,
-                    unsafe_category=self.config.concept_category,
+                    unsafe_concepts=self.config.erase_concept,
+                    unsafe_category=self.config.erase_concept,
                     enable_safree=True,
                     enable_svf=self.config.enable_svf,
                     enable_lra=self.config.enable_lra,

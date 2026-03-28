@@ -9,6 +9,7 @@ from ...logging_utils import get_logger
 # Import the SAeUron-specific components from the installed package
 from saeuron.core.model import SparseAutoencoder
 from saeuron.core.utils import get_target_latents
+from diffusers import StableDiffusionPipeline
 
 # Import local integration config
 from .config import SAeUronConfig
@@ -42,7 +43,7 @@ class SAeUronWrapper:
         # 3. Load the Sparse Autoencoder from the core/ directory logic
         logger.info(f"Loading SAE from {self.config.sae_path}")
         self.sae = SparseAutoencoder.from_pretrained(
-            self.config.sae_path, device=self.config.device
+            self.config.sae_path, device=self.config.device, dtype=self.pipe.dtype
         )
 
         # 4. Determine which latents to steer/ablate
@@ -62,6 +63,12 @@ class SAeUronWrapper:
             )
             logger.info(f"Identified {len(self.target_latents)} latents to steer.")
 
+        if not self.target_latents:
+            raise ValueError(
+                f"No target latents identified for concept '{self.config.erase_concept}'. "
+                f"Check the acts_path and percentile ({self.config.percentile}) configuration."
+            )
+
     def _sae_intervention_hook(
         self, module: torch.nn.Module, input: Any, output: Any
     ) -> Any:
@@ -80,21 +87,27 @@ class SAeUronWrapper:
 
         # --- SAeUron Mathematical Intervention ---
 
+        # Reshape spatial activations for SAE: (b, c, h, w) -> (b, h*w, c)
+        b, c, h, w = cond.shape
+        cond_flat = cond.permute(0, 2, 3, 1).reshape(b, h * w, c)
+
         # 1. Project conditional activations to the sparse latent space
-        orig_latents = self.sae.encode(cond)
+        orig_latents = self.sae.encode(cond_flat)
 
         # 2. Calculate the original SAE reconstruction to capture the residual.
         # This residual contains high-frequency details the SAE cannot perfectly reconstruct.
         # Adding it back prevents image quality degradation.
         orig_reconstruction = self.sae.decode(orig_latents)
-        residual = cond - orig_reconstruction
+        residual = cond_flat - orig_reconstruction
 
         # 3. Apply the intervention (Ablation / Steering)
-        modified_latents = orig_latents.clone()
-        modified_latents[:, :, self.target_latents] *= self.config.multiplier
+        orig_latents[:, :, self.target_latents] *= self.config.multiplier
 
         # 4. Reconstruct the modified activations and add the residual back
-        modified_cond = self.sae.decode(modified_latents) + residual
+        modified_cond_flat = self.sae.decode(orig_latents) + residual
+
+        # Reshape back to spatial: (b, h*w, c) -> (b, c, h, w)
+        modified_cond = modified_cond_flat.reshape(b, h, w, c).permute(0, 3, 1, 2)
 
         # ----------------------------------------
 
@@ -119,9 +132,12 @@ class SAeUronWrapper:
         try:
             # Register the forward hook
             handle = target_layer.register_forward_hook(self._sae_intervention_hook)
-            self.hook_handles.append(handle)
+            self.hook_handles = [handle]
 
             # Execute standard generation through the pipeline
+            # CFG must be active for the SAE intervention hook to work correctly.
+            if kwargs.get("guidance_scale", 7.5) <= 1.0:
+                raise ValueError("SAeUron requires guidance_scale > 1.0 (CFG must be active).")
             generator = (
                 torch.Generator(device=self.config.device).manual_seed(seed)
                 if seed
@@ -147,7 +163,6 @@ class SAeUronWrapper:
         Loads the base diffusion pipeline.
         Note: You can replace this with your framework's global model loader if eval_learn uses one.
         """
-        from diffusers import StableDiffusionPipeline
 
         pipe = StableDiffusionPipeline.from_pretrained(
             self.config.model_id,
