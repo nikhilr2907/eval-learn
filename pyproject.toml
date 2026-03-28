@@ -17,33 +17,34 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "numpy",
-    "scipy",
-    "tqdm",
-    "requests",
-    "filelock",
-    "fsspec",
-    "torchmetrics",
-    "safetensors",
-    "diffusers",
-    "huggingface_hub",
-    "pandas",
-    "Pillow",
-    "python-dotenv",
-    "torch",
-    "transformers",
-    "datasets",
-    "pyyaml",
+    "numpy>=2.4.0",
+    "scipy>=1.17.0",
+    "tqdm>=4.66.5",
+    "requests>=2.28.1",
+    "filelock>=3.25.0",
+    "fsspec>=2026.2.0",
+    "torchmetrics>=1.0.3",
+    "safetensors>=0.7.0",
+    "diffusers>=0.37.0",
+    "huggingface_hub>=1.8.0",
+    "pandas>=3.0.1",
+    "Pillow>=12.1.0",
+    "python-dotenv>=1.2.2",
+    "torch>=2.11.0",
+    "transformers>=5.3.0",
+    "datasets>=4.8.0",
+    "pyarrow>=22.0.0,<23.0.0",
+    "pyyaml>=5.1",
 ]
 
 [project.optional-dependencies]
 # Metric extras (PyPI packages)
-asr = ["nudenet"]
-fid = ["torchvision"]
-tifa = ["tensorflow"]
-coco = ["pycocotools"]
+asr = ["nudenet>=3.4.2"]
+fid = ["torchvision>=0.26.0"]
+tifa = ["tensorflow>=2.21.0"]
+coco = ["pycocotools>=2.0.11"]
 # Development
-dev = ["pytest", "ruff", "mypy"]
+dev = ["pytest>=7.0.0", "ruff>=0.0.1", "mypy>=1.0.0"]
 
 # Note: Technique packages (esd, mace, uce, safree, sld, saeuron, ccrt)
 # are git dependencies declared in requirements.txt only

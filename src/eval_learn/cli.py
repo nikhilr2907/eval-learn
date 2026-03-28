@@ -2,11 +2,21 @@ import argparse
 import sys
 import os
 import json
+import logging
+import warnings
 from typing import Dict, Any, List
 
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
+
+# Suppress unnecessary library warnings and verbose output
+logging.getLogger("transformers").setLevel(logging.ERROR)
+logging.getLogger("datasets").setLevel(logging.ERROR)
+logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
+logging.getLogger("onnxruntime").setLevel(logging.ERROR)
+logging.getLogger("tensorflow").setLevel(logging.ERROR)
+warnings.filterwarnings("ignore")
 
 from eval_learn.registry.hf_sync import HFSync
 from eval_learn.runners import (

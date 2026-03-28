@@ -93,17 +93,14 @@ def main():
         print("=" * 60)
 
         runner = None
-        try:
-            config = load_config(config_path)
-            runner = build_multi(config)
-            report = runner.run()
-            print_results(report)
-        except Exception as e:
-            logger.error(f"Failed to run {title}: {e}")
-        finally:
-            if runner is not None:
-                del runner
-            cleanup()
+        config = load_config(config_path)
+        runner = build_multi(config)
+        report = runner.run()
+        print_results(report)
+
+        if runner is not None:
+            del runner
+        cleanup()
 
     print(f"\n{'=' * 60}")
     print("All benchmarks completed")

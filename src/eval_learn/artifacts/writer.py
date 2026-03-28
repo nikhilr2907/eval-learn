@@ -70,12 +70,12 @@ class ArtifactWriter:
                 os.makedirs(cat_dir, exist_ok=True)
                 idx = category_counters.get(cat.lower(), 0)
                 category_counters[cat.lower()] = idx + 1
-                path = os.path.join(cat_dir, f"{idx}.png")
+                path = os.path.join(cat_dir, f"{technique_name}_{metric_name}_{run_id}_{idx}.png")
                 image_paths.append(self._save_image(img, path, idx))
         else:
             # Flat: save numbered images directly
             for i, img in enumerate(images):
-                path = os.path.join(images_dir, f"{i}.png")
+                path = os.path.join(images_dir, f"{technique_name}_{metric_name}_{run_id}_{i}.png")
                 image_paths.append(self._save_image(img, path, i))
 
         # Filter out None (failed saves)
