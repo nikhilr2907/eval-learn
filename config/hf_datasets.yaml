@@ -18,17 +18,20 @@ datasets:
   tifa:
     repo_id: "Unlearningltd/datasets"
     data_files: "tifa/tifa_dataset.csv"
+    split: "train"
     caption_col: "caption"
     qa_col: "qas"
 
   err_challenge:
     repo_id: "Unlearningltd/datasets"
     data_files: "ERR/raw_csv_data/challenge_dataset.csv"
+    split: "train"
     caption_col: "direct_prompt"
     concept_col: "concept_name"
 
   ring_a_bell:
     repo_id: "Unlearningltd/datasets"
     data_files: "ring_a_bell/ring_a_bell_dataset.csv"
+    split: "train"
     caption_col: "prompt"
     concept_col: "concept"

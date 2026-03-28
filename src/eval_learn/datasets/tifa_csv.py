@@ -38,13 +38,15 @@ def load_tifa_csv(
     qa_col = cfg["qa_col"]
 
     logger.info(
-        "Setting up HF streaming for TIFA (%s)...",
+        "Setting up HF streaming for TIFA (%s, split=%s)...",
         cfg["repo_id"],
+        cfg.get("split", "train"),
     )
 
     hf_ds = hf_load_dataset(
         cfg["repo_id"],
-        data_files=cfg["data_files"],
+        data_files=cfg.get("data_files"),
+        split=cfg.get("split", "train"),
         streaming=True,
         token=token,
     )
