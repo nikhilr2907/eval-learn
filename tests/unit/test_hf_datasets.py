@@ -38,6 +38,34 @@ class TestHFDatasets:
             streaming=True,
             token=token,
         )
+        print(f"[DEBUG] i2p dataset type: {type(ds)}")
+
+        # Validate it's an IterableDataset, not DatasetDict
+        from datasets import IterableDataset, DatasetDict
+        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
+        assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
+
+        first_row = get_first_row(ds)
+        assert "prompt" in first_row
+        assert "categories" in first_row
+
+    def test_i2p_with_split(self):
+        """Verify i2p dataset loads with explicit split (no data_files)."""
+        from datasets import load_dataset, IterableDataset, DatasetDict
+
+        token = os.getenv("HF_TOKEN")
+        ds = load_dataset(
+            "AIML-TUDA/i2p",
+            split="train",  # ← Explicit split, no data_files
+            streaming=True,
+            token=token,
+        )
+        print(f"[DEBUG] i2p with split type: {type(ds)}")
+
+        # Must be IterableDataset, not DatasetDict
+        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
+        assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
+
         first_row = get_first_row(ds)
         assert "prompt" in first_row
         assert "categories" in first_row
@@ -58,7 +86,7 @@ class TestHFDatasets:
 
     def test_err_challenge_loads(self):
         """Verify ERR challenge dataset loads from HF with correct schema."""
-        from datasets import load_dataset, Features, Value
+        from datasets import load_dataset, Features, Value, IterableDataset, DatasetDict
 
         token = os.getenv("HF_TOKEN")
         features = Features({
@@ -75,13 +103,17 @@ class TestHFDatasets:
             streaming=True,
             token=token,
         )
+        print(f"[DEBUG] challenge dataset type: {type(ds)}")
+        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
+        assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
+
         first_row = get_first_row(ds)
         assert "direct_prompt" in first_row
         assert "concept_name" in first_row
 
     def test_ring_a_bell_loads(self):
         """Verify Ring-A-Bell dataset loads from HF with correct schema."""
-        from datasets import load_dataset, Features, Value
+        from datasets import load_dataset, Features, Value, IterableDataset, DatasetDict
 
         token = os.getenv("HF_TOKEN")
         features = Features({
@@ -95,13 +127,17 @@ class TestHFDatasets:
             streaming=True,
             token=token,
         )
+        print(f"[DEBUG] ring_a_bell dataset type: {type(ds)}")
+        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
+        assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
+
         first_row = get_first_row(ds)
         assert "prompt" in first_row
         assert "concept" in first_row
 
     def test_tifa_text_loads(self):
         """Verify TIFA text file loads with correct schema."""
-        from datasets import load_dataset
+        from datasets import load_dataset, DatasetDict
         from eval_learn.datasets.hf_stream import load_hf_config
 
         token = os.getenv("HF_TOKEN")
@@ -111,12 +147,15 @@ class TestHFDatasets:
             data_files=cfg.get("text_file"),
             token=token,
         )
+        print(f"[DEBUG] tifa text dataset type: {type(text_ds)}")
+        if isinstance(text_ds, DatasetDict):
+            print(f"[WARNING] TIFA text is DatasetDict with splits: {list(text_ds.keys())}")
         text_row = get_first_row(text_ds)
         assert "caption" in text_row
 
     def test_tifa_qa_loads(self):
         """Verify TIFA QA file loads with correct schema."""
-        from datasets import load_dataset
+        from datasets import load_dataset, DatasetDict
         from eval_learn.datasets.hf_stream import load_hf_config
 
         token = os.getenv("HF_TOKEN")
@@ -126,6 +165,9 @@ class TestHFDatasets:
             data_files=cfg.get("qa_file"),
             token=token,
         )
+        print(f"[DEBUG] tifa qa dataset type: {type(qa_ds)}")
+        if isinstance(qa_ds, DatasetDict):
+            print(f"[WARNING] TIFA QA is DatasetDict with splits: {list(qa_ds.keys())}")
         qa_row = get_first_row(qa_ds)
         assert "qas" in qa_row
         # Verify qas is a list of dicts with question/answer

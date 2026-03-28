@@ -17,8 +17,7 @@ datasets:
 
   tifa:
     repo_id: "Unlearningltd/datasets"
-    text_file: "tifa/sensitive_text_inputs.json"
-    qa_file: "tifa/sensitive_question_answers.json"
+    data_files: "tifa/tifa_dataset.csv"
     caption_col: "caption"
     qa_col: "qas"
 

@@ -77,14 +77,14 @@ class CLIPScoreMetric:
 
     def load_dataset(self) -> DataLoader:
         """Return a DataLoader over the TIFA dataset."""
-        from ...datasets.tifa_json import load_tifa_json
+        from ...datasets.tifa_csv import load_tifa_csv
 
         self._total_score = 0.0
         self._evaluated = 0
         self._total_images = 0
         self._per_image_scores = []
 
-        return load_tifa_json(limit=self.config.limit)
+        return load_tifa_csv(limit=self.config.limit)
 
     def _to_uint8_tensor(self, img) -> Optional["torch.Tensor"]:
         """Convert a PIL Image or file path to a uint8 tensor on device."""

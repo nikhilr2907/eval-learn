@@ -70,14 +70,14 @@ class TIFAMetric:
 
     def load_dataset(self) -> DataLoader:
         """Return a DataLoader over the TIFA dataset."""
-        from ...datasets.tifa_json import load_tifa_json
+        from ...datasets.tifa_csv import load_tifa_csv
 
         self._correct_count = 0
         self._total_count = 0
         self._total_images = 0
         self._per_image_scores = []
 
-        return load_tifa_json(limit=self.config.limit)
+        return load_tifa_csv(limit=self.config.limit)
 
     # ------------------------------------------------------------------
     # VQA engine

@@ -100,6 +100,7 @@ def load_err_composite(
     else:
         i2p_ds = hf_load_dataset(
             i2p_cfg["repo_id"],
+            split=i2p_cfg.get("split", "train"),
             features=i2p_features,
             streaming=True,
             token=token,
