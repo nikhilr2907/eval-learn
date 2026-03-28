@@ -201,11 +201,18 @@ class MultiBenchmarkRunner(BaseRunner):
             timestamp=timestamp,
             technique_name=self.technique_name,
             metric_names=self.metric_names,
-            dataset_name="multi_metric",
-            dataset_metadata={"metric_datasets": metric_datasets},
-            technique_config=self.technique_config,
-            metric_configs=self.metric_configs,
             metric_results=metric_results,
+        )
+
+        # 5. Save final report to run directory
+        self._log_phase("Saving final combined report")
+        self.writer.save_run(
+            run_id=run_id,
+            technique_name=self.technique_name,
+            metric_name="multi",
+            images=[],
+            report=report,
+            metadata={},
         )
 
         logger.info("Multi-benchmark run completed.")

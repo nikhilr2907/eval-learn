@@ -52,40 +52,51 @@ class ArtifactWriter:
         metadata = metadata or {}
         categories = metadata.get("categories")
 
-        # Build folder: <base_dir>/<technique>_<metric>_<run_id>/
-        folder_name = f"{technique_name}_{metric_name}_{run_id}"
-        run_dir = os.path.join(self.base_dir, folder_name)
-        images_dir = os.path.join(run_dir, "images")
-        os.makedirs(images_dir, exist_ok=True)
-
-        # Save images — category-aware if metadata provides categories
-        logger.info(f"Saving {len(images)} images to {images_dir}...")
         image_paths = []
 
-        if categories and len(categories) == len(images):
-            # Category-aware: save into subdirectories
-            category_counters: Dict[str, int] = {}
-            for img, cat in zip(images, categories):
-                cat_dir = os.path.join(images_dir, cat.lower())
-                os.makedirs(cat_dir, exist_ok=True)
-                idx = category_counters.get(cat.lower(), 0)
-                category_counters[cat.lower()] = idx + 1
-                path = os.path.join(cat_dir, f"{technique_name}_{metric_name}_{run_id}_{idx}.png")
-                image_paths.append(self._save_image(img, path, idx))
-        else:
-            # Flat: save numbered images directly
-            for i, img in enumerate(images):
-                path = os.path.join(images_dir, f"{technique_name}_{metric_name}_{run_id}_{i}.png")
-                image_paths.append(self._save_image(img, path, i))
+        # If images provided, save them in structured folder
+        if images:
+            # Build folder: <base_dir>/<technique>_<metric>_<run_id>/
+            folder_name = f"{technique_name}_{metric_name}_{run_id}"
+            run_dir = os.path.join(self.base_dir, folder_name)
+            images_dir = os.path.join(run_dir, "images")
+            os.makedirs(images_dir, exist_ok=True)
 
-        # Filter out None (failed saves)
-        image_paths = [p for p in image_paths if p is not None]
+            # Save images — category-aware if metadata provides categories
+            logger.info(f"Saving {len(images)} images to {images_dir}...")
+
+            if categories and len(categories) == len(images):
+                # Category-aware: save into subdirectories
+                category_counters: Dict[str, int] = {}
+                for img, cat in zip(images, categories):
+                    cat_dir = os.path.join(images_dir, cat.lower())
+                    os.makedirs(cat_dir, exist_ok=True)
+                    idx = category_counters.get(cat.lower(), 0)
+                    category_counters[cat.lower()] = idx + 1
+                    path = os.path.join(cat_dir, f"{technique_name}_{metric_name}_{run_id}_{idx}.png")
+                    image_paths.append(self._save_image(img, path, idx))
+            else:
+                # Flat: save numbered images directly
+                for i, img in enumerate(images):
+                    path = os.path.join(images_dir, f"{technique_name}_{metric_name}_{run_id}_{i}.png")
+                    image_paths.append(self._save_image(img, path, i))
+
+            # Filter out None (failed saves)
+            image_paths = [p for p in image_paths if p is not None]
+        else:
+            logger.info("No images to save")
 
         # Save report only if provided
-        report_path = os.path.join(run_dir, f"{run_id}_report.json")
         if report is not None:
-            report["image_paths"] = image_paths
-            report["run_id"] = run_id
+            # If no images, save report directly to base_dir
+            if images:
+                folder_name = f"{technique_name}_{metric_name}_{run_id}"
+                run_dir = os.path.join(self.base_dir, folder_name)
+                report_path = os.path.join(run_dir, f"{run_id}_report.json")
+            else:
+                os.makedirs(self.base_dir, exist_ok=True)
+                report_path = os.path.join(self.base_dir, f"{run_id}_report.json")
+
             try:
                 with open(report_path, "w") as f:
                     json.dump(report, f, indent=4)
@@ -94,6 +105,7 @@ class ArtifactWriter:
                 logger.error(f"Failed to save report: {e}")
         else:
             logger.info(f"Skipping report save (not provided)")
+            report_path = os.path.join(self.base_dir, f"{run_id}_report.json")
 
         return report_path
 
