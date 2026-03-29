@@ -41,7 +41,7 @@ class UAIRAMetric:
             f"Initializing CLIP model '{self.config.clip_model_name}' on {self.device}..."
         )
         self.model = CLIPModel.from_pretrained(self.config.clip_model_name).to(self.device)
-        self.processor = CLIPProcessor.from_pretrained(self.config.clip_model)
+        self.processor = CLIPProcessor.from_pretrained(self.config.clip_model_name)
         self.model.eval()
 
         # State for accumulation across batches
