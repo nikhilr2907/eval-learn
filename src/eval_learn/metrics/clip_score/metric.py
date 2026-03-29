@@ -61,21 +61,19 @@ class CLIPScoreMetric:
 
         return load_tifa_csv(limit=self.config.limit)
 
-    def _to_uint8_tensor(self, img) -> Optional["torch.Tensor"]:
-        """Convert a PIL Image or file path to a uint8 tensor on device."""
-        pil_img = None
-        if Image and isinstance(img, Image.Image):
-            pil_img = img
+    def _load_image_pil(self, img) -> Optional[Image.Image]:
+        """Load and convert image to PIL Image."""
+        if isinstance(img, Image.Image):
+            return img.convert("RGB") if img.mode != "RGB" else img
         elif isinstance(img, str):
             try:
-                pil_img = Image.open(img).convert("RGB")
+                return Image.open(img).convert("RGB")
             except (FileNotFoundError, OSError) as e:
-                logger.warning("Could not load image %s: %s", img, e)
+                logger.warning(f"Could not load image {img}: {e}")
                 return None
-        if pil_img is None:
+        else:
+            logger.warning(f"Unsupported image type: {type(img)}")
             return None
-        tensor = transforms.ToTensor()(pil_img)
-        return (tensor * 255).to(torch.uint8).to(self.device)
 
     def update(
         self,
@@ -84,7 +82,7 @@ class CLIPScoreMetric:
         _metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
-        Run CLIP on each image-prompt pair and accumulate the running score total.
+        Compute CLIP score for each image-prompt pair and accumulate.
 
         Args:
             images:    Generated PIL Images or file paths.
@@ -92,17 +90,23 @@ class CLIPScoreMetric:
             _metadata: Unused.
         """
         for img, prompt in zip(images, prompts):
-            tensor = self._to_uint8_tensor(img)
-            if tensor is None:
-                logger.warning(
-                    "Skipping image at index %d: could not load.", self._total_images
-                )
+            pil_img = self._load_image_pil(img)
+            if pil_img is None:
+                logger.warning(f"Skipping image at index {self._total_count}: could not load.")
                 self._per_image_scores.append(None)
-                self._total_images += 1
+                self._total_count += 1
                 continue
 
             try:
-                score_val = self._clip_score_fn(tensor, prompt).item()
+                # Process image and text
+                with torch.no_grad():
+                    inputs = self.processor(images=pil_img, text=prompt, return_tensors="pt").to(self.device)
+                    outputs = self.model(**inputs)
+
+                # Compute cosine similarity
+                logits_per_image = outputs.logits_per_image
+                score_val = logits_per_image.item()
+
                 self._per_image_scores.append(score_val)
                 self._total_score += score_val
                 self._evaluated_count += 1
