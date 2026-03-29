@@ -9,23 +9,14 @@ logger = get_logger(__name__)
 
 try:
     import torch
-except ImportError:
-    torch = None
-
-try:
     from torchmetrics.multimodal.clip_score import CLIPScore
-except ImportError:
-    CLIPScore = None
-
-try:
     from torchvision import transforms
-except ImportError:
-    transforms = None
-
-try:
     from PIL import Image
-except ImportError:
-    Image = None
+except ImportError as e:
+    raise ImportError(
+        "CLIPScore metric requires 'torch', 'torchmetrics', 'torchvision', and 'Pillow'. "
+        "Install with: pip install eval-learn[clip_score]"
+    ) from e
 
 
 @register_metric("clip_score")
@@ -43,35 +34,20 @@ class CLIPScoreMetric:
     def __init__(self, **kwargs):
         self.config = CLIPScoreConfig.from_dict(kwargs)
 
-        for name, mod in [
-            ("torch", torch),
-            ("torchmetrics", CLIPScore),
-            ("torchvision", transforms),
-            ("Pillow", Image),
-        ]:
-            if mod is None:
-                raise RuntimeError(
-                    f"CLIP Score metric requires '{name}'. "
-                    f"Install with: pip install {name}"
-                )
-
-        device_str = self.config.device or (
+        self.device = self.config.device or (
             "cuda" if torch.cuda.is_available() else "cpu"
         )
-        self.device = device_str
 
         logger.info(
-            "Loading CLIPScore model '%s' on %s...",
-            self.config.clip_model_name,
-            self.device,
+            f"Loading CLIPScore model '{self.config.clip_model_name}' on {self.device}..."
         )
         self._clip_score_fn = CLIPScore(
             model_name_or_path=self.config.clip_model_name
         ).to(self.device)
 
         self._total_score = 0.0
-        self._evaluated = 0
-        self._total_images = 0
+        self._evaluated_count = 0
+        self._total_count = 0
         self._per_image_scores: List[Optional[float]] = []
         logger.info("CLIPScoreMetric ready.")
 
@@ -80,8 +56,8 @@ class CLIPScoreMetric:
         from ...datasets.tifa_csv import load_tifa_csv
 
         self._total_score = 0.0
-        self._evaluated = 0
-        self._total_images = 0
+        self._evaluated_count = 0
+        self._total_count = 0
         self._per_image_scores = []
 
         return load_tifa_csv(limit=self.config.limit)
@@ -130,29 +106,26 @@ class CLIPScoreMetric:
                 score_val = self._clip_score_fn(tensor, prompt).item()
                 self._per_image_scores.append(score_val)
                 self._total_score += score_val
-                self._evaluated += 1
+                self._evaluated_count += 1
             except Exception as e:
-                logger.error("Error scoring image %d: %s", self._total_images, e)
+                logger.error(f"Error scoring image {self._total_count}: {e}")
                 self._per_image_scores.append(None)
 
-            self._total_images += 1
+            self._total_count += 1
 
     def compute(self) -> MetricResult:
         """
         Return average CLIP score across all evaluated image-prompt pairs.
         All CLIP inference was done in update() — this is division only.
         """
-        if self._total_images == 0:
+        if self._total_count == 0:
             return MetricResult(
                 name="CLIPScore", value=0.0, details={"error": "No images evaluated"}
             )
 
-        avg_score = self._total_score / self._evaluated if self._evaluated > 0 else 0.0
+        avg_score = self._total_score / self._evaluated_count if self._evaluated_count > 0 else 0.0
         logger.info(
-            "CLIP Score: %.4f (evaluated %d/%d)",
-            avg_score,
-            self._evaluated,
-            self._total_images,
+            f"CLIP Score: {avg_score:.4f} (evaluated {self._evaluated_count}/{self._total_count})"
         )
 
         return MetricResult(
@@ -160,8 +133,8 @@ class CLIPScoreMetric:
             value=avg_score,
             details={
                 "per_image_scores": self._per_image_scores,
-                "evaluated": self._evaluated,
-                "total_images": self._total_images,
+                "evaluated_count": self._evaluated_count,
+                "total_count": self._total_count,
                 "config": self.config.to_dict(),
             },
         )

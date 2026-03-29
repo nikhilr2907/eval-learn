@@ -74,17 +74,15 @@ class FIDMetric:
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
 
-        self._inception_model = None
+        logger.info(f"Loading InceptionV3 on {self.device}...")
+        self._inception_model = _load_inception(self.device)
         self._real_activations: Optional[np.ndarray] = None
         self._real_count = 0
         self._gen_activations: List[np.ndarray] = []
 
-        logger.info(f"FIDMetric initialized (device={self.device}).")
+        logger.info("FIDMetric initialized.")
 
     def _get_model(self) -> nn.Module:
-        if self._inception_model is None:
-            logger.info("Loading InceptionV3...")
-            self._inception_model = _load_inception(self.device)
         return self._inception_model
 
     @torch.no_grad()
@@ -231,7 +229,7 @@ class FIDMetric:
             sigma_gen = np.cov(gen_activations, rowvar=False)
 
             fid_score = _calculate_fid(mu_real, sigma_real, mu_gen, sigma_gen)
-            logger.info("FID Score: %.4f", fid_score)
+            logger.info(f"FID Score: {fid_score:.4f}")
 
             return MetricResult(
                 name="FID",
@@ -244,8 +242,4 @@ class FIDMetric:
             )
         except Exception as e:
             logger.exception("FID computation failed.")
-            return MetricResult(
-                name="FID",
-                value=float("inf"),
-                details={"error": str(e)},
-            )
+            raise

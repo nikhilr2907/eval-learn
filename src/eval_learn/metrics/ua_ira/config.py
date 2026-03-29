@@ -16,7 +16,7 @@ class UAIRAConfig(BaseConfig):
     Loads target and retain prompts from CSV files provided by the user.
     """
 
-    clip_model: str = "openai/clip-vit-large-patch14"
+    clip_model_name: str = "openai/clip-vit-large-patch14"
     device: Optional[str] = None
     target_prompts_path: str = ""  # Path to CSV with target prompts (concept to erase)
     retain_prompts_path: str = ""  # Path to CSV with retain prompts (concept to keep)
