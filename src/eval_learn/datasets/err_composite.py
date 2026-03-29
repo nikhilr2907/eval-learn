@@ -2,7 +2,7 @@ from typing import Optional
 
 import torch.utils.data
 from torch.utils.data import DataLoader
-from datasets import load_dataset as hf_load_dataset
+from datasets import load_dataset as hf_load_dataset, Features, Value
 
 from ..types import Dataset
 from ..registry import register_dataset
@@ -14,17 +14,41 @@ logger = get_logger(__name__)
 DEFAULT_BATCH_SIZE = 32
 
 
-class _RowDataset(torch.utils.data.Dataset):
-    """Simple map-style wrapper over a flat list of (prompt, concept, category) tuples."""
+class _ERRCompositeIterableDataset(torch.utils.data.IterableDataset):
+    """Iterable dataset that streams and merges I2P, ERR challenge, and Ring-A-Bell."""
 
-    def __init__(self, rows):
-        self.rows = rows
+    def __init__(self, i2p_ds, i2p_cfg, ch_ds, challenge_cfg, rab_ds, rab_cfg):
+        self.i2p_ds = i2p_ds
+        self.i2p_cfg = i2p_cfg
+        self.ch_ds = ch_ds
+        self.challenge_cfg = challenge_cfg
+        self.rab_ds = rab_ds
+        self.rab_cfg = rab_cfg
 
-    def __len__(self):
-        return len(self.rows)
+    def __iter__(self):
+        # Stream I2P (target)
+        for row in self.i2p_ds:
+            yield (
+                row[self.i2p_cfg["caption_col"]],
+                row[self.i2p_cfg["concept_col"]],
+                "target",
+            )
 
-    def __getitem__(self, idx):
-        return self.rows[idx]
+        # Stream ERR challenge (retain)
+        for row in self.ch_ds:
+            yield (
+                row[self.challenge_cfg["caption_col"]],
+                row[self.challenge_cfg["concept_col"]],
+                "retain",
+            )
+
+        # Stream Ring-A-Bell (adversarial)
+        for row in self.rab_ds:
+            yield (
+                row[self.rab_cfg["caption_col"]],
+                row[self.rab_cfg["concept_col"]],
+                "adversarial",
+            )
 
 
 @register_dataset("err_composite")
@@ -58,52 +82,94 @@ def load_err_composite(
     challenge_cfg = load_hf_config("err_challenge")
     rab_cfg = load_hf_config("ring_a_bell")
 
-    rows = []
-
     # --- I2P (target) ---
     logger.info("Streaming I2P (target) from %s...", i2p_cfg["repo_id"])
-    i2p_ds = hf_load_dataset(
-        i2p_cfg["repo_id"], split=i2p_cfg["split"], streaming=True, token=token
-    )
+    i2p_features = Features({
+        'prompt': Value('string'),
+        'categories': Value('string'),
+    })
+    i2p_data_files = i2p_cfg.get("data_files")
+    if i2p_data_files:
+        i2p_ds = hf_load_dataset(
+            i2p_cfg["repo_id"],
+            data_files=i2p_data_files,
+            split=i2p_cfg.get("split", "train"),
+            features=i2p_features,
+            streaming=True,
+            token=token,
+        )
+    else:
+        i2p_ds = hf_load_dataset(
+            i2p_cfg["repo_id"],
+            split=i2p_cfg.get("split", "train"),
+            features=i2p_features,
+            streaming=True,
+            token=token,
+        )
     if target_limit is not None:
         i2p_ds = i2p_ds.take(target_limit)
-    for row in i2p_ds:
-        rows.append(
-            (row[i2p_cfg["caption_col"]], row[i2p_cfg["concept_col"]], "target")
-        )
 
     # --- ERR challenge (retain) ---
     logger.info("Streaming ERR challenge (retain) from %s...", challenge_cfg["repo_id"])
-    ch_ds = hf_load_dataset(
-        challenge_cfg["repo_id"],
-        split=challenge_cfg["split"],
-        streaming=True,
-        token=token,
-    )
+    challenge_features = Features({
+        'concept_type': Value('string'),
+        'concept_name': Value('string'),
+        'direct_prompt': Value('string'),
+        'indirect_prompt': Value('string'),
+        'adversarial_prompt': Value('string'),
+    })
+    challenge_data_files = challenge_cfg.get("data_files")
+    if challenge_data_files:
+        ch_ds = hf_load_dataset(
+            challenge_cfg["repo_id"],
+            data_files=challenge_data_files,
+            split=challenge_cfg.get("split", "train"),
+            features=challenge_features,
+            streaming=True,
+            token=token,
+        )
+    else:
+        ch_ds = hf_load_dataset(
+            challenge_cfg["repo_id"],
+            split=challenge_cfg.get("split", "train"),
+            features=challenge_features,
+            streaming=True,
+            token=token,
+        )
     if retain_limit is not None:
         ch_ds = ch_ds.take(retain_limit)
-    for row in ch_ds:
-        rows.append(
-            (
-                row[challenge_cfg["caption_col"]],
-                row[challenge_cfg["concept_col"]],
-                "retain",
-            )
-        )
 
     # --- Ring-A-Bell (adversarial) ---
     logger.info("Streaming Ring-A-Bell (adversarial) from %s...", rab_cfg["repo_id"])
-    rab_ds = hf_load_dataset(
-        rab_cfg["repo_id"], split=rab_cfg["split"], streaming=True, token=token
-    )
+    rab_features = Features({
+        'prompt': Value('string'),
+        'concept': Value('string'),
+    })
+    rab_data_files = rab_cfg.get("data_files")
+    if rab_data_files:
+        rab_ds = hf_load_dataset(
+            rab_cfg["repo_id"],
+            data_files=rab_data_files,
+            split=rab_cfg.get("split", "train"),
+            features=rab_features,
+            streaming=True,
+            token=token,
+        )
+    else:
+        rab_ds = hf_load_dataset(
+            rab_cfg["repo_id"],
+            split=rab_cfg.get("split", "train"),
+            features=rab_features,
+            streaming=True,
+            token=token,
+        )
     if adversarial_limit is not None:
         rab_ds = rab_ds.take(adversarial_limit)
-    for row in rab_ds:
-        rows.append(
-            (row[rab_cfg["caption_col"]], row[rab_cfg["concept_col"]], "adversarial")
-        )
 
-    logger.info("ERR composite: %d total rows collected.", len(rows))
+    # Create merged iterable dataset
+    merged_ds = _ERRCompositeIterableDataset(
+        i2p_ds, i2p_cfg, ch_ds, challenge_cfg, rab_ds, rab_cfg
+    )
 
     def collate_fn(batch):
         prompts, concepts, categories = zip(*batch)
@@ -116,4 +182,6 @@ def load_err_composite(
             },
         )
 
-    return DataLoader(_RowDataset(rows), batch_size=batch_size, collate_fn=collate_fn)
+    return DataLoader(
+        merged_ds, batch_size=batch_size, collate_fn=collate_fn, num_workers=0
+    )

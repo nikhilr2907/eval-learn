@@ -9,19 +9,13 @@ logger = get_logger(__name__)
 
 try:
     import torch
-except ImportError:
-    torch = None
-
-try:
     from transformers import Blip2Processor, Blip2ForConditionalGeneration
-except ImportError:
-    Blip2Processor = None
-    Blip2ForConditionalGeneration = None
-
-try:
     from PIL import Image
-except ImportError:
-    Image = None
+except ImportError as e:
+    raise ImportError(
+        "TIFA metric requires 'torch', 'transformers', and 'Pillow'. "
+        "Install with: pip install eval-learn[tifa]"
+    ) from e
 
 
 @register_metric("tifa")
@@ -44,53 +38,12 @@ class TIFAMetric:
     def __init__(self, **kwargs):
         self.config = TIFAConfig.from_dict(kwargs)
 
-        for name, mod in [
-            ("torch", torch),
-            ("transformers", Blip2Processor),
-            ("Pillow", Image),
-        ]:
-            if mod is None:
-                raise RuntimeError(
-                    f"TIFA metric requires '{name}'. "
-                    f"Install with: pip install {name}"
-                )
-
-        device_str = self.config.device or (
+        self.device = self.config.device or (
             "cuda" if torch.cuda.is_available() else "cpu"
         )
-        self.device = device_str
 
-        self._processor = None
-        self._model = None
-
-        self._correct_count = 0
-        self._total_count = 0
-        self._total_images = 0
-        self._per_image_scores: List[Optional[float]] = []
-
-    def load_dataset(self) -> DataLoader:
-        """Return a DataLoader over the TIFA dataset."""
-        from ...datasets.tifa_json import load_tifa_json
-
-        self._correct_count = 0
-        self._total_count = 0
-        self._total_images = 0
-        self._per_image_scores = []
-
-        return load_tifa_json(limit=self.config.limit)
-
-    # ------------------------------------------------------------------
-    # VQA engine
-    # ------------------------------------------------------------------
-
-    def _ensure_vqa_loaded(self):
-        """Lazy-load the BLIP-2 VQA model."""
-        if self._model is not None:
-            return
         logger.info(
-            "Loading BLIP-2 VQA model '%s' on %s...",
-            self.config.vqa_model_name,
-            self.device,
+            f"Loading BLIP-2 VQA model '{self.config.vqa_model_name}' on {self.device}..."
         )
         self._processor = Blip2Processor.from_pretrained(self.config.vqa_model_name)
         self._model = Blip2ForConditionalGeneration.from_pretrained(
@@ -99,6 +52,26 @@ class TIFAMetric:
         ).to(self.device)
         self._model.eval()
         logger.info("BLIP-2 VQA model ready.")
+
+        self._correct_count = 0
+        self._total_questions_count = 0
+        self._total_images_count = 0
+        self._per_image_scores: List[Optional[float]] = []
+
+    def load_dataset(self) -> DataLoader:
+        """Return a DataLoader over the TIFA dataset."""
+        from ...datasets.tifa_csv import load_tifa_csv
+
+        self._correct_count = 0
+        self._total_questions_count = 0
+        self._total_images_count = 0
+        self._per_image_scores = []
+
+        return load_tifa_csv(limit=self.config.limit)
+
+    # ------------------------------------------------------------------
+    # VQA engine
+    # ------------------------------------------------------------------
 
     @torch.no_grad()
     def _answer(self, pil_image, question: str, max_new_tokens: int = 10) -> str:
@@ -134,7 +107,6 @@ class TIFAMetric:
             _prompts:  Unused — faithfulness is measured via QA pairs.
             metadata:  Must contain ``qa_pairs`` parallel to images.
         """
-        self._ensure_vqa_loaded()
         metadata = metadata or {}
         qa_pairs_batch = metadata.get("qa_pairs", [None] * len(images))
 
@@ -148,7 +120,7 @@ class TIFAMetric:
 
             if pil_img is None or not questions:
                 self._per_image_scores.append(None)
-                self._total_images += 1
+                self._total_images_count += 1
                 continue
 
             img_correct = 0
@@ -159,7 +131,7 @@ class TIFAMetric:
                 if not question or not expected:
                     continue
                 prediction = self._answer(pil_img, question)
-                self._total_count += 1
+                self._total_questions_count += 1
                 img_total += 1
                 if prediction.lower().strip() == expected.lower().strip():
                     self._correct_count += 1
@@ -168,35 +140,32 @@ class TIFAMetric:
             self._per_image_scores.append(
                 img_correct / img_total if img_total > 0 else None
             )
-            self._total_images += 1
+            self._total_images_count += 1
 
     def compute(self) -> MetricResult:
         """
         Return TIFA score as correct / total questions.
         All VQA inference was done in update() — this is division only.
         """
-        if self._total_images == 0:
+        if self._total_images_count == 0:
             return MetricResult(
                 name="TIFA", value=0.0, details={"error": "No images evaluated"}
             )
 
         tifa_score = (
-            self._correct_count / self._total_count if self._total_count > 0 else 0.0
+            self._correct_count / self._total_questions_count if self._total_questions_count > 0 else 0.0
         )
         logger.info(
-            "TIFA Score: %.4f (%d/%d correct)",
-            tifa_score,
-            self._correct_count,
-            self._total_count,
+            f"TIFA Score: {tifa_score:.4f} ({self._correct_count}/{self._total_questions_count} correct)"
         )
 
         return MetricResult(
             name="TIFA",
             value=tifa_score,
             details={
-                "correct": self._correct_count,
-                "total_questions": self._total_count,
-                "total_images": self._total_images,
+                "correct_count": self._correct_count,
+                "total_questions_count": self._total_questions_count,
+                "total_images_count": self._total_images_count,
                 "per_image_scores": self._per_image_scores,
                 "config": self.config.to_dict(),
             },

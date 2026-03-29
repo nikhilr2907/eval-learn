@@ -106,14 +106,7 @@ class MultiBenchmarkRunner(BaseRunner):
         logger.info("Starting Multi-Benchmark Run...")
         timestamp = time.time()
 
-        # 1. Initialize all metrics
-        self._log_phase("Initializing metrics")
-        metrics: Dict[str, Any] = {}
-        for name in self.metric_names:
-            config = self.metric_configs.get(name, {})
-            metrics[name] = self.metric_factories[name](**config)
-
-        # 2. Initialize technique once
+        # 1. Initialize technique once
         self._log_phase("Initializing technique")
         technique = self.technique_factory(**self.technique_config)
 
@@ -128,14 +121,17 @@ class MultiBenchmarkRunner(BaseRunner):
         )
         logger.info(f"Run ID: {run_id}")
 
-        # 3. Run each metric with its own dataset and generation pass
+        # 2. Run each metric with its own dataset and generation pass.
+        # Metrics are initialised one at a time and freed after use to avoid
+        # exhausting GPU memory when multiple CLIP/detector models are loaded.
         self._log_phase("Generating images and computing metrics")
         metric_results: Dict[str, Any] = {}
         metric_datasets: Dict[str, str] = {}
 
         for metric_name in self.metric_names:
             self._log_phase(f"Running metric '{metric_name}' with its dataset")
-            metric = metrics[metric_name]
+            config = self.metric_configs.get(metric_name, {})
+            metric = self.metric_factories[metric_name](**config)
 
             # Load this metric's dataset
             loader = metric.load_dataset()
@@ -187,9 +183,17 @@ class MultiBenchmarkRunner(BaseRunner):
                 technique_name=self.technique_name,
                 metric_name=metric_name,
                 images=metric_images,
-                report={},  # Minimal report at save time
+                report=None,  # Report will be saved after all metrics computed
                 metadata=metric_metadata,
             )
+
+            # Free metric and its GPU models before loading the next metric
+            del metric
+            try:
+                import torch
+                torch.cuda.empty_cache()
+            except Exception:
+                pass
 
         # 4. Build final report
         report = self._build_base_report(
@@ -197,11 +201,18 @@ class MultiBenchmarkRunner(BaseRunner):
             timestamp=timestamp,
             technique_name=self.technique_name,
             metric_names=self.metric_names,
-            dataset_name="multi_metric",
-            dataset_metadata={"metric_datasets": metric_datasets},
-            technique_config=self.technique_config,
-            metric_configs=self.metric_configs,
             metric_results=metric_results,
+        )
+
+        # 5. Save final report to run directory
+        self._log_phase("Saving final combined report")
+        self.writer.save_run(
+            run_id=run_id,
+            technique_name=self.technique_name,
+            metric_name="multi",
+            images=[],
+            report=report,
+            metadata={},
         )
 
         logger.info("Multi-benchmark run completed.")

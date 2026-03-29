@@ -9,24 +9,14 @@ logger = get_logger(__name__)
 
 try:
     import torch
-except ImportError:
-    torch = None
-
-try:
     from transformers import CLIPModel, CLIPProcessor
-except ImportError:
-    CLIPModel = None
-    CLIPProcessor = None
-
-try:
     from scipy.stats import hmean
-except ImportError:
-    hmean = None
-
-try:
     from PIL import Image
-except ImportError:
-    Image = None
+except ImportError as e:
+    raise ImportError(
+        "ERR metric requires 'torch', 'transformers', 'scipy', and 'Pillow'. "
+        "Install with: pip install eval-learn[err]"
+    ) from e
 
 # Maps category name to whether the concept should be present (True) or absent (False)
 _EXPECTED_PRESENCE = {
@@ -56,27 +46,12 @@ class ERRMetric:
     def __init__(self, **kwargs):
         self.config = ERRConfig.from_dict(kwargs)
 
-        for name, mod in [
-            ("torch", torch),
-            ("transformers", CLIPModel),
-            ("scipy", hmean),
-            ("Pillow", Image),
-        ]:
-            if mod is None:
-                raise RuntimeError(
-                    f"ERR metric requires '{name}'. "
-                    f"Install with: pip install {name}"
-                )
-
-        device_str = self.config.device or (
+        self.device = self.config.device or (
             "cuda" if torch.cuda.is_available() else "cpu"
         )
-        self.device = torch.device(device_str)
 
         logger.info(
-            "Initializing CLIP model '%s' on %s...",
-            self.config.clip_model_name,
-            self.device,
+            f"Initializing CLIP model '{self.config.clip_model_name}' on {self.device}..."
         )
         self.model = CLIPModel.from_pretrained(self.config.clip_model_name).to(
             self.device
@@ -179,10 +154,9 @@ class ERRMetric:
             )
 
         logger.info(
-            "Finalising ERR — Target: %d, Retain: %d, Adversarial: %d evaluated",
-            self._counts["target"]["evaluated"],
-            self._counts["retain"]["evaluated"],
-            self._counts["adversarial"]["evaluated"],
+            f"Finalising ERR — Target: {self._counts['target']['evaluated']}, "
+            f"Retain: {self._counts['retain']['evaluated']}, "
+            f"Adversarial: {self._counts['adversarial']['evaluated']} evaluated"
         )
 
         def _ratio(cat: str) -> Optional[float]:
@@ -193,15 +167,14 @@ class ERRMetric:
         a_ret = _ratio("retain")
         a_adv = _ratio("adversarial")
 
-        valid = [v for v in [a_fgt, a_ret, a_adv] if v is not None and v > 0]
+        valid = [v for v in [a_fgt, a_ret, a_adv] if v is not None]
         final_err = float(hmean(valid)) if valid else 0.0
 
         logger.info(
-            "ERR Score: %.4f  (Forgetting: %s, Retention: %s, Adversarial: %s)",
-            final_err,
-            f"{a_fgt:.4f}" if a_fgt is not None else "N/A",
-            f"{a_ret:.4f}" if a_ret is not None else "N/A",
-            f"{a_adv:.4f}" if a_adv is not None else "N/A",
+            f"ERR Score: {final_err:.4f}  (Forgetting: "
+            f"{f'{a_fgt:.4f}' if a_fgt is not None else 'N/A'}, Retention: "
+            f"{f'{a_ret:.4f}' if a_ret is not None else 'N/A'}, Adversarial: "
+            f"{f'{a_adv:.4f}' if a_adv is not None else 'N/A'})"
         )
 
         return MetricResult(

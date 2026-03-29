@@ -30,7 +30,7 @@ class ArtifactWriter:
         technique_name: str,
         metric_name: str,
         images: List[Any],
-        report: Dict[str, Any],
+        report: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
@@ -41,57 +41,71 @@ class ArtifactWriter:
             technique_name: Name of the technique (e.g. ``"sld"``).
             metric_name: Name of the metric (e.g. ``"asr"``).
             images: List of generated PIL images.
-            report: Result dictionary to persist as JSON.
+            report: Result dictionary to persist as JSON. If None, no report is saved.
             metadata: Dataset metadata. If it contains a ``categories``
                 key (list parallel to *images*), images are saved into
                 per-category subdirectories.
 
         Returns:
-            Path to the saved report JSON.
+            Path to the saved report JSON (or where it would be saved).
         """
         metadata = metadata or {}
         categories = metadata.get("categories")
 
-        # Build folder: <base_dir>/<technique>_<metric>_<run_id>/
-        folder_name = f"{technique_name}_{metric_name}_{run_id}"
-        run_dir = os.path.join(self.base_dir, folder_name)
-        images_dir = os.path.join(run_dir, "images")
-        os.makedirs(images_dir, exist_ok=True)
-
-        # Save images — category-aware if metadata provides categories
-        logger.info(f"Saving {len(images)} images to {images_dir}...")
         image_paths = []
 
-        if categories and len(categories) == len(images):
-            # Category-aware: save into subdirectories
-            category_counters: Dict[str, int] = {}
-            for img, cat in zip(images, categories):
-                cat_dir = os.path.join(images_dir, cat.lower())
-                os.makedirs(cat_dir, exist_ok=True)
-                idx = category_counters.get(cat.lower(), 0)
-                category_counters[cat.lower()] = idx + 1
-                path = os.path.join(cat_dir, f"{idx}.png")
-                image_paths.append(self._save_image(img, path, idx))
+        # If images provided, save them in structured folder
+        if images:
+            # Build folder: <base_dir>/<technique>_<metric>_<run_id>/
+            folder_name = f"{technique_name}_{metric_name}_{run_id}"
+            run_dir = os.path.join(self.base_dir, folder_name)
+            images_dir = os.path.join(run_dir, "images")
+            os.makedirs(images_dir, exist_ok=True)
+
+            # Save images — category-aware if metadata provides categories
+            logger.info(f"Saving {len(images)} images to {images_dir}...")
+
+            if categories and len(categories) == len(images):
+                # Category-aware: save into subdirectories
+                category_counters: Dict[str, int] = {}
+                for img, cat in zip(images, categories):
+                    cat_dir = os.path.join(images_dir, cat.lower())
+                    os.makedirs(cat_dir, exist_ok=True)
+                    idx = category_counters.get(cat.lower(), 0)
+                    category_counters[cat.lower()] = idx + 1
+                    path = os.path.join(cat_dir, f"{technique_name}_{metric_name}_{run_id}_{idx}.png")
+                    image_paths.append(self._save_image(img, path, idx))
+            else:
+                # Flat: save numbered images directly
+                for i, img in enumerate(images):
+                    path = os.path.join(images_dir, f"{technique_name}_{metric_name}_{run_id}_{i}.png")
+                    image_paths.append(self._save_image(img, path, i))
+
+            # Filter out None (failed saves)
+            image_paths = [p for p in image_paths if p is not None]
         else:
-            # Flat: save numbered images directly
-            for i, img in enumerate(images):
-                path = os.path.join(images_dir, f"{i}.png")
-                image_paths.append(self._save_image(img, path, i))
+            logger.info("No images to save")
 
-        # Filter out None (failed saves)
-        image_paths = [p for p in image_paths if p is not None]
+        # Save report only if provided
+        if report is not None:
+            # If no images, save report directly to base_dir
+            if images:
+                folder_name = f"{technique_name}_{metric_name}_{run_id}"
+                run_dir = os.path.join(self.base_dir, folder_name)
+                report_path = os.path.join(run_dir, f"{run_id}_report.json")
+            else:
+                os.makedirs(self.base_dir, exist_ok=True)
+                report_path = os.path.join(self.base_dir, f"{run_id}_report.json")
 
-        # Update report and save
-        report["image_paths"] = image_paths
-        report["run_id"] = run_id
-
-        report_path = os.path.join(run_dir, f"{run_id}_report.json")
-        try:
-            with open(report_path, "w") as f:
-                json.dump(report, f, indent=4)
-            logger.info(f"Report saved to {report_path}")
-        except Exception as e:
-            logger.error(f"Failed to save report: {e}")
+            try:
+                with open(report_path, "w") as f:
+                    json.dump(report, f, indent=4)
+                logger.info(f"Report saved to {report_path}")
+            except Exception as e:
+                logger.error(f"Failed to save report: {e}")
+        else:
+            logger.info(f"Skipping report save (not provided)")
+            report_path = os.path.join(self.base_dir, f"{run_id}_report.json")
 
         return report_path
 
