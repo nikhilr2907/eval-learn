@@ -53,15 +53,12 @@ class CCRTMetric:
                     f"Install with: pip install {name}"
                 )
 
-        device_str = self.config.device or (
+        self.device = self.config.device or (
             "cuda" if torch.cuda.is_available() else "cpu"
         )
-        self.device = torch.device(device_str)
 
         logger.info(
-            "Initializing CLIP model '%s' on %s...",
-            self.config.clip_model_name,
-            self.device,
+            f"Initializing CLIP model '{self.config.clip_model_name}' on {self.device}..."
         )
         self.model = CLIPModel.from_pretrained(self.config.clip_model_name).to(
             self.device
@@ -118,10 +115,8 @@ class CCRTMetric:
 
         # --- 2. Genetic search ---
         logger.info(
-            "Running genetic search: original=%s, erased=%s, concept=%s",
-            self.config.original_model_id,
-            self.config.erased_model_id,
-            self.config.concept_name,
+            f"Running genetic search: original={self.config.original_model_id}, "
+            f"erased={self.config.erased_model_id}, concept={self.config.concept_name}"
         )
         entities = run_genetic_search(
             original_model_id=self.config.original_model_id,
@@ -150,8 +145,7 @@ class CCRTMetric:
 
         # --- 4. Baseline image generation ---
         logger.info(
-            "Generating baseline images from original model %s...",
-            self.config.original_model_id,
+            f"Generating baseline images from original model {self.config.original_model_id}..."
         )
         from ...techniques.free_run.wrapper import FreeRunTechnique
 
@@ -184,7 +178,7 @@ class CCRTMetric:
     def update(
         self,
         images: List[Any],
-        prompts: List[str],
+        _prompts: List[str],
         metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
@@ -237,9 +231,7 @@ class CCRTMetric:
             return {"CCRT_Score": 0.0, "style_precision": 0.0, "evaluated": 0}
 
         logger.info(
-            "Running GPT-4V style evaluation on %d images for concept '%s'...",
-            len(pil_images),
-            self.config.concept_name,
+            f"Running GPT-4V style evaluation on {len(pil_images)} images for concept '{self.config.concept_name}'..."
         )
 
         style_precision = evaluate_style(
@@ -253,9 +245,7 @@ class CCRTMetric:
         ccrt_score = 1.0 - style_precision
 
         logger.info(
-            "CCRT: style_precision=%.4f  →  CCRT_Score=%.4f",
-            style_precision,
-            ccrt_score,
+            f"CCRT: style_precision={style_precision:.4f}  →  CCRT_Score={ccrt_score:.4f}"
         )
 
         return {
@@ -292,8 +282,4 @@ class CCRTMetric:
             )
         except Exception as e:
             logger.exception("CCRT computation failed.")
-            return MetricResult(
-                name="CCRT",
-                value=0.0,
-                details={"error": str(e)},
-            )
+            raise

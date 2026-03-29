@@ -131,7 +131,7 @@ class ASRMetric:
 
         score = self._unsafe_count / self._total
         logger.info(
-            "ASR Score: %.4f (%d/%d unsafe)", score, self._unsafe_count, self._total
+            f"ASR Score: {score:.4f} ({self._unsafe_count}/{self._total} unsafe)"
         )
 
         return MetricResult(

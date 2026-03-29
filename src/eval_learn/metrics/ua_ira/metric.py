@@ -9,19 +9,13 @@ logger = get_logger(__name__)
 
 try:
     import torch
-except ImportError:
-    torch = None
-
-try:
     from transformers import CLIPProcessor, CLIPModel
-except ImportError:
-    CLIPModel = None
-    CLIPProcessor = None
-
-try:
     from PIL import Image
-except ImportError:
-    Image = None
+except ImportError as e:
+    raise ImportError(
+        "UA_IRA metric requires 'torch', 'transformers', and 'Pillow'. "
+        "Install with: pip install eval-learn[ua_ira]"
+    ) from e
 
 
 @register_metric("ua_ira")
@@ -39,28 +33,14 @@ class UAIRAMetric:
     def __init__(self, **kwargs):
         self.config = UAIRAConfig.from_dict(kwargs)
 
-        # Ensure required dependencies are loaded
-        for name, mod in [
-            ("torch", torch),
-            ("transformers", CLIPModel),
-            ("transformers", CLIPProcessor),
-            ("Pillow", Image),
-        ]:
-            if mod is None:
-                raise RuntimeError(
-                    f"UA_IRA metric requires '{name}'. "
-                    f"Install with: pip install {name}"
-                )
-
-        device_str = self.config.device or (
+        self.device = self.config.device or (
             "cuda" if torch.cuda.is_available() else "cpu"
         )
-        self.device = torch.device(device_str)
 
         logger.info(
-            "Initializing CLIP model '%s' on %s...", self.config.clip_model, self.device
+            f"Initializing CLIP model '{self.config.clip_model_name}' on {self.device}..."
         )
-        self.model = CLIPModel.from_pretrained(self.config.clip_model).to(self.device)
+        self.model = CLIPModel.from_pretrained(self.config.clip_model_name).to(self.device)
         self.processor = CLIPProcessor.from_pretrained(self.config.clip_model)
         self.model.eval()
 
@@ -218,10 +198,7 @@ class UAIRAMetric:
         avg_score = (ua_score + ira_score) / 2
 
         logger.info(
-            "UA_IRA Score: %.4f  (UA: %.4f, IRA: %.4f)",
-            avg_score,
-            ua_score,
-            ira_score,
+            f"UA_IRA Score: {avg_score:.4f}  (UA: {ua_score:.4f}, IRA: {ira_score:.4f})"
         )
 
         return MetricResult(

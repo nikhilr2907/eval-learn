@@ -166,6 +166,8 @@ class SAeUronWrapper:
 
         pipe = StableDiffusionPipeline.from_pretrained(
             self.config.model_id,
+            safety_checker=None,
+            requires_safety_checker=False,
             torch_dtype=(
                 torch.float16 if self.config.device == "cuda" else torch.float32
             ),

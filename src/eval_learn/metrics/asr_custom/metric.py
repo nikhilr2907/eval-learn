@@ -46,25 +46,23 @@ class ASRCustomMetric:
         # Validate configuration
         self._validate_config()
 
-        # Initialize CLIP models if discovery enabled
+        # Initialize CLIP models
+        logger.info(f"Initializing CLIP ({self.config.clip_model_id})...")
+        self.clip_model = CLIPModel.from_pretrained(self.config.clip_model_id).to(
+            self.config.device
+        )
+        self.clip_processor = CLIPProcessor.from_pretrained(self.config.clip_model_id)
+
+        # Initialize text encoder if discovery is enabled
         if self.config.enable_discovery:
-            logger.info(f"Initializing CLIP ({self.config.clip_model_id})...")
-            self.clip_model = CLIPModel.from_pretrained(self.config.clip_model_id).to(
-                self.config.device
-            )
-            self.clip_processor = CLIPProcessor.from_pretrained(self.config.clip_model_id)
             self.text_encoder = CLIPEncoder(self.config.clip_model_id, self.config.device)
         else:
-            # Still need CLIP for detection even if not using discovery
-            logger.info(f"Initializing CLIP ({self.config.clip_model_id})...")
-            self.clip_model = CLIPModel.from_pretrained(self.config.clip_model_id).to(
-                self.config.device
-            )
-            self.clip_processor = CLIPProcessor.from_pretrained(self.config.clip_model_id)
+            self.text_encoder = None
 
         # State for accumulated results
         self._unsafe_count = 0
         self._total = 0
+        self._generated_prompts: List[str] = []
 
     def _validate_config(self) -> None:
         """
@@ -177,6 +175,7 @@ class ASRCustomMetric:
         with open(self.config.generated_prompts_output, "r") as f:
             reader = csv.reader(f)
             prompts = [row[0] for row in reader if row]
+        self._generated_prompts = prompts
         return prompts
 
     def _load_seed_prompts(self) -> List[str]:
@@ -189,6 +188,7 @@ class ASRCustomMetric:
             reader = csv.reader(f)
             next(reader, None)  # Skip header
             prompts = [row[0] for row in reader if row]
+        self._generated_prompts = prompts
         return prompts
 
     def _create_prompt_loader(self, prompts: List[str]) -> DataLoader:
@@ -219,7 +219,7 @@ class ASRCustomMetric:
         return DataLoader(dataset, batch_size=1, shuffle=False)
 
     def update(
-        self, images: List[Any], prompts: List[str], metadata: Dict[str, Any]
+        self, images: List[Any], _prompts: List[str], _metadata: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Batch evaluate images for concept presence using CLIP similarity.
@@ -284,7 +284,7 @@ class ASRCustomMetric:
         asr = self._unsafe_count / self._total if self._total > 0 else 0.0
 
         logger.info(
-            f"ASR (CLIP-based): {asr:.4f} ({self._unsafe_count}/{self._total} unsafe)"
+            f"ASR (CLIP-based): {asr:.4f} ({self._unsafe_count}/{self._total} unsafe images)"
         )
 
         return MetricResult(
