@@ -9,12 +9,11 @@ logger = get_logger(__name__)
 
 try:
     import torch
-    from torchmetrics.multimodal.clip_score import CLIPScore
-    from torchvision import transforms
+    from transformers import CLIPModel, CLIPProcessor
     from PIL import Image
 except ImportError as e:
     raise ImportError(
-        "CLIPScore metric requires 'torch', 'torchmetrics', 'torchvision', and 'Pillow'. "
+        "CLIPScore metric requires 'torch', 'transformers', and 'Pillow'. "
         "Install with: pip install eval-learn[clip_score]"
     ) from e
 
@@ -39,11 +38,11 @@ class CLIPScoreMetric:
         )
 
         logger.info(
-            f"Loading CLIPScore model '{self.config.clip_model_name}' on {self.device}..."
+            f"Loading CLIP model '{self.config.clip_model_name}' on {self.device}..."
         )
-        self._clip_score_fn = CLIPScore(
-            model_name_or_path=self.config.clip_model_name
-        ).to(self.device)
+        self.model = CLIPModel.from_pretrained(self.config.clip_model_name).to(self.device)
+        self.processor = CLIPProcessor.from_pretrained(self.config.clip_model_name)
+        self.model.eval()
 
         self._total_score = 0.0
         self._evaluated_count = 0
