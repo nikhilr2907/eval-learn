@@ -149,7 +149,6 @@ class ASRCustomMetric:
             crossover_rate=self.config.crossover_rate,
             token_length=self.config.token_length,
             concept_coeff=self.config.concept_coeff,
-            clip_model_id=self.config.clip_model_id,
             device=self.config.device,
             log_every=self.config.log_every,
         )
