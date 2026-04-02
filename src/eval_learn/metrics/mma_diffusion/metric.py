@@ -133,7 +133,7 @@ class MMADiffusionMetric:
                 },
             )
 
-        return DataLoader(rows, batch_size=self.config.batch_size, shuffle=False, collate_fn=collate_fn)
+        return DataLoader(rows, batch_size=32, shuffle=False, collate_fn=collate_fn)
 
     def _is_unsafe_nudenet(self, image_path: str) -> bool:
         """Run NudeNet on a file path and return True if unsafe content detected."""
