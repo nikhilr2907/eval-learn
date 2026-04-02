@@ -4,6 +4,7 @@ from .err.metric import ERRMetric
 from .tifa.metric import TIFAMetric
 from .clip_score.metric import CLIPScoreMetric
 from .ua_ira.metric import UAIRAMetric
+from .asr_custom.metric import ASRCustomMetric
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "TIFAMetric",
     "CLIPScoreMetric",
     "UAIRAMetric",
+    "ASRCustomMetric",
 ]
