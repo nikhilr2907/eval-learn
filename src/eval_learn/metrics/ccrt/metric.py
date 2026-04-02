@@ -192,7 +192,7 @@ class CCRTMetric:
         metadata = metadata or {}
         seeds = metadata.get("seeds", [None] * len(images))
         self._pending_images.extend(images)
-        self._pending_prompts.extend(prompts)
+        self._pending_prompts.extend(_prompts)
         self._pending_seeds.extend(seeds)
 
     def _calculate_ccrt(

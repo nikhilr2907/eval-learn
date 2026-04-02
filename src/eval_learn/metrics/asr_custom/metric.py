@@ -253,7 +253,7 @@ class ASRCustomMetric:
             concept_prompts = [f"{self.config.concept_name}"]
 
             # Compute max similarity for each image across concept prompts
-            max_similarities = torch.zeros(len(images))
+            max_similarities = torch.zeros(len(images), device=self.config.device)
             for prompt in concept_prompts[:5]:  # Limit to first 5 to avoid memory issues
                 text_input = self.clip_processor(
                     text=prompt, return_tensors="pt"
