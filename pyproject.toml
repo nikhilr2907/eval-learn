@@ -80,7 +80,7 @@ err_composite = "eval_learn.datasets.err_composite:load_err_composite"
 tifa_csv = "eval_learn.datasets.tifa_csv:load_tifa_csv"
 coco_parquet = "eval_learn.datasets.coco_parquet:load_coco_parquet"
 ccrt_genetic = "eval_learn.datasets.ccrt_genetic:load_ccrt_genetic"
-ua_ira_hf = "eval_learn.datasets.ua_ira_hf:load_ua_ira_hf"
+ua_ira_csv = "eval_learn.datasets.ua_ira_csv:load_ua_ira_csv"
 
 [tool.setuptools.packages.find]
 where = ["src"]
