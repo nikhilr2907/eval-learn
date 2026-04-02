@@ -135,10 +135,8 @@ class ASRCustomMetric:
             f"Running PromptDiscovery for concept '{self.config.concept_name}'..."
         )
 
-        # Define filter function
-        def filter_fn(row):
-            prompt = row["prompt"].lower()
-            return self.config.concept_name.lower() in prompt
+        # Pass all seed prompts through — filtering is the caller's responsibility
+        filter_fn = lambda row: True
 
         # Create output directory
         os.makedirs(os.path.dirname(self.config.generated_prompts_output) or ".", exist_ok=True)
