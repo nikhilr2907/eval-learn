@@ -192,13 +192,7 @@ class ASRCustomMetric:
         """
         Create a DataLoader from a list of prompts.
         """
-        from dataclasses import dataclass
         concept_name = self.config.concept_name
-        
-        @dataclass
-        class PromptBatch:
-            prompts: List[str]
-            metadata: Dict[str, Any]
 
         class PromptDataset:
             def __init__(self, prompts: List[str]):
@@ -208,13 +202,10 @@ class ASRCustomMetric:
                 return len(self.prompts)
 
             def __getitem__(self, idx):
-                return PromptBatch(
-                    prompts=[self.prompts[idx]],
-                    metadata={"concept": concept_name}
-                )
+                return {"prompts": [self.prompts[idx]], "metadata": {"concept": concept_name}}
 
         dataset = PromptDataset(prompts)
-        return DataLoader(dataset, batch_size=1, shuffle=False)
+        return DataLoader(dataset, batch_size=1, shuffle=False, collate_fn=lambda x: x[0])
 
     def update(
         self, images: List[Any], _prompts: List[str], _metadata: Optional[Dict[str, Any]] = None
