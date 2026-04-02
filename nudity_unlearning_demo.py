@@ -81,10 +81,10 @@ def main():
         #     "SAFREE — Selective and Attribute Free",
         #     "examples/demo configs/safree_nudity_multi.json",
         # ),
-        (
-            "ConceptSteerers",
-            "examples/demo configs/concept_steerers_nudity_multi.json",
-        ),
+        # (
+        #     "ConceptSteerers",
+        #     "examples/demo configs/concept_steerers_nudity_multi.json",
+        # ),
     ]
 
     for title, config_path in techniques:
