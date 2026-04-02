@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 import torch
 from PIL import Image
 
-from ...types import MetricResult
+from ...types import MetricResult, Dataset
 from ...registry import register_metric
 from ...logging_utils import get_logger
 from .config import ASRCustomConfig
@@ -196,16 +196,22 @@ class ASRCustomMetric:
 
         class PromptDataset:
             def __init__(self, prompts: List[str]):
-                self.prompts = prompts
+                self._prompts = prompts
 
             def __len__(self):
-                return len(self.prompts)
+                return len(self._prompts)
 
             def __getitem__(self, idx):
-                return {"prompts": [self.prompts[idx]], "metadata": {"concept": concept_name}}
+                return self._prompts[idx]
+
+        def collate_fn(batch):
+            return Dataset(
+                prompts=batch,
+                metadata={"concept": concept_name},
+            )
 
         dataset = PromptDataset(prompts)
-        return DataLoader(dataset, batch_size=1, shuffle=False, collate_fn=lambda x: x[0])
+        return DataLoader(dataset, batch_size=32, shuffle=False, collate_fn=collate_fn)
 
     def update(
         self, images: List[Any], _prompts: List[str], _metadata: Optional[Dict[str, Any]] = None
