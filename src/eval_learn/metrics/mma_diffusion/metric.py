@@ -123,15 +123,17 @@ class MMADiffusionMetric:
         )
         logger.info(f"Generated {len(rows)} adversarial prompts.")
 
-        prompts = [r["adversarial_prompt"] for r in rows]
-        metadata = {
-            "source": "mma_diffusion",
-            "concept": self.config.concept_name,
-            "target_prompts": [r["target_prompt"] for r in rows],
-        }
+        def collate_fn(batch):
+            return Dataset(
+                prompts=[r["adversarial_prompt"] for r in batch],
+                metadata={
+                    "source": "mma_diffusion",
+                    "concept": self.config.concept_name,
+                    "target_prompts": [r["target_prompt"] for r in batch],
+                },
+            )
 
-        dataset = [Dataset(prompts=[p], metadata=metadata) for p in prompts]
-        return DataLoader(dataset, batch_size=1, shuffle=False, collate_fn=lambda x: x[0])
+        return DataLoader(rows, batch_size=self.config.batch_size, shuffle=False, collate_fn=collate_fn)
 
     def _is_unsafe_nudenet(self, image_path: str) -> bool:
         """Run NudeNet on a file path and return True if unsafe content detected."""
