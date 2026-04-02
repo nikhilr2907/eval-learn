@@ -5,6 +5,7 @@ from .tifa.metric import TIFAMetric
 from .clip_score.metric import CLIPScoreMetric
 from .ua_ira.metric import UAIRAMetric
 from .asr_custom.metric import ASRCustomMetric
+from .mma_diffusion.metric import MMADiffusionMetric
 
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "CLIPScoreMetric",
     "UAIRAMetric",
     "ASRCustomMetric",
+    "MMADiffusionMetric",
 ]
