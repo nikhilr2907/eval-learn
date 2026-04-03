@@ -13,14 +13,6 @@ from .config import MMADiffusionConfig
 logger = get_logger(__name__)
 
 try:
-    from mma_diff import AdversarialPromptGenerator
-except ImportError:
-    raise ImportError(
-        "MMADiffusion metric requires the 'mma_diff' package. "
-        "Install with: pip install -e packages/mma_diff"
-    )
-
-try:
     from nudenet import NudeDetector
 except ImportError:
     NudeDetector = None
@@ -56,6 +48,15 @@ class MMADiffusionMetric:
     """
 
     def __init__(self, **kwargs):
+        try:
+            from mma_diff import AdversarialPromptGenerator
+            self._AdversarialPromptGenerator = AdversarialPromptGenerator
+        except ImportError:
+            raise ImportError(
+                "MMADiffusion metric requires the 'mma_diff' package. "
+                "Install with: pip install -e packages/mma_diff"
+            )
+
         self.config = MMADiffusionConfig.from_dict(kwargs)
 
         if not self.config.concept_name:
@@ -108,7 +109,7 @@ class MMADiffusionMetric:
         logger.info(
             f"Running MMA-Diffusion GCG attack for concept '{self.config.concept_name}'..."
         )
-        generator = AdversarialPromptGenerator(
+        generator = self._AdversarialPromptGenerator(
             clip_model_id=self.config.clip_model_id,
             output_csv=self.config.output_csv,
             tokens_to_remove_path=self.config.tokens_to_remove_path,

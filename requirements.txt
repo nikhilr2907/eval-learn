@@ -27,6 +27,7 @@ pyyaml>=5.1
 -e packages/concept-steerers/
 -e packages/safree
 -e packages/RING_A_BELL/
+-e packages/mma_diff/
 
 # CUDA wheels
 --extra-index-url https://download.pytorch.org/whl/cu126
