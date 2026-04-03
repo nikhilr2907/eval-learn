@@ -28,6 +28,8 @@ pyyaml>=5.1
 -e packages/safree
 -e packages/RING_A_BELL/
 -e packages/mma_diff/
+-e packages/advunlearn/
+
 
 # CUDA wheels
 --extra-index-url https://download.pytorch.org/whl/cu126
