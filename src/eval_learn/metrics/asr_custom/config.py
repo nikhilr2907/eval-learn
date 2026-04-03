@@ -33,7 +33,7 @@ class ASRCustomConfig(BaseConfig):
     generated_prompts_output: str = None  # Where to save generated prompts
 
     # CLIP detection
-    clip_model_id: str = "openai/clip-vit-base-patch32"
+    clip_model_id: str = "openai/clip-vit-large-patch14"
     similarity_threshold: float = 0.3  # Threshold for concept detection
 
     # Device
