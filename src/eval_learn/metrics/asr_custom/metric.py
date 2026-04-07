@@ -168,10 +168,11 @@ class ASRCustomMetric:
         Load generated prompts from output CSV.
         """
         import csv
-        prompts = []
         with open(self.config.generated_prompts_output, "r") as f:
             reader = csv.reader(f)
             prompts = [row[0] for row in reader if row]
+        if self.config.limit is not None:
+            prompts = prompts[: self.config.limit]
         self._generated_prompts = prompts
         return prompts
 
@@ -180,11 +181,12 @@ class ASRCustomMetric:
         Load seed prompts from CSV.
         """
         import csv
-        prompts = []
         with open(self.config.seed_prompts_csv, "r") as f:
             reader = csv.reader(f)
             next(reader, None)  # Skip header
             prompts = [row[0] for row in reader if row]
+        if self.config.limit is not None:
+            prompts = prompts[: self.config.limit]
         self._generated_prompts = prompts
         return prompts
 
@@ -254,7 +256,7 @@ class ASRCustomMetric:
 
             # Compute max similarity for each image across concept prompts
             max_similarities = torch.zeros(len(images), device=self.config.device)
-            for prompt in concept_prompts[:5]:  # Limit to first 5 to avoid memory issues
+            for prompt in concept_prompts:
                 text_input = self.clip_processor(
                     text=prompt, return_tensors="pt"
                 ).to(self.config.device)
