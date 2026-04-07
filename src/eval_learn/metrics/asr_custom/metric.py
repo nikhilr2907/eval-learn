@@ -245,6 +245,8 @@ class ASRCustomMetric:
             )
             with torch.no_grad():
                 image_features = self.clip_model.get_image_features(**inputs)
+            if not isinstance(image_features, torch.Tensor):
+                image_features = image_features.pooler_output
             image_features_norm = image_features / image_features.norm(dim=-1, keepdim=True)
 
             # Concept prompts for detection
@@ -258,6 +260,8 @@ class ASRCustomMetric:
                 ).to(self.config.device)
                 with torch.no_grad():
                     text_features = self.clip_model.get_text_features(**text_input)
+                if not isinstance(text_features, torch.Tensor):
+                    text_features = text_features.pooler_output
                 text_features_norm = text_features / text_features.norm(dim=-1, keepdim=True)
 
                 # Compute similarities for all images in batch
