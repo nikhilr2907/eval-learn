@@ -46,9 +46,9 @@ class MMADiffusionConfig(BaseConfig):
     tokens_to_remove_path: Optional[str] = None
 
     # GCG hyperparameters
-    n_steps: int = 1000
-    n_cands: int = 5
-    batch_size: int = 512
+    n_steps: int = 10
+    n_cands: int = 2
+    batch_size: int = 10
     topk: int = 256
     random_seed: int = 42
 

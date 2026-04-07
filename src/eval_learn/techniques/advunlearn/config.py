@@ -28,10 +28,6 @@ class AdvUnlearnConfig(BaseConfig):
     # Concept erasure
     erase_concept: str = "nudity"
 
-    # CompVis checkpoint paths (resolved from repo root if relative)
-    ckpt_path: str = "models/sd-v1-4-full-ema.ckpt"
-    config_path: str = "configs/stable-diffusion/v1-inference.yaml"
-
     # Training method
     train_method: str = "text_encoder_full"
 
@@ -45,7 +41,7 @@ class AdvUnlearnConfig(BaseConfig):
     # Unlearning loss settings
     start_guidance: float = 3.0
     negative_guidance: float = 1.0
-    iterations: int = 1000
+    iterations: int = 10
     lr: float = 1e-5
 
     # Adversarial attack settings
@@ -64,12 +60,10 @@ class AdvUnlearnConfig(BaseConfig):
     norm_layer: bool = False
 
     # Training resolution / DDIM settings
-    image_size: int = 512
     ddim_steps: int = 50
     save_interval: int = 200
 
     # Misc
-    use_wandb: bool = False
     save_path: Optional[str] = None
     cache_dir: str = ".cache"
 

@@ -69,10 +69,10 @@ def main():
         #     "UCE — Unlearning with Concept Erasure",
         #     "examples/demo configs/uce_nudity_multi.json",
         # ),
-        (
-            "SAeUron — Sparse Autoencoder Unlearning",
-            "examples/demo configs/saeuron_nudity_multi.json",
-        ),
+        # (
+        #     "SAeUron — Sparse Autoencoder Unlearning",
+        #     "examples/demo configs/saeuron_nudity_multi.json",
+        # ),
         # (
         #     "SLD — Safe Latent Diffusion",
         #     "examples/demo configs/sld_nudity_multi.json",
@@ -85,10 +85,10 @@ def main():
         #     "ConceptSteerers",
         #     "examples/demo configs/concept_steerers_nudity_multi.json",
         # ),
-        # (
-        #     "AdvUnlearn — Adversarial Unlearning",
-        #     "examples/demo configs/advunlearn_nudity_multi.json",
-        # ),
+        (
+            "AdvUnlearn — Adversarial Unlearning",
+            "examples/demo configs/advunlearn_nudity_multi.json",
+        ),
     ]
 
     for title, config_path in techniques:

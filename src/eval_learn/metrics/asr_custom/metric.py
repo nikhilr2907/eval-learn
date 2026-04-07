@@ -151,6 +151,7 @@ class ASRCustomMetric:
             concept_coeff=self.config.concept_coeff,
             device=self.config.device,
             log_every=self.config.log_every,
+            patience=self.config.patience,
         )
 
         # Run discovery
