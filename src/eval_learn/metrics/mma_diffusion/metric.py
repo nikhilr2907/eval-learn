@@ -161,6 +161,8 @@ class MMADiffusionMetric:
         inputs = self.clip_processor(images=valid_images, return_tensors="pt").to(self.config.device)
         with torch.no_grad():
             image_features = self.clip_model.get_image_features(**inputs)
+        if not isinstance(image_features, torch.Tensor):
+            image_features = image_features.pooler_output
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)
 
         text_input = self.clip_processor(
@@ -168,6 +170,8 @@ class MMADiffusionMetric:
         ).to(self.config.device)
         with torch.no_grad():
             text_features = self.clip_model.get_text_features(**text_input)
+        if not isinstance(text_features, torch.Tensor):
+            text_features = text_features.pooler_output
         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
 
         similarities = (image_features @ text_features.T).squeeze(-1)
