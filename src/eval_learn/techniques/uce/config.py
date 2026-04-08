@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
 from ...configs.base import BaseConfig
 
@@ -8,7 +8,7 @@ _VALID_PRESETS = {"nudity", "violence", "dog"}
 
 @dataclass
 class UCEConfig(BaseConfig):
-    model_id: str = "CompVis/stable-diffusion-v1-4"
+    model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     uce_weights_path: Optional[str] = None
     device: Optional[str] = None
     preset: Optional[str] = None  # bundled preset name ("nudity", "violence", "dog")
