@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
 from ...configs.base import BaseConfig
+from .._clip_constants import validate_clip_model
 
 
 @dataclass(frozen=True)
@@ -39,3 +40,6 @@ class ASRCustomConfig(BaseConfig):
 
     # Device
     device: str = "cuda"
+
+    def __post_init__(self) -> None:
+        validate_clip_model(self.clip_model_id, "clip_model_id")

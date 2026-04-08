@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 from ...configs.base import BaseConfig
+from .._clip_constants import validate_clip_model
 
 
 @dataclass(frozen=True)
@@ -29,3 +30,6 @@ class UAIRAConfig(BaseConfig):
     target_prompt_limit: Optional[int] = None  # Max target prompts to load
     retain_prompt_limit: Optional[int] = None  # Max retain prompts to load
     batch_size: int = 32  # Batch size for DataLoader
+
+    def __post_init__(self) -> None:
+        validate_clip_model(self.clip_model_name, "clip_model_name")

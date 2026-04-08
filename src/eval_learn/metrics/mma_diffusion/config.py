@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
 from ...configs.base import BaseConfig
+from .._clip_constants import SD1X_CLIP_MODEL
 
 
 @dataclass(frozen=True)
@@ -20,9 +21,9 @@ class MMADiffusionConfig(BaseConfig):
         target_prompts: Concept-specific prompts for the GCG attack to target.
                         Required for non-nudity concepts. For nudity, defaults to
                         the 5 prompts from the MMA-Diffusion paper if not provided.
-        clip_model_id: HuggingFace CLIP model ID used for the GCG attack.
+        clip_model_id: Fixed to SD1X_CLIP_MODEL ("openai/clip-vit-large-patch14").
                        Must match the text encoder inside the diffusion model being attacked.
-                       All SD 1.x models use "openai/clip-vit-large-patch14".
+                       All SD 1.x models use this exact encoder — not user-configurable.
         tokens_to_remove_path: Path to a pre-computed tokens_to_remove_set.pt.
                                Built from scratch and saved here if not found.
         n_steps: Number of GCG optimisation steps per candidate.
@@ -42,7 +43,7 @@ class MMADiffusionConfig(BaseConfig):
 
     # Attack inputs
     target_prompts: Optional[List[str]] = None
-    clip_model_id: str = "openai/clip-vit-large-patch14"
+    clip_model_id: str = field(default=SD1X_CLIP_MODEL, init=False)
     tokens_to_remove_path: Optional[str] = None
 
     # GCG hyperparameters
