@@ -87,7 +87,6 @@
 
 | Metric | Requires Technique | Requires Concept | Dataset Req | Notes |
 |--------|-------------------|-----------------|-------------|-------|
-| **CCRT** | free_run only | N/A | HuggingFace I2P | Genetic search; requires original + erased comparison |
 | **ASR** | Any | nudity | I2P (hardcoded) | Nudity-specific detector (NudeNet) |
 | **ERR** | Any | nudity | I2P (hardcoded) | Nudity-specific detector (NudeNet) |
 | **UA_IRA** | Any | Any | User CSV | CLIP-based; flexible to any concept via CSV paths |
@@ -95,11 +94,6 @@
 | **Others** | Any | Any | Flexible | Framework-specific metrics |
 
 ### Metric-Technique Compatibility Rules
-
-**CCRT (Concept Correction through Regeneration):**
-- ✅ **Required:** `technique_name == "free_run"`
-- ❌ **Blocked:** All other techniques
-- **Reason:** Requires original unmodified model for comparison
 
 **ASR/ERR (Attack/Erase Robustness):**
 - ✅ **Allowed:** Any technique with `erase_concept == "nudity"`
@@ -124,11 +118,7 @@ def _validate(self):
     technique_factory = get_technique(technique_name)
     metric_factory = get_metric(metric_name)
 
-    # 2. CCRT requires free_run
-    if metric_name == "ccrt" and technique_name != "free_run":
-        raise ValueError("CCRT requires 'free_run' technique")
-
-    # 3. ASR/ERR require nudity
+    # 2. ASR/ERR require nudity
     if metric_name in ["asr", "err"]:
         erase_concept = technique_config.get("erase_concept", "").lower()
         if erase_concept and erase_concept != "nudity":
@@ -156,33 +146,6 @@ def _validate(self):
                 f"Metrics {used_nudity_metrics} require nudity. "
                 f"Got erase_concept='{erase_concept}'"
             )
-```
-
-### MatrixBenchmarkRunner
-
-```python
-def _validate(self):
-    # 1. CCRT requires all techniques to be free_run
-    if "ccrt" in metric_names:
-        non_free = [t for t in technique_names if t != "free_run"]
-        if non_free:
-            raise ValueError(
-                "CCRT requires all techniques to be 'free_run'. "
-                f"Got: {non_free}"
-            )
-
-    # 2. ASR/ERR require nudity for each technique
-    nudity_metrics = {"asr", "err"}
-    used_nudity_metrics = set(metric_names) & nudity_metrics
-    if used_nudity_metrics:
-        for technique_name in technique_names:
-            tech_config = technique_configs.get(technique_name, {})
-            erase_concept = tech_config.get("erase_concept", "").lower()
-            if erase_concept and erase_concept != "nudity":
-                raise ValueError(
-                    f"Metrics {used_nudity_metrics} require nudity. "
-                    f"Got technique '{technique_name}' with erase_concept='{erase_concept}'"
-                )
 ```
 
 ---
@@ -216,14 +179,11 @@ single_runner = SingleBenchmarkRunner(
     technique_name="saeuron",
     metric_name="asr",
     technique_config={
-        # erase_concept is fixed to "nudity" - validation ensures this
         "erase_concept": "nudity",
         "multiplier": -20.0,
         "percentile": 99.99,
     },
-    metric_config={
-        # ASR uses hardcoded I2P dataset + NudeNet
-    },
+    metric_config={},
 )
 ```
 
@@ -234,56 +194,27 @@ single_runner = SingleBenchmarkRunner(
     technique_name="uce",
     metric_name="fid",
     technique_config={
-        "preset": "violence",  # Pre-trained violence weights
-        # erase_concept property will be "violence"
+        "preset": "violence",
     },
-    metric_config={
-        # FID is concept-agnostic
-    },
+    metric_config={},
 )
-```
-
-### Example 4: Matrix Benchmark (Mixed Concepts - Invalid)
-
-```python
-# This will FAIL validation
-matrix_runner = MatrixBenchmarkRunner(
-    technique_names=["esd", "mace"],
-    metric_names=["asr"],  # Requires nudity
-    technique_configs={
-        "esd": {"erase_concept": "violence"},
-        "mace": {"erase_concept": "violence"},
-    },
-)
-# Error: ASR metric requires nudity concept, got violence
-```
-
-### Example 5: Matrix Benchmark (CCRT - Invalid)
-
-```python
-# This will FAIL validation
-matrix_runner = MatrixBenchmarkRunner(
-    technique_names=["esd", "free_run"],
-    metric_names=["ccrt"],  # Requires free_run only
-)
-# Error: CCRT metric only works with free_run technique
 ```
 
 ---
 
 ## Summary Table: What You Can Mix
 
-| Technique | With CCRT? | With ASR/ERR? | With UA_IRA? | With FID? |
-|-----------|-----------|--------------|------------|----------|
-| **free_run** | ✅ Only this | ❌ (not nudity) | ✅ | ✅ |
-| **ESD** (any concept) | ❌ | ❌ (unless nudity) | ✅ | ✅ |
-| **ESD** (nudity) | ❌ | ✅ | ✅ | ✅ |
-| **MACE** (any concept) | ❌ | ❌ (unless nudity) | ✅ | ✅ |
-| **MACE** (nudity) | ❌ | ✅ | ✅ | ✅ |
-| **SAeUron** (nudity) | ❌ | ✅ | ✅ | ✅ |
-| **SLD** (nudity) | ❌ | ✅ | ✅ | ✅ |
-| **SAFREE** (nudity) | ❌ | ✅ | ✅ | ✅ |
-| **ConceptSteerers** (nudity) | ❌ | ✅ | ✅ | ✅ |
-| **UCE** (nudity) | ❌ | ✅ | ✅ | ✅ |
-| **UCE** (violence) | ❌ | ❌ | ✅ | ✅ |
-| **UCE** (dog) | ❌ | ❌ | ✅ | ✅ |
+| Technique | With ASR/ERR? | With UA_IRA? | With FID? |
+|-----------|--------------|------------|----------|
+| **free_run** | ❌ (not nudity) | ✅ | ✅ |
+| **ESD** (any concept) | ❌ (unless nudity) | ✅ | ✅ |
+| **ESD** (nudity) | ✅ | ✅ | ✅ |
+| **MACE** (any concept) | ❌ (unless nudity) | ✅ | ✅ |
+| **MACE** (nudity) | ✅ | ✅ | ✅ |
+| **SAeUron** (nudity) | ✅ | ✅ | ✅ |
+| **SLD** (nudity) | ✅ | ✅ | ✅ |
+| **SAFREE** (nudity) | ✅ | ✅ | ✅ |
+| **ConceptSteerers** (nudity) | ✅ | ✅ | ✅ |
+| **UCE** (nudity) | ✅ | ✅ | ✅ |
+| **UCE** (violence) | ❌ | ✅ | ✅ |
+| **UCE** (dog) | ❌ | ✅ | ✅ |

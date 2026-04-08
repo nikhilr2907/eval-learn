@@ -19,7 +19,6 @@ pycocotools>=2.0.11
 pyyaml>=5.1
 
 # Local editable packages
--e packages/ccrt/
 -e packages/esd/
 -e packages/mace/
 -e packages/uce/
