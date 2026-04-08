@@ -93,7 +93,13 @@ class SingleBenchmarkRunner(BaseRunner):
 
         # 1. Initialize Metric
         self._log_phase("Initializing metric")
-        metric = self.metric_factory(**self.metric_config)
+        resolved = self._resolve_mma_clip_model(
+            {self.metric_name: self.metric_config},
+            self.technique_name,
+            self.technique_config,
+        )
+        metric_config = resolved.get(self.metric_name, self.metric_config)
+        metric = self.metric_factory(**metric_config)
 
         # 2. Load Dataset
         self._log_phase("Loading dataset")

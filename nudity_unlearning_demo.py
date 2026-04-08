@@ -85,10 +85,10 @@ def main():
         #     "ConceptSteerers",
         #     "examples/demo configs/concept_steerers_nudity_multi.json",
         # ),
-        (
-            "AdvUnlearn — Adversarial Unlearning",
-            "examples/demo_configs/advunlearn_nudity_multi.json",
-        ),
+        # (
+        #     "AdvUnlearn — Adversarial Unlearning",
+        #     "examples/demo_configs/advunlearn_nudity_multi.json",
+        # ),
         (
             "Free Run Test",
             "examples/demo_configs/free_run_test.json",

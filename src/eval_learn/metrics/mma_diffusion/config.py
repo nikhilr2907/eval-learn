@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
 from ...configs.base import BaseConfig
-from .._clip_constants import SD1X_CLIP_MODEL
+from .._clip_constants import validate_sd_text_encoder
 
 
 @dataclass(frozen=True)
@@ -21,9 +21,10 @@ class MMADiffusionConfig(BaseConfig):
         target_prompts: Concept-specific prompts for the GCG attack to target.
                         Required for non-nudity concepts. For nudity, defaults to
                         the 5 prompts from the MMA-Diffusion paper if not provided.
-        clip_model_id: Fixed to SD1X_CLIP_MODEL ("openai/clip-vit-large-patch14").
-                       Must match the text encoder inside the diffusion model being attacked.
-                       All SD 1.x models use this exact encoder — not user-configurable.
+        clip_model_id: CLIP text encoder used for the GCG attack. Must match the
+                       text encoder baked into the target diffusion model. Injected
+                       automatically by the runner from the technique's base model;
+                       override only if you know the exact encoder of your SD variant.
         tokens_to_remove_path: Path to a pre-computed tokens_to_remove_set.pt.
                                Built from scratch and saved here if not found.
         n_steps: Number of GCG optimisation steps per candidate.
@@ -43,7 +44,7 @@ class MMADiffusionConfig(BaseConfig):
 
     # Attack inputs
     target_prompts: Optional[List[str]] = None
-    clip_model_id: str = field(default=SD1X_CLIP_MODEL, init=False)
+    clip_model_id: str = "openai/clip-vit-large-patch14"
     tokens_to_remove_path: Optional[str] = None
 
     # GCG hyperparameters
@@ -58,3 +59,6 @@ class MMADiffusionConfig(BaseConfig):
 
     # Device
     device: str = "cuda"
+
+    def __post_init__(self) -> None:
+        validate_sd_text_encoder(self.clip_model_id, "clip_model_id")
