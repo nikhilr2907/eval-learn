@@ -3,7 +3,7 @@ from typing import Optional
 from ...configs.base import BaseConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class CLIPScoreConfig(BaseConfig):
     """
     Configuration for the CLIP Score metric.

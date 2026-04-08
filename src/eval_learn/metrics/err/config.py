@@ -3,7 +3,7 @@ from typing import Optional
 from ...configs.base import BaseConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class ERRConfig(BaseConfig):
     """
     Configuration for the Erasing-Retention-Robustness (ERR) metric.
