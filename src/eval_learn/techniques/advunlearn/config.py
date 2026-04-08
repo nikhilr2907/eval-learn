@@ -41,30 +41,31 @@ class AdvUnlearnConfig(BaseConfig):
     # Unlearning loss settings
     start_guidance: float = 3.0
     negative_guidance: float = 1.0
-    iterations: int = 1
+    iterations: int = 10
     lr: float = 1e-5
 
     # Adversarial attack settings
     attack_method: str = "pgd"
-    attack_step: int = 5
+    attack_step: int = 30
     attack_lr: float = 1e-3
     attack_type: str = "prefix_k"
     attack_init: str = "latest"
     attack_embd_type: str = "word_embd"
     adv_prompt_num: int = 1
     adv_prompt_update_step: int = 1
-    warmup_iter: int = 0
+    warmup_iter: int = 200
 
     # Model component selection
     component: str = "all"
     norm_layer: bool = False
 
     # Training resolution / DDIM settings
-    ddim_steps: int = 10
-    save_interval: int = 200
+    ddim_steps: int = 50
+    save_interval: int = 1
 
     # Misc
-    save_path: Optional[str] = None
+    save_dir: Optional[str] = None
+    checkpoint_path: Optional[str] = None
     cache_dir: str = ".cache"
 
     # Generation settings
