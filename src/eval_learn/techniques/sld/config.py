@@ -2,15 +2,6 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
 from ...configs.base import BaseConfig
 
-# SLD parameter keys that presets control
-_SLD_PARAM_KEYS = {
-    "sld_guidance_scale",
-    "sld_warmup_steps",
-    "sld_threshold",
-    "sld_momentum_scale",
-    "sld_mom_beta",
-}
-
 _VALID_ERASE_CONCEPTS = {"nudity"}
 
 # Preset values matching diffusers SafetyConfig
