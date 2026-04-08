@@ -22,7 +22,6 @@ from eval_learn.registry.hf_sync import HFSync
 from eval_learn.runners import (
     SingleBenchmarkRunner,
     MultiBenchmarkRunner,
-    MatrixBenchmarkRunner,
 )
 from eval_learn.logging_utils import get_logger
 
@@ -147,45 +146,7 @@ def _build_multi_runner(
     )
 
 
-def _build_matrix_runner(
-    config: Dict[str, Any], output_dir: str
-) -> MatrixBenchmarkRunner:
-    """Build a MatrixBenchmarkRunner from config."""
-    techniques_list = config.get("techniques", [])
-    if not techniques_list:
-        logger.error("Config must specify 'techniques' as a non-empty list")
-        sys.exit(1)
 
-    metrics_list = config.get("metrics", [])
-    if not metrics_list:
-        logger.error("Config must specify 'metrics' as a non-empty list")
-        sys.exit(1)
-
-    technique_names = []
-    technique_configs = {}
-    for t in techniques_list:
-        name = t.get("name")
-        if not name:
-            logger.error("Each entry in 'techniques' must have a 'name'")
-            sys.exit(1)
-        technique_names.append(name)
-        cfg = t.get("config", {})
-        if cfg:
-            technique_configs[name] = cfg
-
-    metric_names, metric_configs = _parse_metrics_list(metrics_list)
-
-    logger.info(
-        f"Mode: matrix | Techniques: {technique_names} | Metrics: {metric_names}"
-    )
-
-    return MatrixBenchmarkRunner(
-        technique_names=technique_names,
-        metric_names=metric_names,
-        technique_configs=technique_configs,
-        metric_configs=metric_configs,
-        output_dir=output_dir,
-    )
 
 
 def run_benchmark(args):
