@@ -204,6 +204,35 @@ def cmd_plugins(_args):
     print()
 
 
+def cmd_models(_args):
+    """Show the base model used by each technique and metric."""
+    from eval_learn.techniques._base_models import TECHNIQUE_BASE_MODELS
+    from eval_learn.metrics._base_models import METRIC_MODELS
+
+    # Techniques
+    print("\nTechniques:")
+    print(f"  {'name':<20} {'base model':<45} {'configurable'}")
+    print(f"  {'-'*20} {'-'*45} {'-'*12}")
+    for name in sorted(TECHNIQUE_BASE_MODELS):
+        print(f"  {name:<20} {TECHNIQUE_BASE_MODELS[name]:<45} no  (field init=False)")
+    print(f"  {'free_run':<20} {'(user-specified via model_id)':<45} required")
+
+    # Metrics
+    print("\nMetrics:")
+    print(f"  {'name':<20} {'model':<45} {'configurable'}")
+    print(f"  {'-'*20} {'-'*45} {'-'*12}")
+    for name in sorted(METRIC_MODELS):
+        info = METRIC_MODELS[name]
+        if info.configurable:
+            detail = f"yes  (config: {info.config_field})"
+        elif info.note:
+            detail = f"no   ({info.note})"
+        else:
+            detail = "no"
+        print(f"  {name:<20} {info.model:<45} {detail}")
+    print()
+
+
 # ---------------------------------------------------------------------------
 # Argument parser
 # ---------------------------------------------------------------------------
@@ -268,6 +297,9 @@ def main():
     # plugins
     subparsers.add_parser("plugins", help="List all registered techniques, metrics, and datasets")
 
+    # models
+    subparsers.add_parser("models", help="Show the base model used by each technique and metric")
+
     args = parser.parse_args()
 
     if args.version:
@@ -280,6 +312,7 @@ def main():
         "push": cmd_push,
         "pull": cmd_pull,
         "plugins": cmd_plugins,
+        "models": cmd_models,
     }
 
     if args.command in dispatch:

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
 from ...configs.base import BaseConfig
 
@@ -23,7 +23,7 @@ class ESDConfig(BaseConfig):
     """
 
     # Model settings
-    model_id: str = "CompVis/stable-diffusion-v1-4"
+    model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     device: str = "cuda"
 
     # Concept erasure settings
@@ -49,9 +49,6 @@ class ESDConfig(BaseConfig):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ESDConfig":
         """Create config from a dict, validating train_method."""
-        data = dict(data)
-        data.pop("model_id", None)
-
         train_method = data.get("train_method", "xattn")
         if train_method not in TRAIN_METHODS:
             raise ValueError(
