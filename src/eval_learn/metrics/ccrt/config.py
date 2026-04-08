@@ -4,7 +4,7 @@ from typing import Optional
 from ...configs.base import BaseConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class CCRTConfig(BaseConfig):
     """
     Configuration for the CCRT metric.

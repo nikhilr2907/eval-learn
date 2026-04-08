@@ -7,7 +7,7 @@ from ...configs.base import BaseConfig
 _VALID_ERASE_CONCEPTS = {"nudity"}
 
 
-@dataclass
+@dataclass(frozen=True)
 class ConceptSteerersConfig(BaseConfig):
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     device: str = "cuda"
