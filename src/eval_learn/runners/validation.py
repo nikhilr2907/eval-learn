@@ -23,17 +23,6 @@ def get_erase_concept(
     return erase_concept.lower() if erase_concept else None
 
 
-def validate_ccrt_technique(technique_name: str) -> None:
-    """Validate CCRT can only be used with free_run."""
-    if technique_name != "free_run":
-        raise ValidationError(
-            f"CCRT metric only works with 'free_run' technique. "
-            f"Got technique='{technique_name}'. "
-            f"Reason: CCRT requires genetic search with loadable erased_model_id "
-            f"(only free_run loads from HF checkpoint). "
-            f"Use UA_IRA or FID for other techniques."
-        )
-
 
 def validate_nudity_metrics(
     technique_name: str, erase_concept: Optional[str], metric_name: str
@@ -109,12 +98,7 @@ def validate_technique_metric_pair(
     erase_concept = get_erase_concept(technique_name, technique_config)
     metric_config = metric_config or {}
 
-    # Rule 1: CCRT absolute restriction
-    if metric_name == "ccrt":
-        validate_ccrt_technique(technique_name)
-        return  # CCRT + free_run is always valid, skip other checks
-
-    # Rule 2: Nudity-specific metrics
+    # Rule 1: Nudity-specific metrics
     validate_nudity_metrics(technique_name, erase_concept, metric_name)
 
     # Rule 3: Nudity-only techniques
