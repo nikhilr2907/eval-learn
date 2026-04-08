@@ -3,7 +3,7 @@ from typing import Optional
 from ...configs.base import BaseConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class UAIRAConfig(BaseConfig):
     """
     Configuration for Unlearning Accuracy and In-domain Retain Accuracy (IRA) Metric.

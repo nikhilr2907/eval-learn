@@ -3,7 +3,7 @@ from typing import Optional, List
 from ...configs.base import BaseConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class MMADiffusionConfig(BaseConfig):
     """
     Configuration for the MMA-Diffusion adversarial ASR metric.
