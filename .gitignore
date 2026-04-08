@@ -4,6 +4,7 @@
 .vscode/
 .claude/
 .env
+CLAUDE.md
 /venv
 packages
 results/

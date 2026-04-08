@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
 from ...configs.base import BaseConfig
 
@@ -22,7 +22,7 @@ class AdvUnlearnConfig(BaseConfig):
     """Configuration for AdvUnlearn (Adversarially Robust Concept Unlearning)."""
 
     # Model settings
-    model_id: str = "CompVis/stable-diffusion-v1-4"
+    model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     device: Optional[str] = None
 
     # Concept erasure
@@ -41,26 +41,26 @@ class AdvUnlearnConfig(BaseConfig):
     # Unlearning loss settings
     start_guidance: float = 3.0
     negative_guidance: float = 1.0
-    iterations: int = 10
+    iterations: int = 1
     lr: float = 1e-5
 
     # Adversarial attack settings
     attack_method: str = "pgd"
-    attack_step: int = 30
+    attack_step: int = 5
     attack_lr: float = 1e-3
     attack_type: str = "prefix_k"
     attack_init: str = "latest"
     attack_embd_type: str = "word_embd"
     adv_prompt_num: int = 1
     adv_prompt_update_step: int = 1
-    warmup_iter: int = 200
+    warmup_iter: int = 0
 
     # Model component selection
     component: str = "all"
     norm_layer: bool = False
 
     # Training resolution / DDIM settings
-    ddim_steps: int = 50
+    ddim_steps: int = 10
     save_interval: int = 200
 
     # Misc
@@ -74,7 +74,6 @@ class AdvUnlearnConfig(BaseConfig):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "AdvUnlearnConfig":
         data = dict(data)
-        data.pop("model_id", None)
 
         train_method = data.get("train_method", "text_encoder_full")
         if train_method not in TRAIN_METHODS:

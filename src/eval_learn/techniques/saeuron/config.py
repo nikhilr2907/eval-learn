@@ -67,9 +67,6 @@ class SAeUronConfig(BaseConfig):
         """
         config_dict = dict(config_dict)
 
-        # model_id is fixed — silently drop any user-supplied value.
-        config_dict.pop("model_id", None)
-
         # Validate erase_concept
         erase_concept = config_dict.get("erase_concept", "nudity")
         if erase_concept.lower() not in _VALID_ERASE_CONCEPTS:

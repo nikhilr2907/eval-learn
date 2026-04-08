@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, Tuple
 from ...configs.base import BaseConfig
 
@@ -8,7 +8,7 @@ _VALID_ERASE_CONCEPTS = {"nudity"}
 @dataclass
 class SAFREEConfig(BaseConfig):
     # Model settings
-    model_id: str = "CompVis/stable-diffusion-v1-4"
+    model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     device: str = "cuda"
 
     # Stage 1: Text Projection
