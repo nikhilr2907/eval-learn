@@ -3,7 +3,7 @@ from typing import List, Any, Optional
 
 from ...registry import register_technique
 from ...logging_utils import get_logger
-from .config import SLDConfig, _SLD_PARAM_KEYS
+from .config import SLDConfig
 
 logger = get_logger(__name__)
 
