@@ -16,7 +16,7 @@ __pycache__/
 results/
 # C extensions
 *.so
-
+.lock
 # Distribution / packaging
 .Python
 build/
@@ -227,3 +227,4 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+uv.lock
