@@ -17,13 +17,13 @@ ATTACK_TYPES = ["prefix_k", "suffix_k", "replace_k", "add", "mid_k", "insert_k",
 RETAIN_DATASETS = ["coco_object", "imagenet243", "coco_object_no_filter", "imagenet243_no_filter"]
 
 
-@dataclass
+@dataclass(frozen=True)
 class AdvUnlearnConfig(BaseConfig):
     """Configuration for AdvUnlearn (Adversarially Robust Concept Unlearning)."""
 
     # Model settings
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
-    device: Optional[str] = None
+    device: str = "cuda"
 
     # Concept erasure
     erase_concept: str = "nudity"

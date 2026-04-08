@@ -53,7 +53,7 @@ _PRESETS: Dict[str, Dict[str, Any]] = {
 }
 
 
-@dataclass
+@dataclass(frozen=True)
 class SLDConfig(BaseConfig):
     """
     Configuration for Safe Latent Diffusion (SLD).
@@ -66,7 +66,7 @@ class SLDConfig(BaseConfig):
     """
 
     model_id: str = field(init=False, default="AIML-TUDA/stable-diffusion-safe")
-    device: Optional[str] = None
+    device: str = "cuda"
     erase_concept: str = "nudity"
     preset: Optional[str] = None
     sld_guidance_scale: float = 5000

@@ -8,7 +8,7 @@ from ...configs.base import BaseConfig
 _VALID_ERASE_CONCEPTS = {"nudity"}
 
 
-@dataclass
+@dataclass(frozen=True)
 class SAeUronConfig(BaseConfig):
     """
     Configuration for the SAeUron (Sparse Autoencoder Unlearning) technique.

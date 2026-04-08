@@ -3,7 +3,7 @@ from typing import Optional
 from ...configs.base import BaseConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class ASRConfig(BaseConfig):
     """
     Configuration for Attack Success Rate (ASR) metric.

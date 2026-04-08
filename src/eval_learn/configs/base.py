@@ -2,7 +2,7 @@ from dataclasses import dataclass, asdict
 from typing import Dict, Any
 
 
-@dataclass
+@dataclass(frozen=True)
 class BaseConfig:
     """
     Base configuration class providing dictionary serialization methods.

@@ -3,7 +3,7 @@ from typing import Optional, List
 from ...configs.base import BaseConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class ASRCustomConfig(BaseConfig):
     """
     Configuration for ASR metric using RING_A_BELL prompt generation.

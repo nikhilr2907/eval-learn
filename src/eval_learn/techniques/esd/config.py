@@ -10,7 +10,7 @@ from ...configs.base import BaseConfig
 TRAIN_METHODS = ["xattn", "noxattn", "selfattn", "full"]
 
 
-@dataclass
+@dataclass(frozen=True)
 class ESDConfig(BaseConfig):
     """
     Configuration for Erased Stable Diffusion (ESD).
@@ -24,7 +24,7 @@ class ESDConfig(BaseConfig):
 
     # Model settings
     model_id: str = "CompVis/stable-diffusion-v1-4"
-    device: Optional[str] = None
+    device: str = "cuda"
 
     # Concept erasure settings
     erase_concept: str = "nudity"
