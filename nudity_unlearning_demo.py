@@ -87,7 +87,11 @@ def main():
         # ),
         (
             "AdvUnlearn — Adversarial Unlearning",
-            "examples/demo configs/advunlearn_nudity_multi.json",
+            "examples/demo_configs/advunlearn_nudity_multi.json",
+        ),
+        (
+            "Free Run Test",
+            "examples/demo_configs/free_run_test.json",
         ),
     ]
 

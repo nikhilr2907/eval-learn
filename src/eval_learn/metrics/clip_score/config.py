@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 from ...configs.base import BaseConfig
+from .._clip_constants import validate_clip_model
 
 
 @dataclass(frozen=True)
@@ -17,3 +18,6 @@ class CLIPScoreConfig(BaseConfig):
     clip_model_name: str = "openai/clip-vit-base-patch32"
     device: Optional[str] = None
     limit: Optional[int] = 300
+
+    def __post_init__(self) -> None:
+        validate_clip_model(self.clip_model_name, "clip_model_name")
