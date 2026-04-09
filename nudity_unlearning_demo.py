@@ -60,38 +60,34 @@ def cleanup():
 def main():
     """Run all nudity unlearning technique benchmarks."""
     techniques = [
-        # ("ESD — Erased Stable Diffusion", "examples/demo configs/esd_nudity_multi.json"),
+        # ("ESD — Erased Stable Diffusion", "examples/demo_configs/esd_nudity_multi.json"),
         # (
         #     "MACE — Mass Concept Erasure",
-        #     "examples/demo configs/mace_nudity_multi.json",
+        #     "examples/demo_configs/mace_nudity_multi.json",
         # ),
         # (
         #     "UCE — Unlearning with Concept Erasure",
-        #     "examples/demo configs/uce_nudity_multi.json",
+        #     "examples/demo_configs/uce_nudity_multi.json",
         # ),
         # (
         #     "SAeUron — Sparse Autoencoder Unlearning",
-        #     "examples/demo configs/saeuron_nudity_multi.json",
+        #     "examples/demo_configs/saeuron_nudity_multi.json",
         # ),
         # (
         #     "SLD — Safe Latent Diffusion",
-        #     "examples/demo configs/sld_nudity_multi.json",
+        #     "examples/demo_configs/sld_nudity_multi.json",
         # ),
         # (
         #     "SAFREE — Selective and Attribute Free",
-        #     "examples/demo configs/safree_nudity_multi.json",
+        #     "examples/demo_configs/safree_nudity_multi.json",
         # ),
         # (
         #     "ConceptSteerers",
-        #     "examples/demo configs/concept_steerers_nudity_multi.json",
-        # ),
-        # (
-        #     "AdvUnlearn — Adversarial Unlearning",
-        #     "examples/demo_configs/advunlearn_nudity_multi.json",
+        #     "examples/demo_configs/concept_steerers_nudity_multi.json",
         # ),
         (
-            "Free Run Test",
-            "examples/demo_configs/free_run_test.json",
+            "AdvUnlearn — Adversarial Unlearning",
+            "examples/demo_configs/advunlearn_nudity_multi.json",
         ),
     ]
 
