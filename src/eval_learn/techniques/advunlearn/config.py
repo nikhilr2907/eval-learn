@@ -54,7 +54,7 @@ class AdvUnlearnConfig(BaseConfig):
     # Unlearning loss settings
     start_guidance: float = 3.0
     negative_guidance: float = 1.0
-    iterations: int = 10
+    iterations: int = 5
     lr: float = 1e-5
 
     # Adversarial attack settings
@@ -66,7 +66,7 @@ class AdvUnlearnConfig(BaseConfig):
     attack_embd_type: str = "word_embd"
     adv_prompt_num: int = 1
     adv_prompt_update_step: int = 1
-    warmup_iter: int = 2
+    warmup_iter: int = 1
 
     # Model component selection
     component: str = "all"

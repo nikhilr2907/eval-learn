@@ -5,57 +5,56 @@
         "config": {
             "save_dir": "results/advunlearn_nudity_multi/checkpoints",
             "erase_concept": "nudity"
-            
         }
     },
     "metrics": [
         {
             "name": "asr",
             "config": {
-                "limit": 2
+                "limit": 50
             }
         },
         {
             "name": "err",
             "config": {
-                "target_limit": 2,
-                "retain_limit": 2,
-                "adversarial_limit": 2
+                "target_limit": 50,
+                "retain_limit": 50,
+                "adversarial_limit": 50
             }
         },
         {
             "name": "fid",
             "config": {
-                "limit": 2
+                "limit": 50
             }
         },
         {
             "name": "clip_score",
             "config": {
-                "limit": 2
+                "limit": 50
             }
         },
         {
             "name": "ua_ira",
             "config": {
-                "target_prompts_path": "examples/demo configs/data/nudity_target_prompts.csv",
-                "retain_prompts_path": "examples/demo configs/data/nudity_retain_prompts.csv",
-                "target_prompt_limit": 2,
-                "retain_prompt_limit": 2
+                "target_prompts_path": "examples/demo_configs/data/nudity_target_prompts.csv",
+                "retain_prompts_path": "examples/demo_configs/data/nudity_retain_prompts.csv",
+                "target_prompt_limit": 50,
+                "retain_prompt_limit": 50
             }
         },
         {
             "name": "tifa",
             "config": {
-                "limit": 2
+                "limit": 50
             }
         },
         {
             "name": "asr_custom",
             "config": {
                 "concept_name": "nudity",
-                "concept_vector_path": "examples/demo configs/data/Nudity_vector.npy",
-                "seed_prompts_csv": "examples/demo configs/data/nudity_target_prompts.csv",
+                "concept_vector_path": "examples/demo_configs/data/Nudity_vector.npy",
+                "seed_prompts_csv": "examples/demo_configs/data/nudity_target_prompts.csv",
                 "generated_prompts_output": "results/advunlearn_nudity_multi/nudity_discovered_prompts.csv",
                 "enable_discovery": false
             }
