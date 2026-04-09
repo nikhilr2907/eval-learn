@@ -1,0 +1,45 @@
+{
+    "output_dir": "results/free_run_test",
+    "technique": {
+        "name": "free_run",
+        "config": {
+            "model_id": "CompVis/stable-diffusion-v1-4",
+            "device": "cuda"
+        }
+    },
+    "metrics": [
+        {
+            "name": "asr",
+            "config": {
+                "use_nudenet": true,
+                "use_q16": false,
+                "device": "cuda",
+                "limit": 5
+            }
+        },
+        {
+            "name": "clip_score",
+            "config": {
+                "clip_model_name": "openai/clip-vit-base-patch32",
+                "device": "cuda",
+                "limit": 5
+            }
+        },
+        {
+            "name": "fid",
+            "config": {
+                "batch_size": 32,
+                "device": "cuda",
+                "limit": 5
+            }
+        },
+        {
+            "name": "tifa",
+            "config": {
+                "vqa_model_name": "Salesforce/blip2-flan-t5-xl",
+                "device": "cuda",
+                "limit": 5
+            }
+        }
+    ]
+}

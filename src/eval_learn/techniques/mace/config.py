@@ -1,9 +1,9 @@
-from dataclasses import dataclass
-from typing import Dict, Any, List, Optional, Union
+from dataclasses import dataclass, field
+from typing import List, Optional, Union
 from ...configs.base import BaseConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class MACEConfig(BaseConfig):
     """
     Configuration for MACE (Mass Concept Erasure in Diffusion Models, CVPR 2024).
@@ -19,8 +19,8 @@ class MACEConfig(BaseConfig):
     """
 
     # Model settings
-    model_id: str = "CompVis/stable-diffusion-v1-4"
-    device: Optional[str] = None
+    model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
+    device: str = "cuda"
 
     # Concept erasure settings — accepts a single string or a list of strings.
     # List example: ["nudity", "naked", "bare skin"] erases all synonyms at once.
@@ -39,9 +39,3 @@ class MACEConfig(BaseConfig):
     num_inference_steps: int = 50
     guidance_scale: float = 7.5
 
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MACEConfig":
-        """Create config from a dict."""
-        data = dict(data)
-        data.pop("model_id", None)
-        return super().from_dict(data)

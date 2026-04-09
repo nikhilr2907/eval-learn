@@ -19,7 +19,6 @@ pycocotools>=2.0.11
 pyyaml>=5.1
 
 # Local editable packages
--e packages/ccrt/
 -e packages/esd/
 -e packages/mace/
 -e packages/uce/
@@ -27,6 +26,9 @@ pyyaml>=5.1
 -e packages/concept-steerers/
 -e packages/safree
 -e packages/RING_A_BELL/
+-e packages/mma_diff/
+-e packages/advunlearn/
+
 
 # CUDA wheels
 --extra-index-url https://download.pytorch.org/whl/cu126

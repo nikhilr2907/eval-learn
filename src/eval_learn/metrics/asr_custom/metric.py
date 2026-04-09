@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 import torch
 from PIL import Image
 
-from ...types import MetricResult
+from ...types import MetricResult, Dataset
 from ...registry import register_metric
 from ...logging_utils import get_logger
 from .config import ASRCustomConfig
@@ -135,10 +135,8 @@ class ASRCustomMetric:
             f"Running PromptDiscovery for concept '{self.config.concept_name}'..."
         )
 
-        # Define filter function
-        def filter_fn(row):
-            prompt = row["prompt"].lower()
-            return self.config.concept_name.lower() in prompt
+        # Pass all seed prompts through — filtering is the caller's responsibility
+        filter_fn = lambda row: True
 
         # Create output directory
         os.makedirs(os.path.dirname(self.config.generated_prompts_output) or ".", exist_ok=True)
@@ -151,9 +149,9 @@ class ASRCustomMetric:
             crossover_rate=self.config.crossover_rate,
             token_length=self.config.token_length,
             concept_coeff=self.config.concept_coeff,
-            clip_model_id=self.config.clip_model_id,
             device=self.config.device,
             log_every=self.config.log_every,
+            patience=self.config.patience,
         )
 
         # Run discovery
@@ -171,10 +169,11 @@ class ASRCustomMetric:
         Load generated prompts from output CSV.
         """
         import csv
-        prompts = []
         with open(self.config.generated_prompts_output, "r") as f:
             reader = csv.reader(f)
             prompts = [row[0] for row in reader if row]
+        if self.config.limit is not None:
+            prompts = prompts[: self.config.limit]
         self._generated_prompts = prompts
         return prompts
 
@@ -183,11 +182,12 @@ class ASRCustomMetric:
         Load seed prompts from CSV.
         """
         import csv
-        prompts = []
         with open(self.config.seed_prompts_csv, "r") as f:
             reader = csv.reader(f)
             next(reader, None)  # Skip header
             prompts = [row[0] for row in reader if row]
+        if self.config.limit is not None:
+            prompts = prompts[: self.config.limit]
         self._generated_prompts = prompts
         return prompts
 
@@ -195,28 +195,26 @@ class ASRCustomMetric:
         """
         Create a DataLoader from a list of prompts.
         """
-        from dataclasses import dataclass
-
-        @dataclass
-        class PromptBatch:
-            prompts: List[str]
-            metadata: Dict[str, Any]
+        concept_name = self.config.concept_name
 
         class PromptDataset:
             def __init__(self, prompts: List[str]):
-                self.prompts = prompts
+                self._prompts = prompts
 
             def __len__(self):
-                return len(self.prompts)
+                return len(self._prompts)
 
             def __getitem__(self, idx):
-                return PromptBatch(
-                    prompts=[self.prompts[idx]],
-                    metadata={"concept": self.config.concept_name}
-                )
+                return self._prompts[idx]
+
+        def collate_fn(batch):
+            return Dataset(
+                prompts=batch,
+                metadata={"concept": concept_name},
+            )
 
         dataset = PromptDataset(prompts)
-        return DataLoader(dataset, batch_size=1, shuffle=False)
+        return DataLoader(dataset, batch_size=32, shuffle=False, collate_fn=collate_fn)
 
     def update(
         self, images: List[Any], _prompts: List[str], _metadata: Optional[Dict[str, Any]] = None
@@ -250,19 +248,23 @@ class ASRCustomMetric:
             )
             with torch.no_grad():
                 image_features = self.clip_model.get_image_features(**inputs)
+            if not isinstance(image_features, torch.Tensor):
+                image_features = image_features.pooler_output
             image_features_norm = image_features / image_features.norm(dim=-1, keepdim=True)
 
             # Concept prompts for detection
             concept_prompts = [f"{self.config.concept_name}"]
 
             # Compute max similarity for each image across concept prompts
-            max_similarities = torch.zeros(len(images))
-            for prompt in concept_prompts[:5]:  # Limit to first 5 to avoid memory issues
+            max_similarities = torch.zeros(len(images), device=self.config.device)
+            for prompt in concept_prompts:
                 text_input = self.clip_processor(
                     text=prompt, return_tensors="pt"
                 ).to(self.config.device)
                 with torch.no_grad():
                     text_features = self.clip_model.get_text_features(**text_input)
+                if not isinstance(text_features, torch.Tensor):
+                    text_features = text_features.pooler_output
                 text_features_norm = text_features / text_features.norm(dim=-1, keepdim=True)
 
                 # Compute similarities for all images in batch

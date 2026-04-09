@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Any, Dict
 
 from ...configs.base import BaseConfig
@@ -7,9 +7,9 @@ from ...configs.base import BaseConfig
 _VALID_ERASE_CONCEPTS = {"nudity"}
 
 
-@dataclass
+@dataclass(frozen=True)
 class ConceptSteerersConfig(BaseConfig):
-    model_id: str = "CompVis/stable-diffusion-v1-4"
+    model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     device: str = "cuda"
     sae_path: Optional[str] = None
     erase_concept: str = "nudity"
@@ -18,7 +18,6 @@ class ConceptSteerersConfig(BaseConfig):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "ConceptSteerersConfig":
         config_dict = dict(config_dict)
-        config_dict.pop("model_id", None)
 
         erase_concept = config_dict.get("erase_concept", "nudity")
         if erase_concept.lower() not in _VALID_ERASE_CONCEPTS:

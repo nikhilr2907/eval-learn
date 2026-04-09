@@ -3,7 +3,7 @@ from typing import Optional
 from ...configs.base import BaseConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class TIFAConfig(BaseConfig):
     """
     Configuration for the TIFA (Text-to-Image Faithfulness) metric.

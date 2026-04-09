@@ -22,4 +22,10 @@ except Exception as e:
     import logging
     logging.getLogger(__name__).warning("Could not register safree: %s", e)
 
+try:
+    from .advunlearn.wrapper import AdvUnlearnWrapper
+except Exception as e:
+    import logging
+    logging.getLogger(__name__).warning("Could not register advunlearn: %s", e)
+
 __all__ = ["SLDWrapper", "ConceptSteerersWrapper", "UCEWrapper", "FreeRunTechnique", "MACEWrapper"]

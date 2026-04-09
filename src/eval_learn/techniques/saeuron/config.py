@@ -8,7 +8,7 @@ from ...configs.base import BaseConfig
 _VALID_ERASE_CONCEPTS = {"nudity"}
 
 
-@dataclass
+@dataclass(frozen=True)
 class SAeUronConfig(BaseConfig):
     """
     Configuration for the SAeUron (Sparse Autoencoder Unlearning) technique.
@@ -66,9 +66,6 @@ class SAeUronConfig(BaseConfig):
         the evaluation script is executed from.
         """
         config_dict = dict(config_dict)
-
-        # model_id is fixed — silently drop any user-supplied value.
-        config_dict.pop("model_id", None)
 
         # Validate erase_concept
         erase_concept = config_dict.get("erase_concept", "nudity")

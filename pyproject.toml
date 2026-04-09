@@ -46,8 +46,8 @@ coco = ["pycocotools>=2.0.11"]
 # Development
 dev = ["pytest>=7.0.0", "ruff>=0.0.1", "mypy>=1.0.0"]
 
-# Note: Technique packages (esd, mace, uce, safree, sld, saeuron, ccrt)
-# are git dependencies declared in requirements.txt only
+# Note: Technique packages (esd, mace, uce, safree, sld, saeuron)
+# are local editable installs declared in requirements.txt
 
 [project.scripts]
 eval-learn = "eval_learn.cli:main"
@@ -62,15 +62,16 @@ uce = "eval_learn.techniques.uce.wrapper:UCEWrapper"
 safree = "eval_learn.techniques.SAFREE.wrapper:SAFREETechnique"
 concept_steerers = "eval_learn.techniques.concept_steerers.wrapper:ConceptSteerersWrapper"
 saeuron = "eval_learn.techniques.saeuron.wrapper:SAeUronWrapper"
+advunlearn = "eval_learn.techniques.advunlearn.wrapper:AdvUnlearnWrapper"
 
 [project.entry-points."eval_learn.metrics"]
 asr = "eval_learn.metrics.asr.metric:ASRMetric"
 asr_custom = "eval_learn.metrics.asr_custom.metric:ASRCustomMetric"
+mma_diffusion = "eval_learn.metrics.mma_diffusion.metric:MMADiffusionMetric"
 fid = "eval_learn.metrics.fid.metric:FIDMetric"
 err = "eval_learn.metrics.err.metric:ERRMetric"
 tifa = "eval_learn.metrics.tifa.metric:TIFAMetric"
 clip_score = "eval_learn.metrics.clip_score.metric:CLIPScoreMetric"
-ccrt = "eval_learn.metrics.ccrt.metric:CCRTMetric"
 ua_ira = "eval_learn.metrics.ua_ira.metric:UAIRAMetric"
 
 [project.entry-points."eval_learn.datasets"]
@@ -78,8 +79,7 @@ i2p_csv = "eval_learn.datasets.i2p_csv:load_i2p_csv"
 err_composite = "eval_learn.datasets.err_composite:load_err_composite"
 tifa_csv = "eval_learn.datasets.tifa_csv:load_tifa_csv"
 coco_parquet = "eval_learn.datasets.coco_parquet:load_coco_parquet"
-ccrt_genetic = "eval_learn.datasets.ccrt_genetic:load_ccrt_genetic"
-ua_ira_hf = "eval_learn.datasets.ua_ira_hf:load_ua_ira_hf"
+ua_ira_csv = "eval_learn.datasets.ua_ira_csv:load_ua_ira_csv"
 
 [tool.setuptools.packages.find]
 where = ["src"]

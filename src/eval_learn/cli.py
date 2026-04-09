@@ -4,13 +4,13 @@ import os
 import json
 import logging
 import warnings
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-# Suppress unnecessary library warnings and verbose output
+# Suppress noisy library output before any heavy imports
 logging.getLogger("transformers").setLevel(logging.ERROR)
 logging.getLogger("datasets").setLevel(logging.ERROR)
 logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
@@ -18,68 +18,33 @@ logging.getLogger("onnxruntime").setLevel(logging.ERROR)
 logging.getLogger("tensorflow").setLevel(logging.ERROR)
 warnings.filterwarnings("ignore")
 
-from eval_learn.registry.hf_sync import HFSync
-from eval_learn.runners import (
-    SingleBenchmarkRunner,
-    MultiBenchmarkRunner,
-    MatrixBenchmarkRunner,
-)
+from eval_learn.runners import SingleBenchmarkRunner, MultiBenchmarkRunner
 from eval_learn.logging_utils import get_logger
 
 logger = get_logger("cli")
 
 
-def _build_hf_sync(args) -> HFSync:
-    """Construct HFSync from CLI args, falling back to env vars."""
-    datasets_repo = args.datasets_repo or os.environ.get("HF_DATASETS_REPO")
-    results_repo = args.results_repo or os.environ.get("HF_RESULTS_REPO")
-    images_repo = args.images_repo or os.environ.get("HF_IMAGES_REPO")
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-    missing = []
-    if not datasets_repo:
-        missing.append("--datasets-repo or HF_DATASETS_REPO")
-    if not results_repo:
-        missing.append("--results-repo or HF_RESULTS_REPO")
-    if not images_repo:
-        missing.append("--images-repo or HF_IMAGES_REPO")
-
-    if missing:
-        logger.error("Missing required HF repo IDs: %s", ", ".join(missing))
-        sys.exit(1)
-
-    return HFSync(
-        datasets_repo=datasets_repo,
-        results_repo=results_repo,
-        images_repo=images_repo,
-        create_pr=getattr(args, "create_pr", False),
-    )
-
-
-def load_config(path: str) -> Dict[str, Any]:
-    """Load config from JSON or YAML file."""
+def _load_config(path: str) -> Dict[str, Any]:
     if not os.path.exists(path):
-        logger.error(f"Config file not found: {path}")
+        logger.error("Config file not found: %s", path)
         sys.exit(1)
-
-    with open(path, "r") as f:
-        if path.endswith(".yaml") or path.endswith(".yml"):
+    with open(path) as f:
+        if path.endswith((".yaml", ".yml")):
             try:
                 import yaml
-
                 return yaml.safe_load(f)
             except ImportError:
-                logger.error(
-                    "PyYAML not installed. Install it to use .yaml files, or use .json"
-                )
+                logger.error("PyYAML not installed. Use a .json config or: pip install pyyaml")
                 sys.exit(1)
-        else:
-            return json.load(f)
+        return json.load(f)
 
 
-def _parse_metrics_list(metrics_list: List[Dict[str, Any]]) -> tuple:
-    """Extract metric names and configs from a list of metric dicts."""
-    metric_names = []
-    metric_configs = {}
+def _parse_metrics_list(metrics_list: List[Dict[str, Any]]):
+    metric_names, metric_configs = [], {}
     for m in metrics_list:
         name = m.get("name")
         if not name:
@@ -92,123 +57,70 @@ def _parse_metrics_list(metrics_list: List[Dict[str, Any]]) -> tuple:
     return metric_names, metric_configs
 
 
-def _build_single_runner(
-    config: Dict[str, Any], output_dir: str
-) -> SingleBenchmarkRunner:
-    """Build a SingleBenchmarkRunner from config."""
-    tech_conf = config.get("technique", {})
-    tech_name = tech_conf.get("name")
+def _build_single_runner(config: Dict[str, Any], output_dir: str) -> SingleBenchmarkRunner:
+    tech = config.get("technique", {})
+    tech_name = tech.get("name")
     if not tech_name:
         logger.error("Config must specify 'technique.name'")
         sys.exit(1)
-
-    met_conf = config.get("metric", {})
-    met_name = met_conf.get("name")
+    met = config.get("metric", {})
+    met_name = met.get("name")
     if not met_name:
         logger.error("Config must specify 'metric.name'")
         sys.exit(1)
-
-    logger.info(f"Mode: single | Technique: {tech_name} | Metric: {met_name}")
-
+    logger.info("Mode: single | technique=%s | metric=%s", tech_name, met_name)
     return SingleBenchmarkRunner(
         technique_name=tech_name,
         metric_name=met_name,
-        technique_config=tech_conf.get("config", {}),
-        metric_config=met_conf.get("config", {}),
+        technique_config=tech.get("config", {}),
+        metric_config=met.get("config", {}),
         output_dir=output_dir,
     )
 
 
-def _build_multi_runner(
-    config: Dict[str, Any], output_dir: str
-) -> MultiBenchmarkRunner:
-    """Build a MultiBenchmarkRunner from config."""
-    tech_conf = config.get("technique", {})
-    tech_name = tech_conf.get("name")
+def _build_multi_runner(config: Dict[str, Any], output_dir: str) -> MultiBenchmarkRunner:
+    tech = config.get("technique", {})
+    tech_name = tech.get("name")
     if not tech_name:
         logger.error("Config must specify 'technique.name'")
         sys.exit(1)
-
     metrics_list = config.get("metrics", [])
     if not metrics_list:
         logger.error("Config must specify 'metrics' as a non-empty list")
         sys.exit(1)
-
     metric_names, metric_configs = _parse_metrics_list(metrics_list)
-
-    logger.info(f"Mode: multi | Technique: {tech_name} | Metrics: {metric_names}")
-
+    logger.info("Mode: multi | technique=%s | metrics=%s", tech_name, metric_names)
     return MultiBenchmarkRunner(
         technique_name=tech_name,
         metric_names=metric_names,
-        technique_config=tech_conf.get("config", {}),
+        technique_config=tech.get("config", {}),
         metric_configs=metric_configs,
         output_dir=output_dir,
     )
 
 
-def _build_matrix_runner(
-    config: Dict[str, Any], output_dir: str
-) -> MatrixBenchmarkRunner:
-    """Build a MatrixBenchmarkRunner from config."""
-    techniques_list = config.get("techniques", [])
-    if not techniques_list:
-        logger.error("Config must specify 'techniques' as a non-empty list")
-        sys.exit(1)
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
 
-    metrics_list = config.get("metrics", [])
-    if not metrics_list:
-        logger.error("Config must specify 'metrics' as a non-empty list")
-        sys.exit(1)
-
-    technique_names = []
-    technique_configs = {}
-    for t in techniques_list:
-        name = t.get("name")
-        if not name:
-            logger.error("Each entry in 'techniques' must have a 'name'")
-            sys.exit(1)
-        technique_names.append(name)
-        cfg = t.get("config", {})
-        if cfg:
-            technique_configs[name] = cfg
-
-    metric_names, metric_configs = _parse_metrics_list(metrics_list)
-
-    logger.info(
-        f"Mode: matrix | Techniques: {technique_names} | Metrics: {metric_names}"
-    )
-
-    return MatrixBenchmarkRunner(
-        technique_names=technique_names,
-        metric_names=metric_names,
-        technique_configs=technique_configs,
-        metric_configs=metric_configs,
-        output_dir=output_dir,
-    )
-
-
-def run_benchmark(args):
-    """Execute the benchmark run, auto-detecting mode from config structure."""
-    config = load_config(args.config)
+def cmd_run(args):
+    """Execute a benchmark run, then optionally push results to HF Hub."""
+    config = _load_config(args.config)
     output_dir = config.get("output_dir", "results")
 
-    has_techniques = "techniques" in config
     has_technique = "technique" in config
     has_metrics = "metrics" in config
     has_metric = "metric" in config
 
     try:
-        if has_techniques and has_metrics:
-            runner = _build_matrix_runner(config, output_dir)
-        elif has_technique and has_metrics:
+        if has_technique and has_metrics:
             runner = _build_multi_runner(config, output_dir)
         elif has_technique and has_metric:
             runner = _build_single_runner(config, output_dir)
         else:
             logger.error(
-                "Invalid config: must specify technique+metric, "
-                "technique+metrics, or techniques+metrics"
+                "Invalid config: must have 'technique'+'metric' (single run) "
+                "or 'technique'+'metrics' (multi-metric run)"
             )
             sys.exit(1)
     except ValueError as e:
@@ -217,152 +129,194 @@ def run_benchmark(args):
 
     try:
         report = runner.run()
-        logger.info("Run completed successfully.")
-    except Exception as e:
+    except Exception:
         logger.exception("Run failed.")
         sys.exit(1)
 
+    logger.info("Run completed. run_id=%s", report.get("run_id"))
 
-def hf_push(args):
-    """Push run artifacts to HF Hub."""
-    sync = _build_hf_sync(args)
-    run_dir = args.run_dir
-    run_id = args.run_id
-
-    if getattr(args, "matrix", False):
-        # Matrix mode: push all sub-runs + matrix report
-        result = sync.push_matrix_run(run_dir, run_id)
-        logger.info("Matrix report pushed: %s", result["matrix_report_url"])
-        for folder, urls in result["sub_runs"].items():
-            logger.info(
-                "  %s — report: %s, images: %s",
-                folder,
-                urls["report_url"],
-                urls["images_url"],
-            )
-        return
-
-    if args.target == "report":
-        url = sync.push_report(run_dir, run_id)
-        logger.info("Report pushed: %s", url)
-    elif args.target == "images":
-        url = sync.push_images(run_dir, run_id)
-        logger.info("Images pushed: %s", url)
-    elif args.target == "all":
-        urls = sync.push_run(run_dir, run_id)
-        logger.info("Report pushed: %s", urls["report_url"])
-        logger.info("Images pushed: %s", urls["images_url"])
+    if args.hf_repo:
+        _push_results(
+            output_dir=output_dir,
+            hf_repo=args.hf_repo,
+            hf_path=args.hf_path,
+            create_pr=args.create_pr,
+        )
 
 
-def hf_pull(args):
+def _push_results(output_dir: str, hf_repo: str, hf_path: str, create_pr: bool):
+    from eval_learn.hub import HFSync
+    remote_path = hf_path or os.path.basename(os.path.normpath(output_dir))
+    sync = HFSync(repo_id=hf_repo, create_pr=create_pr)
+    try:
+        url = sync.push_folder(output_dir, remote_path)
+        logger.info("Results pushed → %s/%s  (%s)", hf_repo, remote_path, url)
+    except Exception as e:
+        logger.error("HF push failed: %s", e)
+        sys.exit(1)
+
+
+def cmd_push(args):
+    """Push a local directory to HF Hub."""
+    from eval_learn.hub import HFSync
+    remote_path = args.remote_path or os.path.basename(os.path.normpath(args.local_dir))
+    sync = HFSync(repo_id=args.repo, create_pr=args.create_pr)
+    try:
+        url = sync.push_folder(args.local_dir, remote_path)
+        logger.info("Pushed %s → %s/%s  (%s)", args.local_dir, args.repo, remote_path, url)
+    except Exception as e:
+        logger.error("Push failed: %s", e)
+        sys.exit(1)
+
+
+def cmd_pull(args):
     """Pull artifacts from HF Hub."""
-    sync = _build_hf_sync(args)
+    from eval_learn.hub import HFSync
+    local_dir = args.local_dir or "results"
+    sync = HFSync(repo_id=args.repo)
+    try:
+        if args.remote_path:
+            path = sync.pull_folder(args.remote_path, local_dir)
+        else:
+            path = sync.pull_all(local_dir)
+        logger.info("Downloaded to %s", path)
+    except Exception as e:
+        logger.error("Pull failed: %s", e)
+        sys.exit(1)
 
-    if args.target == "datasets":
-        path = sync.pull_datasets(args.local_dir)
-        logger.info("Datasets downloaded to %s", path)
-    elif args.target == "results":
-        path = sync.pull_results(args.local_dir)
-        logger.info("Results downloaded to %s", path)
-    elif args.target == "images":
-        if not args.run_folder:
-            logger.error("--run-folder is required when pulling images")
-            sys.exit(1)
-        path = sync.pull_run_images(args.run_folder, args.local_dir)
-        logger.info("Images downloaded to %s", path)
 
+def cmd_plugins(_args):
+    """List all registered techniques, metrics, and datasets."""
+    from eval_learn.registry.entrypoints import load_entrypoints
+    from eval_learn.registry.local import _TECHNIQUES, _METRICS, _DATASETS
+
+    load_entrypoints()
+
+    print("\nTechniques:")
+    for name in sorted(_TECHNIQUES):
+        print(f"  {name}")
+    print("\nMetrics:")
+    for name in sorted(_METRICS):
+        print(f"  {name}")
+    print("\nDatasets:")
+    for name in sorted(_DATASETS):
+        print(f"  {name}")
+    print()
+
+
+def cmd_models(_args):
+    """Show the base model used by each technique and metric."""
+    from eval_learn.techniques._base_models import TECHNIQUE_BASE_MODELS
+    from eval_learn.metrics._base_models import METRIC_MODELS
+
+    # Techniques
+    print("\nTechniques:")
+    print(f"  {'name':<20} {'base model':<45} {'configurable'}")
+    print(f"  {'-'*20} {'-'*45} {'-'*12}")
+    for name in sorted(TECHNIQUE_BASE_MODELS):
+        print(f"  {name:<20} {TECHNIQUE_BASE_MODELS[name]:<45} no  (field init=False)")
+    print(f"  {'free_run':<20} {'(user-specified via model_id)':<45} required")
+
+    # Metrics
+    print("\nMetrics:")
+    print(f"  {'name':<20} {'model':<45} {'configurable'}")
+    print(f"  {'-'*20} {'-'*45} {'-'*12}")
+    for name in sorted(METRIC_MODELS):
+        info = METRIC_MODELS[name]
+        if info.configurable:
+            detail = f"yes  (config: {info.config_field})"
+        elif info.note:
+            detail = f"no   ({info.note})"
+        else:
+            detail = "no"
+        print(f"  {name:<20} {info.model:<45} {detail}")
+    print()
+
+
+# ---------------------------------------------------------------------------
+# Argument parser
+# ---------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="Eval-Learn CLI")
-    parser.add_argument("--version", action="store_true", help="Show version")
-
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
-    # Run Command
-    run_parser = subparsers.add_parser("run", help="Execute a benchmark run")
-    run_parser.add_argument(
-        "--config", "-c", required=True, help="Path to config file (JSON/YAML)"
+    parser = argparse.ArgumentParser(
+        prog="eval-learn",
+        description="Eval-Learn: unlearning benchmark for text-to-image diffusion models",
     )
+    parser.add_argument("--version", action="store_true", help="Print version and exit")
+    subparsers = parser.add_subparsers(dest="command")
 
-    # --- HF repo arguments (shared by push/pull) ---
-    hf_parent = argparse.ArgumentParser(add_help=False)
-    hf_parent.add_argument(
-        "--datasets-repo",
+    # run
+    run_p = subparsers.add_parser("run", help="Execute a benchmark run")
+    run_p.add_argument("--config", "-c", required=True, help="Path to config file (JSON/YAML)")
+    run_p.add_argument(
+        "--hf-repo",
         default=None,
-        help="HF dataset repo ID (or set HF_DATASETS_REPO)",
+        metavar="REPO_ID",
+        help="HF Hub dataset repo to push results to after the run (e.g. org/my-results)",
     )
-    hf_parent.add_argument(
-        "--results-repo",
+    run_p.add_argument(
+        "--hf-path",
         default=None,
-        help="HF results repo ID (or set HF_RESULTS_REPO)",
+        metavar="REMOTE_PATH",
+        help="Remote path inside the repo (default: basename of output_dir from config)",
     )
-    hf_parent.add_argument(
-        "--images-repo", default=None, help="HF images repo ID (or set HF_IMAGES_REPO)"
-    )
-
-    # Push Command
-    push_parser = subparsers.add_parser(
-        "push", parents=[hf_parent], help="Push run artifacts to Hugging Face Hub"
-    )
-    push_parser.add_argument(
-        "target",
-        choices=["report", "images", "all"],
-        help="What to push: report, images, or all",
-    )
-    push_parser.add_argument(
-        "--run-dir",
-        required=True,
-        help="Local run directory (e.g. results/sld_asr_a1b2c3d4)",
-    )
-    push_parser.add_argument("--run-id", required=True, help="8-char hex run ID")
-    push_parser.add_argument(
-        "--matrix",
-        action="store_true",
-        help="Push a matrix run (--run-dir is the output directory containing sub-runs)",
-    )
-    push_parser.add_argument(
+    run_p.add_argument(
         "--create-pr",
         action="store_true",
-        help="Create a Pull Request instead of pushing directly (use if you don't have write access)",
+        help="Open a pull request instead of committing directly to HF Hub",
     )
 
-    # Pull Command
-    pull_parser = subparsers.add_parser(
-        "pull", parents=[hf_parent], help="Pull artifacts from Hugging Face Hub"
+    # push
+    push_p = subparsers.add_parser("push", help="Push a local results directory to HF Hub")
+    push_p.add_argument("--repo", required=True, metavar="REPO_ID", help="HF Hub dataset repo ID")
+    push_p.add_argument("--local-dir", required=True, metavar="PATH", help="Local directory to upload")
+    push_p.add_argument(
+        "--remote-path",
+        default=None,
+        metavar="PATH",
+        help="Destination path in the repo (default: basename of --local-dir)",
     )
-    pull_parser.add_argument(
-        "target",
-        choices=["datasets", "results", "images"],
-        help="What to pull: datasets, results, or images",
+    push_p.add_argument("--create-pr", action="store_true")
+
+    # pull
+    pull_p = subparsers.add_parser("pull", help="Pull artifacts from HF Hub")
+    pull_p.add_argument("--repo", required=True, metavar="REPO_ID", help="HF Hub dataset repo ID")
+    pull_p.add_argument(
+        "--remote-path",
+        default=None,
+        metavar="PATH",
+        help="Remote path to download (omit to pull the entire repo)",
     )
-    pull_parser.add_argument(
+    pull_p.add_argument(
         "--local-dir",
         default=None,
-        help="Local directory to download into (default: data/ or results/)",
+        metavar="PATH",
+        help="Local directory to download into (default: results/)",
     )
-    pull_parser.add_argument(
-        "--run-folder",
-        default=None,
-        help="Run folder name for selective image pull (e.g. sld_asr_a1b2c3d4)",
-    )
+
+    # plugins
+    subparsers.add_parser("plugins", help="List all registered techniques, metrics, and datasets")
+
+    # models
+    subparsers.add_parser("models", help="Show the base model used by each technique and metric")
 
     args = parser.parse_args()
 
     if args.version:
         from eval_learn import __version__
-
-        print(f"Eval-Learn v{__version__}")
+        print(f"eval-learn {__version__}")
         sys.exit(0)
 
-    if args.command == "run":
-        run_benchmark(args)
-    elif args.command == "push":
-        hf_push(args)
-    elif args.command == "pull":
-        # Default local_dir based on target
-        if args.local_dir is None:
-            args.local_dir = "data" if args.target == "datasets" else "results"
-        hf_pull(args)
+    dispatch = {
+        "run": cmd_run,
+        "push": cmd_push,
+        "pull": cmd_pull,
+        "plugins": cmd_plugins,
+        "models": cmd_models,
+    }
+
+    if args.command in dispatch:
+        dispatch[args.command](args)
     else:
         parser.print_help()
 

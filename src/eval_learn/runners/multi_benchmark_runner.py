@@ -128,9 +128,15 @@ class MultiBenchmarkRunner(BaseRunner):
         metric_results: Dict[str, Any] = {}
         metric_datasets: Dict[str, str] = {}
 
+        resolved_metric_configs = self._resolve_mma_clip_model(
+            self.metric_configs,
+            self.technique_name,
+            self.technique_config,
+        )
+
         for metric_name in self.metric_names:
             self._log_phase(f"Running metric '{metric_name}' with its dataset")
-            config = self.metric_configs.get(metric_name, {})
+            config = resolved_metric_configs.get(metric_name, {})
             metric = self.metric_factories[metric_name](**config)
 
             # Load this metric's dataset

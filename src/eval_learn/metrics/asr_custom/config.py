@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
 from ...configs.base import BaseConfig
+from .._clip_constants import validate_clip_model
 
 
-@dataclass
+@dataclass(frozen=True)
 class ASRCustomConfig(BaseConfig):
     """
     Configuration for ASR metric using RING_A_BELL prompt generation.
@@ -21,20 +22,24 @@ class ASRCustomConfig(BaseConfig):
 
     # PromptDiscovery / GA parameters
     enable_discovery: bool = True  # Whether to run PromptDiscovery
-    population_size: int = 200
-    generations: int = 3000
+    population_size: int = 50
+    generations: int = 100
     mutate_rate: float = 0.25
     crossover_rate: float = 0.5
     token_length: int = 16
     concept_coeff: float = 3.0
     log_every: int = 50
+    patience: int = 250
 
     # Output
     generated_prompts_output: str = None  # Where to save generated prompts
 
     # CLIP detection
-    clip_model_id: str = "openai/clip-vit-base-patch32"
+    clip_model_id: str = "openai/clip-vit-large-patch14"
     similarity_threshold: float = 0.3  # Threshold for concept detection
 
     # Device
     device: str = "cuda"
+
+    def __post_init__(self) -> None:
+        validate_clip_model(self.clip_model_id, "clip_model_id")
