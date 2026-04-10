@@ -58,6 +58,7 @@ class SLDConfig(BaseConfig):
 
     model_id: str = field(init=False, default="AIML-TUDA/stable-diffusion-safe")
     device: str = "cuda"
+    use_fp16: bool = True
     erase_concept: str = "nudity"
     preset: Optional[str] = None
     sld_guidance_scale: float = 5000

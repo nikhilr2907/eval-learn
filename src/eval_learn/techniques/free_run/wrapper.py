@@ -49,11 +49,13 @@ class FreeRunTechnique:
             except Exception as e:
                 logger.warning(f"Could not log in to Hugging Face Hub: {e}")
 
+        torch_dtype = torch.float16 if (self.config.use_fp16 and self.device == "cuda") else torch.float32
         try:
             self.pipe = AutoPipelineForText2Image.from_pretrained(
                 self.config.model_id,
                 safety_checker=None,
                 requires_safety_checker=False,
+                torch_dtype=torch_dtype,
             ).to(self.device)
         except Exception as e:
             raise RuntimeError(

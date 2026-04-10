@@ -27,6 +27,7 @@ class SAeUronConfig(BaseConfig):
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     # Target computation device
     device: str = "cuda"
+    use_fp16: bool = True
 
     # --- Paths ---
     # Path to the directory containing the SAE weights (cfg.json & sae.safetensors)

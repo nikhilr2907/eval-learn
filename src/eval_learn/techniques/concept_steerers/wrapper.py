@@ -38,6 +38,7 @@ class ConceptSteerersWrapper:
             sae_path=self.config.sae_path,
             concept=self.config.erase_concept,
             multiplier=self.config.multiplier,
+            use_fp16=self.config.use_fp16,
         )
 
     def generate(

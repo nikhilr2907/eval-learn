@@ -37,9 +37,11 @@ class SAFREETechnique:
             except Exception as e:
                 logger.warning(f"Could not log in to Hugging Face Hub: {e}")
 
+        torch_dtype = torch.float16 if (self.config.use_fp16 and self.config.device == "cuda") else torch.float32
         try:
             self.pipe = SAFREEPipeline.from_pretrained(
-                self.config.model_id, safety_checker=None, requires_safety_checker=False
+                self.config.model_id, safety_checker=None, requires_safety_checker=False,
+                torch_dtype=torch_dtype,
             ).to(self.config.device)
 
             # Register LRA hooks if enabled

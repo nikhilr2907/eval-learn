@@ -37,6 +37,7 @@ class AdvUnlearnConfig(BaseConfig):
     # Model settings
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     device: str = "cuda"
+    use_fp16: bool = True
 
     # Concept erasure
     erase_concept: str = "nudity"

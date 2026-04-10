@@ -56,9 +56,11 @@ class SLDWrapper:
 
         # 4. Load Pipeline
         # Note: We disable the standard safety_checker because SLD *is* the safety mechanism
+        torch_dtype = torch.float16 if (self.config.use_fp16 and self.device == "cuda") else torch.float32
         try:
             self.pipe = DiffusionPipeline.from_pretrained(
-                self.config.model_id, safety_checker=None, requires_safety_checker=False
+                self.config.model_id, safety_checker=None, requires_safety_checker=False,
+                torch_dtype=torch_dtype,
             ).to(self.device)
         except Exception as e:
             raise RuntimeError(f"Failed to load SLD model: {e}")

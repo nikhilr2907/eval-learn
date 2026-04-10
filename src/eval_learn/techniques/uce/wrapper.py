@@ -35,6 +35,7 @@ class UCEWrapper:
             device=self.config.device,
             preset=self.config.preset,
             weights_path=self.config.uce_weights_path,
+            use_fp16=self.config.use_fp16,
         )
 
     def generate(
