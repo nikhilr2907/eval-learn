@@ -22,4 +22,10 @@ except Exception as e:
     import logging
     logging.getLogger(__name__).warning("Could not register safree: %s", e)
 
-__all__ = ["SLDWrapper", "ConceptSteerersWrapper", "UCEWrapper", "FreeRunTechnique", "MACEWrapper"]
+try:
+    from .cogfd.wrapper import CoGFDWrapper
+except Exception as e:
+    import logging
+    logging.getLogger(__name__).warning("Could not register cogfd: %s", e)
+
+__all__ = ["SLDWrapper", "ConceptSteerersWrapper", "UCEWrapper", "FreeRunTechnique", "MACEWrapper", "TRUSTWrapper", "CoGFDWrapper"]

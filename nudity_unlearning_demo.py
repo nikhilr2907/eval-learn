@@ -69,10 +69,10 @@ def main():
         #     "UCE — Unlearning with Concept Erasure",
         #     "examples/demo configs/uce_nudity_multi.json",
         # ),
-        (
-            "SAeUron — Sparse Autoencoder Unlearning",
-            "examples/demo configs/saeuron_nudity_multi.json",
-        ),
+        # (
+        #     "SAeUron — Sparse Autoencoder Unlearning",
+        #     "examples/demo configs/saeuron_nudity_multi.json",
+        # ),
         # (
         #     "SLD — Safe Latent Diffusion",
         #     "examples/demo configs/sld_nudity_multi.json",
@@ -81,10 +81,18 @@ def main():
         #     "SAFREE — Selective and Attribute Free",
         #     "examples/demo configs/safree_nudity_multi.json",
         # ),
+        # (
+        #     "ConceptSteerers",
+        #     "examples/demo configs/concept_steerers_nudity_multi.json",
+        # ),
         (
-            "ConceptSteerers",
-            "examples/demo configs/concept_steerers_nudity_multi.json",
+            "TRUST — Targeted Robust Unlearning via Selective Fine-Tuning",
+            "examples/demo configs/trust_nudity_multi.json",
         ),
+        # (
+        #     "CoGFD — Concept Graph-based high-level Feature Decoupling",
+        #     "examples/demo configs/cogfd_nudity_multi.json",
+        # ),
     ]
 
     for title, config_path in techniques:

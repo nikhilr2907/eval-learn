@@ -62,6 +62,7 @@ uce = "eval_learn.techniques.uce.wrapper:UCEWrapper"
 safree = "eval_learn.techniques.SAFREE.wrapper:SAFREETechnique"
 concept_steerers = "eval_learn.techniques.concept_steerers.wrapper:ConceptSteerersWrapper"
 saeuron = "eval_learn.techniques.saeuron.wrapper:SAeUronWrapper"
+cogfd = "eval_learn.techniques.cogfd.wrapper:CoGFDWrapper"
 
 [project.entry-points."eval_learn.metrics"]
 asr = "eval_learn.metrics.asr.metric:ASRMetric"
