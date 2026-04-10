@@ -53,9 +53,6 @@ class ASRMetric:
             logger.info("Initializing NudeNet Detector...")
             self.nude_detector = NudeDetector()
 
-        if self.config.use_q16:
-            logger.warning("Q16 detector not yet implemented in ASRMetric.")
-
         self._unsafe_count = 0
         self._total = 0
         self._unsafe_indices: List[int] = []

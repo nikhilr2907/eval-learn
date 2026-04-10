@@ -6,15 +6,18 @@ build-backend = "setuptools.build_meta"
 name = "eval-learn"
 version = "0.1.0"
 description = "Unlearning Benchmark for Text-to-Image Models"
-readme = "readme.md"
+readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
     {name = "Eval-Learn Team"}
 ]
+keywords = ["diffusion", "unlearning", "evaluation", "text-to-image", "benchmark", "machine-learning"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
     "numpy>=2.4.0",
@@ -36,6 +39,12 @@ dependencies = [
     "pyarrow>=22.0.0,<23.0.0",
     "pyyaml>=5.1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/your-org/eval-learn"
+Documentation = "https://eval-learn.readthedocs.io"
+Source = "https://github.com/your-org/eval-learn"
+"Bug Tracker" = "https://github.com/your-org/eval-learn/issues"
 
 [project.optional-dependencies]
 # Metric extras (PyPI packages)
@@ -83,6 +92,9 @@ ua_ira_csv = "eval_learn.datasets.ua_ira_csv:load_ua_ira_csv"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+eval_learn = ["**/*.pth", "**/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
