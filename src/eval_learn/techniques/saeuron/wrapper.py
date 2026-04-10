@@ -169,7 +169,7 @@ class SAeUronWrapper:
             safety_checker=None,
             requires_safety_checker=False,
             torch_dtype=(
-                torch.float16 if self.config.device == "cuda" else torch.float32
+                torch.float16 if (self.config.use_fp16 and self.config.device == "cuda") else torch.float32
             ),
         )
         pipe = pipe.to(self.config.device)

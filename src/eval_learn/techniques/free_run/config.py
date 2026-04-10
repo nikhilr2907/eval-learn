@@ -10,6 +10,7 @@ class FreeRunConfig(BaseConfig):
 
     model_id: str = ""
     device: Optional[str] = None
+    use_fp16: bool = True
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "FreeRunConfig":

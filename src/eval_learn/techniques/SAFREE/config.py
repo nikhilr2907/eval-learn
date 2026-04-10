@@ -10,6 +10,7 @@ class SAFREEConfig(BaseConfig):
     # Model settings
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     device: str = "cuda"
+    use_fp16: bool = True
 
     # Stage 1: Text Projection
     alpha: float = 0.01

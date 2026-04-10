@@ -21,6 +21,7 @@ class MACEConfig(BaseConfig):
     # Model settings
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     device: str = "cuda"
+    use_fp16: bool = True
 
     # Concept erasure settings — accepts a single string or a list of strings.
     # List example: ["nudity", "naked", "bare skin"] erases all synonyms at once.

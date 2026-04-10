@@ -63,6 +63,7 @@ class AdvUnlearnWrapper:
             cache_dir=self.config.cache_dir,
             num_inference_steps=self.config.num_inference_steps,
             guidance_scale=self.config.guidance_scale,
+            use_fp16=self.config.use_fp16,
         )
 
     def generate(
