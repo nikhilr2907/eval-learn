@@ -1,1 +1,55 @@
-site_name: My Docs
+site_name: Eval-Learn
+site_description: Unlearning Benchmark for Text-to-Image Models
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    scheme: default
+    primary: indigo
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+  font:
+    text: Inter
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Concepts: concepts.md
+  - Techniques:
+    - Overview: techniques/index.md
+    - ESD: techniques/esd.md
+    - MACE: techniques/mace.md
+    - UCE: techniques/uce.md
+    - AdvUnlearn: techniques/advunlearn.md
+    - SAeUron: techniques/saeuron.md
+    - SAFREE: techniques/safree.md
+    - SLD: techniques/sld.md
+    - Concept Steerers: techniques/concept-steerers.md
+    - Free Run: techniques/free-run.md
+  - Metrics:
+    - Overview: metrics/index.md
+    - ASR: metrics/asr.md
+    - FID: metrics/fid.md
+    - CLIP Score: metrics/clip-score.md
+    - ERR: metrics/err.md
+    - TIFA: metrics/tifa.md
+    - UA-IRA: metrics/ua-ira.md
+    - MMA-Diffusion: metrics/mma-diffusion.md
+  - Configuration: configuration.md
+
+markdown_extensions:
+  - admonition
+  - tables
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.details
+
+plugins:
+  - search

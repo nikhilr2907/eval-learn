@@ -80,8 +80,6 @@ class AdvUnlearnConfig(BaseConfig):
     # Misc
     save_dir: Optional[str] = None
     checkpoint_path: Optional[str] = None
-    cache_dir: str = ".cache"
-
     # Generation settings
     num_inference_steps: int = 50
     guidance_scale: float = 7.5
