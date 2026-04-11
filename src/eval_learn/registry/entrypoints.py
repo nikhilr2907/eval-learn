@@ -14,7 +14,7 @@ def load_entrypoints():
         "eval_learn.datasets": register_dataset,
     }
 
-    logger.info("Loading plugins from entry points...")
+    logger.debug("Loading plugins from entry points...")
 
     for group_name, register in groups.items():
         try:

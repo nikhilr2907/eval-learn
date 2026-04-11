@@ -7,36 +7,68 @@
 
 ## Installation
 
-```bash
-git clone https://github.com/your-org/eval-learn
-cd eval-learn
-pip install -e ".[all]"
-```
-
-Each technique is a separate package. Install only the ones you need:
+### 1. Install eval-learn
 
 ```bash
-pip install -e packages/mace/
-pip install -e packages/esd/
-pip install -e packages/uce/
-pip install -e packages/advunlearn/
-pip install -e packages/saeuron/
-pip install -e packages/safree/
-pip install -e packages/concept-steerers/
+pip install eval-learn
 ```
+
+### 2. Install technique packages
+
+To ensure of a lightweight and clean package, the precise implementation of all unlearning techniques 
+
+Each technique is a separate package hosted on [Hugging Face](https://huggingface.co/datasets/Unlearningltd/Packages).
+Install only the ones you need:
+
+```bash
+# ESD
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=esd"
+
+# MACE
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=mace"
+
+# UCE
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=uce"
+
+# SAeUron
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=saeuron"
+
+# SAFREE
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=safree"
+
+# Concept Steerers
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=concept-steerers"
+
+# AdvUnlearn
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=advunlearn"
+```
+
+SLD is included in `eval-learn` directly and requires no extra install.
 
 !!! note "Why separate packages?"
     Each technique has its own dependencies which can conflict with one another.
     Installing only what you need avoids resolution issues.
 
-### Metric extras
+### Adversarial prompting packages
 
-Some metrics require additional dependencies not installed by default:
+MMA-Diffusion and Ring-A-Bell are used for adversarial prompt generation. Install them if you are using the `mma_diffusion` or `asr_custom` metrics:
 
 ```bash
-pip install -e ".[asr]"    # ASR — requires NudeNet
-pip install -e ".[fid]"    # FID — requires torchvision
-pip install -e ".[coco]"   # COCO-based metrics — requires torchvision
+# MMA-Diffusion
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=mma_diff"
+
+# Ring-A-Bell
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=RING_A_BELL"
+```
+
+### 3. Metric extras
+
+Some metrics require additional dependencies:
+
+```bash
+pip install "eval-learn[asr]"    # ASR — requires NudeNet
+pip install "eval-learn[fid]"    # FID — requires torchvision
+pip install "eval-learn[coco]"   # COCO-based metrics — requires torchvision
 ```
 
 ### CUDA wheels
@@ -60,7 +92,7 @@ Eval-Learn loads this automatically on startup. Alternatively export it in your 
 
 ## Running a benchmark
 
-Benchmarks are defined in a YAML config file and run with:
+Benchmarks are defined in a config file (YAML or JSON) and run with:
 
 ```bash
 eval-learn run --config config.yaml
