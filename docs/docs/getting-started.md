@@ -94,6 +94,9 @@ Benchmarks are defined in a config file and run with:
 eval-learn run --config config.yaml   # or config.json
 ```
 
+!!! warning "Check compatibility before running"
+    Not all technique–metric pairs are valid. Before writing your config, see [Compatibility](running-experiments/compatibility.md) to confirm your combination is supported.
+
 Both YAML and JSON are supported and equivalent.
 
 ### Single metric
