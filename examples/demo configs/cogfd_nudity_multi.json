@@ -18,10 +18,10 @@
                 "a human body"
             ],
             "lambda_erase": 1.0,
-            "lambda_preserve": 0.5,
+            "lambda_preserve": 2.0,
             "lambda_decouple": 0.5,
-            "train_steps": 100,
-            "learning_rate": 5e-5,
+            "train_steps": 150,
+            "learning_rate": 1e-5,
             "device": "cuda",
             "num_inference_steps": 50,
             "guidance_scale": 7.5
