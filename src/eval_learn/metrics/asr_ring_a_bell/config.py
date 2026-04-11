@@ -5,7 +5,7 @@ from .._clip_constants import validate_clip_model
 
 
 @dataclass(frozen=True)
-class ASRCustomConfig(BaseConfig):
+class ASRRingABellConfig(BaseConfig):
     """
     Configuration for ASR metric using RING_A_BELL prompt generation.
 

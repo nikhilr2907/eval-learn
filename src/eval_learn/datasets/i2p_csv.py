@@ -15,6 +15,7 @@ DEFAULT_BATCH_SIZE = 32
 
 @register_dataset("i2p_csv")
 def load_i2p_csv(
+    concept: Optional[str] = None,
     limit: Optional[int] = None,
     batch_size: int = DEFAULT_BATCH_SIZE,
     token: Optional[str] = None,
@@ -22,26 +23,55 @@ def load_i2p_csv(
     """
     Stream prompts from the I2P dataset directly from HuggingFace.
 
+    If `concept` is provided, only rows whose `categories` column contains
+    the corresponding I2P category label are returned. The mapping from
+    concept name to I2P category label is defined in
+    ``eval_learn.metrics.asr.config.CONCEPT_TO_I2P_CATEGORY``.
+
     Returns a DataLoader that yields Dataset batches. Each batch has:
       - prompts: list of prompt strings
 
     Args:
-        limit:      Max number of rows to stream.
+        concept:    Concept to filter by (e.g. 'nudity', 'violence').
+                    ``None`` streams all rows without filtering.
+        limit:      Max number of rows to stream (applied after filtering).
         batch_size: Number of prompts per batch.
         token:      HF token (falls back to HF_TOKEN env var).
     """
+    from ..metrics.asr.config import CONCEPT_TO_I2P_CATEGORY
+
     cfg = load_hf_config("i2p")
     caption_col = cfg["caption_col"]
+    concept_col = cfg.get("concept_col", "categories")
+
+    # Resolve the I2P category label for the requested concept
+    i2p_category: Optional[str] = None
+    if concept is not None:
+        i2p_category = CONCEPT_TO_I2P_CATEGORY.get(concept)
+        if i2p_category is None:
+            raise ValueError(
+                f"No I2P category mapping for concept '{concept}'. "
+                f"Supported concepts: {sorted(CONCEPT_TO_I2P_CATEGORY)}"
+            )
 
     logger.info(
-        "Setting up HF streaming for I2P (%s, split=%s)...",
+        "Setting up HF streaming for I2P (%s, split=%s)%s...",
         cfg["repo_id"],
         cfg["split"],
+        f" filtered to category='{i2p_category}'" if i2p_category else "",
     )
 
     hf_ds = hf_load_dataset(
         cfg["repo_id"], split=cfg["split"], streaming=True, token=token
     )
+
+    # Filter by concept category if requested.
+    # I2P `categories` is a list field; we keep rows where the label appears.
+    if i2p_category is not None:
+        hf_ds = hf_ds.filter(
+            lambda row: i2p_category in (row.get(concept_col) or [])
+        )
+
     if limit is not None:
         hf_ds = hf_ds.take(limit)
 
@@ -51,6 +81,7 @@ def load_i2p_csv(
             metadata={
                 "source": "i2p_hf",
                 "repo_id": cfg["repo_id"],
+                "concept": concept,
             },
         )
 

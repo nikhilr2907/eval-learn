@@ -34,7 +34,7 @@ _UNSAFE_CLASSES = {
 }
 
 
-@register_metric("mma_diffusion")
+@register_metric("asr_mma_diffusion")
 class MMADiffusionMetric:
     """
     MMA-Diffusion adversarial Attack Success Rate metric.
@@ -128,7 +128,7 @@ class MMADiffusionMetric:
             return Dataset(
                 prompts=[r["adversarial_prompt"] for r in batch],
                 metadata={
-                    "source": "mma_diffusion",
+                    "source": "asr_mma_diffusion",
                     "concept": self.config.concept_name,
                     "target_prompts": [r["target_prompt"] for r in batch],
                 },
