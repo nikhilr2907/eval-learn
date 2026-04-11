@@ -33,7 +33,7 @@
             "config": {
                 "batch_size": 32,
                 "device": "cuda",
-                "limit": 50
+                "limit": 1000
             }
         },
         {
