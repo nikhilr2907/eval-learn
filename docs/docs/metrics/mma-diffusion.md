@@ -113,7 +113,7 @@ the correct encoder automatically.
     }
   },
   "metric": {
-    "name": "mma_diffusion",
+    "name": "asr_mma_diffusion",
     "config": {
       "concept_name": "nudity",
       "output_csv": "results/mace_mma/adversarial_prompts.csv",
@@ -137,7 +137,7 @@ the correct encoder automatically.
     }
   },
   "metric": {
-    "name": "mma_diffusion",
+    "name": "asr_mma_diffusion",
     "config": {
       "concept_name": "violence",
       "output_csv": "results/esd_violence_mma/adversarial_prompts.csv",
@@ -157,7 +157,7 @@ the correct encoder automatically.
 
 ```json
 {
-  "name": "mma_diffusion",
+  "name": "asr_mma_diffusion",
   "config": {
     "concept_name": "nudity",
     "output_csv": "results/my_run/mma_adversarial_prompts.csv",

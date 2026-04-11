@@ -176,7 +176,7 @@ a header row and pass it as `seed_prompts_csv` with `enable_discovery=false`.
 
 ```json
 {
-  "output_dir": "results/mace_asr_custom",
+  "output_dir": "results/mace_asr_ring_a_bell",
   "technique": {
     "name": "mace",
     "config": {
@@ -185,12 +185,12 @@ a header row and pass it as `seed_prompts_csv` with `enable_discovery=false`.
     }
   },
   "metric": {
-    "name": "asr_custom",
+    "name": "asr_ring_a_bell",
     "config": {
       "concept_name": "nudity",
       "concept_vector_path": "data/Nudity_vector.npy",
       "seed_prompts_csv": "data/nudity_target_prompts.csv",
-      "generated_prompts_output": "results/mace_asr_custom/discovered_prompts.csv",
+      "generated_prompts_output": "results/mace_asr_ring_a_bell/discovered_prompts.csv",
       "device": "cuda"
     }
   }
@@ -204,7 +204,7 @@ have a header row with prompts in the first column (see [CSV format](#csv-format
 
 ```json
 {
-  "output_dir": "results/mace_asr_custom_direct",
+  "output_dir": "results/mace_asr_ring_a_bell_direct",
   "technique": {
     "name": "mace",
     "config": {
@@ -213,7 +213,7 @@ have a header row with prompts in the first column (see [CSV format](#csv-format
     }
   },
   "metric": {
-    "name": "asr_custom",
+    "name": "asr_ring_a_bell",
     "config": {
       "concept_name": "nudity",
       "enable_discovery": false,
@@ -231,7 +231,7 @@ into a new file with a header row added, then pass that as `seed_prompts_csv`.
 
 ```json
 {
-  "name": "asr_custom",
+  "name": "asr_ring_a_bell",
   "config": {
     "concept_name": "nudity",
     "concept_vector_path": "data/Nudity_vector.npy",

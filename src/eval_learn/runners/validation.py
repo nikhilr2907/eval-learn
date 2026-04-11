@@ -27,19 +27,19 @@ def get_erase_concept(
 def validate_nudity_metrics(
     technique_name: str, erase_concept: Optional[str], metric_name: str
 ) -> None:
-    """Validate ASR/ERR require nudity concept."""
-    if metric_name not in ["asr", "err"]:
+    """Validate ERR requires nudity concept. ASR is multi-concept and not restricted here."""
+    if metric_name != "err":
         return
 
     # free_run doesn't have erase_concept field - allow it
     if technique_name == "free_run":
         return
 
-    # Other techniques must have erase_concept="nudity"
+    # ERR uses NudeNet + I2P and is nudity-specific
     if erase_concept != "nudity":
         raise ValidationError(
-            f"Metric '{metric_name}' is nudity-specific "
-            f"(uses NudeNet detector and I2P/Ring-A-Bell datasets). "
+            f"Metric 'err' is nudity-specific "
+            f"(uses NudeNet detector and I2P dataset). "
             f"Got erase_concept='{erase_concept}'. "
             f"For non-nudity concepts, use UA_IRA, FID, or CLIP_Score."
         )

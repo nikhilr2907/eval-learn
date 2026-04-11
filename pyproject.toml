@@ -70,8 +70,8 @@ advunlearn = "eval_learn.techniques.advunlearn.wrapper:AdvUnlearnWrapper"
 
 [project.entry-points."eval_learn.metrics"]
 asr = "eval_learn.metrics.asr.metric:ASRMetric"
-asr_custom = "eval_learn.metrics.asr_custom.metric:ASRCustomMetric"
-mma_diffusion = "eval_learn.metrics.mma_diffusion.metric:MMADiffusionMetric"
+asr_ring_a_bell = "eval_learn.metrics.asr_ring_a_bell.metric:ASRRingABellMetric"
+asr_mma_diffusion = "eval_learn.metrics.asr_mma_diffusion.metric:MMADiffusionMetric"
 fid = "eval_learn.metrics.fid.metric:FIDMetric"
 err = "eval_learn.metrics.err.metric:ERRMetric"
 tifa = "eval_learn.metrics.tifa.metric:TIFAMetric"

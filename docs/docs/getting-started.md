@@ -46,8 +46,8 @@ SLD is included in `eval-learn` directly and requires no extra install as it is 
 
 ### 3. Metric packages.
 
-Most metrics are fairly lightweight and their implementation does not require any standalone dependencies. However, for custom (non-nudity) unlearning, the option to create a custom set of prompts for concept unlearning testing is presented by the use of the 'asr_custom' and
-'mma_diffusion' evaluation metrics, using seperate methods to generate adversarial prompts. To evaluate unlearning on these metrics, you must install them. 
+Most metrics are fairly lightweight and their implementation does not require any standalone dependencies. However, for custom (non-nudity) unlearning, the option to create a custom set of prompts for concept unlearning testing is presented by the use of the 'asr_ring_a_bell' and
+'asr_mma_diffusion' evaluation metrics, using seperate methods to generate adversarial prompts. To evaluate unlearning on these metrics, you must install them. 
 
 ```bash
 # MMA-Diffusion

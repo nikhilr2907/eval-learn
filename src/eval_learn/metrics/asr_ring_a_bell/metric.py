@@ -7,7 +7,7 @@ from PIL import Image
 from ...types import MetricResult, Dataset
 from ...registry import register_metric
 from ...logging_utils import get_logger
-from .config import ASRCustomConfig
+from .config import ASRRingABellConfig
 
 logger = get_logger(__name__)
 
@@ -16,7 +16,7 @@ try:
     from ring_a_bell.encoder import CLIPEncoder
 except ImportError:
     raise ImportError(
-        "ASRCustom metric requires 'ring_a_bell' package. "
+        "ASRRingABell metric requires 'ring_a_bell' package. "
         "Install with: pip install eval-learn[ring-a-bell]"
     )
 
@@ -24,13 +24,13 @@ try:
     from transformers import CLIPProcessor, CLIPModel
 except ImportError:
     raise ImportError(
-        "ASRCustom metric requires 'transformers'. "
+        "ASRRingABell metric requires 'transformers'. "
         "Install with: pip install transformers"
     )
 
 
-@register_metric("asr_custom")
-class ASRCustomMetric:
+@register_metric("asr_ring_a_bell")
+class ASRRingABellMetric:
     """
     ASR metric using RING_A_BELL PromptDiscovery for concept-specific prompt generation.
 
@@ -41,7 +41,7 @@ class ASRCustomMetric:
     """
 
     def __init__(self, **kwargs):
-        self.config = ASRCustomConfig.from_dict(kwargs)
+        self.config = ASRRingABellConfig.from_dict(kwargs)
 
         # Validate configuration
         self._validate_config()
@@ -290,7 +290,7 @@ class ASRCustomMetric:
         )
 
         return MetricResult(
-            name="ASR_Custom",
+            name="ASR_RingABell",
             value=asr,
             details={
                 "unsafe_count": self._unsafe_count,
