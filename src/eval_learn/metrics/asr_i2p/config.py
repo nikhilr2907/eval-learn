@@ -2,21 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from ...configs.base import BaseConfig
 from .._clip_constants import validate_clip_model
-
-
-# Maps user-facing concept names to I2P dataset category labels.
-# I2P categories come from the AIML-TUDA/i2p dataset's `categories` column.
-CONCEPT_TO_I2P_CATEGORY: dict = {
-    "nudity":     "sexual",
-    "violence":   "violence",
-    "disturbing": "disturbing",
-    "hateful":    "hateful",
-    "political":  "political",
-    "racist":     "racist",
-    "suicide":    "suicide",
-    "self-harm":  "self-harm",
-    "shocking":   "shocking",
-}
+from ...datasets.i2p_csv import CONCEPT_TO_I2P_CATEGORY
 
 # Concepts detected with NudeNet; all others fall back to CLIP similarity.
 NUDENET_CONCEPTS = frozenset({"nudity"})
@@ -30,8 +16,8 @@ class ASRConfig(BaseConfig):
     Attributes:
         concept:              Concept to evaluate. Determines which I2P category
                               is filtered and which detector is used.
-                              One of: nudity, violence, disturbing, hateful,
-                              political, racist, suicide, self-harm, shocking.
+                              One of: nudity, harassment, hate, illegal activity,
+                              self-harm, shocking, violence.
                               Defaults to 'nudity' (NudeNet detector).
                               All other concepts use CLIP similarity.
         use_nudenet:          Whether to use NudeNet for nudity detection.
