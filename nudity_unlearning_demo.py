@@ -86,13 +86,9 @@ def main():
         #     "examples/demo configs/concept_steerers_nudity_multi.json",
         # ),
         (
-            "TRUST — Targeted Robust Unlearning via Selective Fine-Tuning",
-            "examples/demo configs/trust_nudity_multi.json",
+             "CoGFD — Concept Graph-based high-level Feature Decoupling",
+             "examples/demo configs/cogfd_nudity_multi.json",
         ),
-        # (
-        #     "CoGFD — Concept Graph-based high-level Feature Decoupling",
-        #     "examples/demo configs/cogfd_nudity_multi.json",
-        # ),
     ]
 
     for title, config_path in techniques:

@@ -7,14 +7,7 @@ from ...configs.base import BaseConfig
 @dataclass
 class CoGFDConfig(BaseConfig):
     """
-    Configuration for CoGFD (Concept Graph-based high-level Feature Decoupling).
-
-    Paper: "Erasing Concept Combination from Text-to-Image Diffusion Model"
-    Nie, Yao, Liu, Wang, Bian — ICLR 2025
-
-    CoGFD addresses Concept Combination Erasing (CCE): removing the ability to
-    generate harmful *combinations* of concepts while keeping each individual
-    concept intact. Two components:
+    Configuration for CoGFD.
 
     1. Concept logic graph — a set of prompts (combination_prompts) that all
        express the same harmful theme (e.g. "nude person", "naked woman", …).
@@ -52,12 +45,12 @@ class CoGFDConfig(BaseConfig):
 
     # Loss weights
     lambda_erase: float = 1.0     # combination erasure weight
-    lambda_preserve: float = 0.5  # individual preservation weight
+    lambda_preserve: float = 2.0  # individual preservation weight (higher than erase to prevent model degradation)
     lambda_decouple: float = 0.5  # feature decoupling weight
 
     # Fine-tuning
-    train_steps: int = 100
-    learning_rate: float = 5e-5
+    train_steps: int = 150
+    learning_rate: float = 1e-5
 
     # Save modified UNet weights
     save_path: Optional[str] = None
