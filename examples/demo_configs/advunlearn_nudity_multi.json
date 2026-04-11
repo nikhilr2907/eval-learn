@@ -25,7 +25,7 @@
         {
             "name": "fid",
             "config": {
-                "limit": 50
+                "limit": 1000
             }
         },
         {
