@@ -8,11 +8,11 @@ def load_hf_config(key: str) -> Dict[str, Any]:
     """Load a dataset config entry from config/hf_datasets.yaml."""
     import yaml
 
-    config_path = Path(__file__).parents[3] / "config" / "hf_datasets.yaml"
+    config_path = Path(__file__).parent.parent / "config" / "hf_datasets.yaml"
     if not config_path.exists():
         raise FileNotFoundError(
             f"HF dataset config not found at {config_path}. "
-            "Ensure config/hf_datasets.yaml exists at the project root."
+            "Ensure config/hf_datasets.yaml exists inside the eval_learn package."
         )
 
     with open(config_path, "r") as f:

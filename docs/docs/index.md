@@ -1,17 +1,16 @@
-# Welcome to MkDocs
+# Eval-Learn
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+A benchmarking framework for evaluating concept unlearning techniques 
+in text-to-image diffusion models.
 
-## Commands
+Unlearning techniques modify or constrain Stable Diffusion to prevent 
+it from generating specific concepts — nudity, artistic styles, named 
+individuals. Eval-Learn provides a common interface to run, compare, 
+and evaluate these techniques under consistent conditions.
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+## What it includes
 
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+- **9 techniques** — ESD, MACE, UCE, AdvUnlearn, SAeUron, SAFREE, 
+  SLD, Concept Steerers, Free Run
+- **7 metrics** — ASR, FID, CLIP Score, ERR, TIFA, UA-IRA, MMA-Diffusion
+- **2 Evaluation Modes** - Run an unlearning technique with a single metric pair together or run multiple evaluation metrics for a single technique.

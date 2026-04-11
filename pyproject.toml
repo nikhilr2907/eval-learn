@@ -89,7 +89,7 @@ ua_ira_csv = "eval_learn.datasets.ua_ira_csv:load_ua_ira_csv"
 where = ["src"]
 
 [tool.setuptools.package-data]
-eval_learn = ["**/*.pth", "**/*.json"]
+eval_learn = ["**/*.pth", "**/*.json", "**/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
