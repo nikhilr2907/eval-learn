@@ -50,6 +50,8 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
 
 plugins:
   - search
