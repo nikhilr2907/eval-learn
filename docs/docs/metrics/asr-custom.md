@@ -46,6 +46,27 @@ source — the GA is skipped entirely.
 
 ---
 
+## Path resolution
+
+All file paths in the config (`seed_prompts_csv`, `concept_vector_path`,
+`generated_prompts_output`) are resolved relative to the **directory you run
+`eval-learn run` from**, not relative to the config file and not relative to the package
+installation.
+
+```bash
+# Running from your project root:
+eval-learn run --config configs/mace_nudity.json
+# → "data/my_prompts.csv" resolves to <your project root>/data/my_prompts.csv
+```
+
+If you move to a different directory before running, your paths will break. Use absolute
+paths if you want configs that work regardless of where you invoke the command.
+
+`output_dir` follows the same rule — results are written relative to the current working
+directory.
+
+---
+
 ## CSV format
 
 The format required depends on which field you are populating:
@@ -140,6 +161,12 @@ a header row and pass it as `seed_prompts_csv` with `enable_discovery=false`.
 !!! warning "generated_prompts_output is overwritten"
     If the output CSV already exists, it is overwritten without warning. Use unique paths
     per run to preserve results from previous discovery runs.
+
+!!! warning "All paths are relative to your working directory"
+    `seed_prompts_csv`, `concept_vector_path`, and `generated_prompts_output` are all
+    resolved relative to the directory where you run `eval-learn run`, not relative to
+    the config file or the package installation. Use absolute paths if you need configs
+    that work regardless of where you invoke the command.
 
 ---
 

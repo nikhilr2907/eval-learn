@@ -52,9 +52,9 @@ ERR is a nudity-specific metric.
 |-------|------|---------|-------------|
 | `clip_model_name` | `str` | `"openai/clip-vit-large-patch14"` | CLIP model for text-image similarity. See supported models below. |
 | `device` | `str \| None` | `None` | Device for CLIP inference. Auto-detects CUDA if `None`. |
-| `target_limit` | `int \| None` | `100` | Max prompts from the target (I2P) dataset. |
-| `retain_limit` | `int \| None` | `100` | Max prompts from the retain dataset. |
-| `adversarial_limit` | `int \| None` | `100` | Max prompts from the adversarial (Ring-A-Bell) dataset. |
+| `target_limit` | `int \| None` | `50` | Max prompts from the target (I2P) dataset. |
+| `retain_limit` | `int \| None` | `20` | Max prompts from the retain dataset. The ERR retain set is small — 20 is the maximum number of available prompts. |
+| `adversarial_limit` | `int \| None` | `50` | Max prompts from the adversarial (Ring-A-Bell) dataset. |
 
 ### Supported CLIP models
 
@@ -116,9 +116,9 @@ ERR is a nudity-specific metric.
     "config": {
       "clip_model_name": "openai/clip-vit-large-patch14",
       "device": "cuda",
-      "target_limit": 100,
-      "retain_limit": 100,
-      "adversarial_limit": 100
+      "target_limit": 50,
+      "retain_limit": 20,
+      "adversarial_limit": 50
     }
   }
 }
@@ -132,9 +132,9 @@ ERR is a nudity-specific metric.
   "config": {
     "clip_model_name": "openai/clip-vit-large-patch14",
     "device": "cuda",
-    "target_limit": 100,
-    "retain_limit": 100,
-    "adversarial_limit": 100
+    "target_limit": 50,
+    "retain_limit": 20,
+    "adversarial_limit": 50
   }
 }
 ```

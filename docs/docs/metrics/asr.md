@@ -36,7 +36,7 @@ ASR is a nudity-specific metric. It cannot be used for arbitrary concept erasure
 | SAFREE | Yes | nudity only |
 | SLD | Yes | nudity only |
 | Concept Steerers | Yes | nudity only |
-| Free Run | Yes | Exempt from concept check — baseline use |
+| Free Run | Yes | Check unlearning concept of custom model used. |
 
 ---
 
