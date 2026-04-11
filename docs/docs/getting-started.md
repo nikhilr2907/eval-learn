@@ -15,9 +15,8 @@ pip install eval-learn
 
 ### 2. Install technique packages
 
-To ensure of a lightweight and clean package, the precise implementation of all unlearning techniques 
+To ensure of a lightweight and clean package, the precise implementation of all unlearning techniques are in  seperate installable packages hosted on [Hugging Face](https://huggingface.co/datasets/Unlearningltd/Packages).
 
-Each technique is a separate package hosted on [Hugging Face](https://huggingface.co/datasets/Unlearningltd/Packages).
 Install only the ones you need:
 
 ```bash
@@ -43,15 +42,12 @@ pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirec
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=advunlearn"
 ```
 
-SLD is included in `eval-learn` directly and requires no extra install.
+SLD is included in `eval-learn` directly and requires no extra install as it is implemented within the [Hugging-Face] [diffusers] library, a required dependency of the package.
 
-!!! note "Why separate packages?"
-    Each technique has its own dependencies which can conflict with one another.
-    Installing only what you need avoids resolution issues.
+### 3. Metric packages.
 
-### Adversarial prompting packages
-
-MMA-Diffusion and Ring-A-Bell are used for adversarial prompt generation. Install them if you are using the `mma_diffusion` or `asr_custom` metrics:
+Most metrics are fairly lightweight and their implementation does not require any standalone dependencies. However, for custom (non-nudity) unlearning, the option to create a custom set of prompts for concept unlearning testing is presented by the use of the 'asr_custom' and
+'mma_diffusion' evaluation metrics, using seperate methods to generate adversarial prompts. To evaluate unlearning on these metrics, you must install them. 
 
 ```bash
 # MMA-Diffusion
@@ -61,7 +57,7 @@ pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirec
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=RING_A_BELL"
 ```
 
-### 3. Metric extras
+### 4. Metric extras
 
 Some metrics require additional dependencies:
 
@@ -92,45 +88,89 @@ Eval-Learn loads this automatically on startup. Alternatively export it in your 
 
 ## Running a benchmark
 
-Benchmarks are defined in a config file (YAML or JSON) and run with:
+Benchmarks are defined in a config file and run with:
 
 ```bash
-eval-learn run --config config.yaml
+eval-learn run --config config.yaml   # or config.json
 ```
+
+Both YAML and JSON are supported and equivalent.
 
 ### Single metric
 
-```yaml
-technique:
-  name: mace
-  config:
-    erase_concept: nudity
-    lambda_cfr: 0.1
-    save_path: checkpoints/mace_nudity.pt
+=== "YAML"
 
-metric:
-  name: asr
+    ```yaml
+    technique:
+      name: mace
+      config:
+        erase_concept: nudity
+        lambda_cfr: 0.1
+        save_path: checkpoints/mace_nudity.pt
 
-output_dir: results/mace_nudity
-```
+    metric:
+      name: asr
+
+    output_dir: results/mace_nudity
+    ```
+
+=== "JSON"
+
+    ```json
+    {
+      "technique": {
+        "name": "mace",
+        "config": {
+          "erase_concept": "nudity",
+          "lambda_cfr": 0.1,
+          "save_path": "checkpoints/mace_nudity.pt"
+        }
+      },
+      "metric": {
+        "name": "asr"
+      },
+      "output_dir": "results/mace_nudity"
+    }
+    ```
 
 ### Multiple metrics
 
 Replace `metric` with `metrics` as a list:
 
-```yaml
-technique:
-  name: mace
-  config:
-    erase_concept: nudity
+=== "YAML"
 
-metrics:
-  - name: asr
-  - name: clip_score
-  - name: fid
+    ```yaml
+    technique:
+      name: mace
+      config:
+        erase_concept: nudity
 
-output_dir: results/mace_nudity
-```
+    metrics:
+      - name: asr
+      - name: clip_score
+      - name: fid
+
+    output_dir: results/mace_nudity
+    ```
+
+=== "JSON"
+
+    ```json
+    {
+      "technique": {
+        "name": "mace",
+        "config": {
+          "erase_concept": "nudity"
+        }
+      },
+      "metrics": [
+        { "name": "asr" },
+        { "name": "clip_score" },
+        { "name": "fid" }
+      ],
+      "output_dir": "results/mace_nudity"
+    }
+    ```
 
 Results are written to `output_dir` as JSON.
 
