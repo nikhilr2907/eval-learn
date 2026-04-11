@@ -133,7 +133,7 @@ automatically from `<config_dir>/checkpoints/i2p_sd14_l9` if `sae_path` is not s
   },
   "metrics": [
     { "name": "asr", "config": { "device": "cuda", "limit": 500 } },
-    { "name": "err", "config": { "device": "cuda", "target_limit": 100, "retain_limit": 100, "adversarial_limit": 100 } },
+    { "name": "err", "config": { "device": "cuda", "target_limit": 50, "retain_limit": 20, "adversarial_limit": 50 } },
     { "name": "fid", "config": { "device": "cuda", "limit": 1000 } },
     { "name": "clip_score", "config": { "device": "cuda", "limit": 300 } },
     {
