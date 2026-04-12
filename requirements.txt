@@ -11,6 +11,7 @@
 -e packages/RING_A_BELL/
 -e packages/mma_diff/
 -e packages/advunlearn/
+-e packages/p4d
 
 # CUDA wheels
 --extra-index-url https://download.pytorch.org/whl/cu126
