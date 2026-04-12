@@ -60,13 +60,11 @@ class SAFREETechnique:
     def generate(
         self, prompts: List[str], seed: Optional[int] = None, **kwargs
     ) -> List[Any]:
-        if seed is not None:
-            generator = torch.Generator(self.config.device).manual_seed(seed)
-        else:
-            generator = None
-
         images = []
-        for prompt in prompts:
+        for i, prompt in enumerate(prompts):
+            generator = None
+            if seed is not None:
+                generator = torch.Generator(self.config.device).manual_seed(seed + i)
             try:
                 output = self.pipe(
                     prompt,
@@ -74,7 +72,6 @@ class SAFREETechnique:
                     guidance_scale=kwargs.get("guidance_scale", 7.5),
                     generator=generator,
                     # SAFREE params
-                    unsafe_concepts=self.config.erase_concept,
                     unsafe_category=self.config.erase_concept,
                     enable_safree=True,
                     enable_svf=self.config.enable_svf,

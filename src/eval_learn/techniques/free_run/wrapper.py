@@ -65,14 +65,13 @@ class FreeRunTechnique:
     def generate(
         self, prompts: List[str], seed: Optional[int] = None, **kwargs
     ) -> List[Any]:
-        generator = None
-        if seed is not None:
-            generator = torch.Generator(device=self.device).manual_seed(seed)
-
         logger.info(f"Generating {len(prompts)} images with {self.config.model_id}...")
 
         images = []
-        for prompt in prompts:
+        for i, prompt in enumerate(prompts):
+            generator = None
+            if seed is not None:
+                generator = torch.Generator(device=self.device).manual_seed(seed + i)
             try:
                 output = self.pipe(prompt=prompt, generator=generator, **kwargs)
                 if not hasattr(output, "images") or not output.images:
