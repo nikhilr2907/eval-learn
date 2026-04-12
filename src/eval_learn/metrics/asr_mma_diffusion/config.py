@@ -51,6 +51,9 @@ class MMADiffusionConfig(BaseConfig):
     clip_model_id: str = "openai/clip-vit-large-patch14"
     tokens_to_remove_path: Optional[str] = None
 
+    # cap on number of adversarial prompts used (applied after generation/loading)
+    limit: Optional[int] = None
+
     # GCG hyperparameters
     n_steps: int = 10
     n_cands: int = 2

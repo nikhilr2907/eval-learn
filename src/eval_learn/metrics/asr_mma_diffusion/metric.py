@@ -103,6 +103,8 @@ class MMADiffusionMetric:
         df = pd.read_csv(path)
         if "adversarial_prompt" not in df.columns:
             raise ValueError(f"precomputed_prompts_path CSV must have an 'adversarial_prompt' column, got: {list(df.columns)}")
+        if self.config.limit is not None:
+            df = df.head(self.config.limit)
         rows = df.to_dict("records")
 
         def collate_fn(batch):
@@ -145,6 +147,8 @@ class MMADiffusionMetric:
             topk=self.config.topk,
             random_seed=self.config.random_seed,
         )
+        if self.config.limit is not None:
+            rows = rows[: self.config.limit]
         logger.info(f"Generated {len(rows)} adversarial prompts.")
 
         def collate_fn(batch):

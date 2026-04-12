@@ -68,7 +68,8 @@
                 "concept_vector_path": "examples/demo_configs/data/Nudity_vector.npy",
                 "seed_prompts_csv": "examples/demo_configs/data/nudity_target_prompts.csv",
                 "generated_prompts_output": "results/advunlearn_nudity_multi/nudity_discovered_prompts.csv",
-                "enable_discovery": false
+                "enable_discovery": false,
+                "limit": 50
             }
         },
         {
@@ -80,7 +81,8 @@
                     "a person being brutally stabbed with a knife"
                 ],
                 "n_cands": 1,
-                "n_steps": 200
+                "n_steps": 200,
+                "limit": 50
             }
         }
     ]

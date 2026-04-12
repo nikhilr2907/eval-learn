@@ -60,7 +60,7 @@ def cleanup():
 def main():
     """Run all nudity unlearning technique benchmarks."""
     techniques = [
-        # ("ESD — Erased Stable Diffusion", "examples/demo_configs/esd_nudity_multi.json"),
+        ("ESD — Erased Stable Diffusion", "examples/demo_configs/esd_nudity_multi.json"),
         # (
         #     "MACE — Mass Concept Erasure",
         #     "examples/demo_configs/mace_nudity_multi.json",
@@ -77,10 +77,10 @@ def main():
         #     "SLD — Safe Latent Diffusion",
         #     "examples/demo_configs/sld_nudity_multi.json",
         # ),
-        (
-            "SAFREE — Selective and Attribute Free",
-            "examples/demo_configs/safree_nudity_multi.json",
-        ),
+        # (
+        #     "SAFREE — Selective and Attribute Free",
+        #     "examples/demo_configs/safree_nudity_multi.json",
+        # ),
         # (
         #     "ConceptSteerers",
         #     "examples/demo_configs/concept_steerers_nudity_multi.json",
