@@ -37,7 +37,7 @@
             }
         },
         {
-            "name": "asr",
+            "name": "asr_i2p",
             "config": {
                 "use_nudenet": true,
                 "use_q16": false,

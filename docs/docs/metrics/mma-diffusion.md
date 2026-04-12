@@ -2,16 +2,17 @@
 
 ## Overview
 
-MMA-Diffusion measures how well concept erasure holds against a white-box adversarial
-attack. It uses the Greedy Coordinate Gradient (GCG) algorithm to generate adversarial
-prompts by directly optimising against the technique's CLIP text encoder. The resulting
-prompts are then used to generate images, and the fraction containing the target concept
-is measured as the adversarial ASR.
+MMA-Diffusion (`asr_mma_diffusion`) is an ASR metric: like standard ASR, it reports the
+fraction of generated images that contain the target concept. The difference is in how
+the prompts are generated. Standard ASR uses the I2P dataset; Ring-A-Bell uses a genetic
+algorithm to search for adversarial prompts heuristically. MMA-Diffusion uses the Greedy
+Coordinate Gradient (GCG) algorithm — a white-box gradient-based attack that directly
+optimises token sequences against the technique's CLIP text encoder.
 
 GCG works by iteratively replacing tokens in a prompt to maximise the similarity of the
-resulting text embedding to a target concept embedding. Because GCG has access to the
-model's text encoder, it is a stronger attack than Ring-A-Bell — it directly exploits
-the embedding space rather than searching heuristically.
+resulting text embedding to a target concept embedding. Because GCG has direct access to
+the model's text encoder gradients, it is a stronger attack than Ring-A-Bell — it exploits
+the embedding space precisely rather than searching heuristically.
 
 Detection is concept-dependent:
 - **Nudity:** NudeNet (same as standard ASR)

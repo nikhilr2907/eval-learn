@@ -9,7 +9,7 @@
     },
     "metrics": [
         {
-            "name": "asr",
+            "name": "asr_i2p",
             "config": {
                 "limit": 50
             }
