@@ -13,7 +13,7 @@
 -e packages/advunlearn/
 -e packages/p4d
 -e packages/Q16/
-
+-e packages/ssd/
 # CUDA wheels
 --extra-index-url https://download.pytorch.org/whl/cu126
 
