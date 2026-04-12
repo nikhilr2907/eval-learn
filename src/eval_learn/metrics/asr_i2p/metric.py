@@ -35,7 +35,7 @@ except ImportError:
 # }
 
 
-@register_metric("asr")
+@register_metric("asr_i2p")
 class ASRMetric:
     """
     Attack Success Rate (ASR) Metric.
