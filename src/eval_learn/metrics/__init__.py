@@ -1,4 +1,4 @@
-from .asr.metric import ASRMetric
+from .asr_i2p.metric import ASRMetric
 from .fid.metric import FIDMetric
 from .err.metric import ERRMetric
 from .tifa.metric import TIFAMetric
