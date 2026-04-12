@@ -42,6 +42,10 @@ class MMADiffusionConfig(BaseConfig):
     # Attack output (required)
     output_csv: str = None
 
+    # pre-generated prompts: if set, skip GCG attack and load directly from this CSV
+    # (expects an "adversarial_prompt" column; "target_prompt" is optional)
+    precomputed_prompts_path: Optional[str] = None
+
     # Attack inputs
     target_prompts: Optional[List[str]] = None
     clip_model_id: str = "openai/clip-vit-large-patch14"
