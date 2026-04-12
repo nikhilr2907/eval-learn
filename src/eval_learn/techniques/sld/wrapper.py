@@ -90,14 +90,13 @@ class SLDWrapper:
             "sld_mom_beta": kwargs.pop("sld_mom_beta", self.config.sld_mom_beta),
         }
 
-        generator = None
-        if seed is not None:
-            generator = torch.Generator(device=self.device).manual_seed(seed)
-
         logger.info(f"Generating {len(prompts)} images using SLD...")
 
         images = []
         for i, prompt in enumerate(prompts):
+            generator = None
+            if seed is not None:
+                generator = torch.Generator(device=self.device).manual_seed(seed + i)
             try:
                 output = self.pipe(
                     prompt=prompt,

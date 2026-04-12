@@ -140,7 +140,7 @@ class SAeUronWrapper:
                 raise ValueError("SAeUron requires guidance_scale > 1.0 (CFG must be active).")
             generator = (
                 torch.Generator(device=self.config.device).manual_seed(seed)
-                if seed
+                if seed is not None
                 else None
             )
             images = self.pipe(prompts, generator=generator, **kwargs).images
