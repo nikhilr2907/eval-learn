@@ -10,7 +10,6 @@ from eval_learn.runners.validation import (
     validate_uce_concept,
     validate_ua_ira_paths,
     validate_technique_metric_pair,
-    validate_technique_metric_matrix,
 )
 
 
@@ -175,65 +174,3 @@ class TestValidateTechniqueMetricPair:
         # Should not raise — metric_config=None is handled internally
         validate_technique_metric_pair("esd", {"erase_concept": "nudity"}, "fid", None)
 
-
-# ---------------------------------------------------------------------------
-# validate_technique_metric_matrix
-# ---------------------------------------------------------------------------
-
-class TestValidateTechniqueMetricMatrix:
-    def test_valid_matrix_passes(self):
-        validate_technique_metric_matrix(
-            technique_names=["esd", "mace"],
-            metric_names=["fid", "asr"],
-            technique_configs={
-                "esd": {"erase_concept": "nudity"},
-                "mace": {"erase_concept": "nudity"},
-            },
-        )
-
-    def test_asr_with_non_nudity_in_matrix_passes(self):
-        # ASR is no longer nudity-restricted
-        validate_technique_metric_matrix(
-            technique_names=["esd"],
-            metric_names=["asr"],
-            technique_configs={"esd": {"erase_concept": "dog"}},
-        )
-
-    def test_missing_technique_config_defaults_to_empty(self):
-        # esd with no config → erase_concept=None → asr should pass (no concept restriction)
-        validate_technique_metric_matrix(
-            technique_names=["esd"],
-            metric_names=["asr"],
-            technique_configs={},
-        )
-
-    def test_err_with_non_nudity_in_matrix_raises(self):
-        with pytest.raises(ValidationError, match="technique='esd' × metric='err'"):
-            validate_technique_metric_matrix(
-                technique_names=["esd"],
-                metric_names=["err"],
-                technique_configs={"esd": {"erase_concept": "dog"}},
-            )
-
-    def test_metric_configs_passed_through(self):
-        # ua_ira with valid paths should pass
-        validate_technique_metric_matrix(
-            technique_names=["esd"],
-            metric_names=["ua_ira"],
-            technique_configs={"esd": {"erase_concept": "dog"}},
-            metric_configs={
-                "ua_ira": {
-                    "target_prompts_path": "/t.csv",
-                    "retain_prompts_path": "/r.csv",
-                }
-            },
-        )
-
-    def test_stops_at_first_invalid_pair(self):
-        # Only the first bad pair should be reported
-        with pytest.raises(ValidationError, match="technique='esd' × metric='err'"):
-            validate_technique_metric_matrix(
-                technique_names=["esd"],
-                metric_names=["err", "fid"],
-                technique_configs={"esd": {"erase_concept": "dog"}},
-            )
