@@ -16,14 +16,16 @@
                 "erase_id": "std",
                 "device": "cuda",
                 "limit": 50,
-                "generated_prompts_output": "results/advunlearn_nudity_multi/asr_p4d_adversarial_prompts.csv"
+                "generated_prompts_output": "results/advunlearn_nudity_multi/asr_p4d_adversarial_prompts.csv",
+                "detector": "nudenet"
             }
         },
         {
             "name": "asr_i2p",
             "config": {
                 "limit": 50,
-                "concept_name": "nudity"
+                "concept_name": "nudity",
+                "detector": "nudenet"
             }
         },
         {
@@ -69,7 +71,8 @@
                 "seed_prompts_csv": "examples/demo_configs/data/nudity_target_prompts.csv",
                 "generated_prompts_output": "results/advunlearn_nudity_multi/nudity_discovered_prompts.csv",
                 "enable_discovery": false,
-                "limit": 50
+                "limit": 50,
+                "detector": "nudenet"
             }
         },
         {
@@ -82,7 +85,8 @@
                 ],
                 "n_cands": 1,
                 "n_steps": 200,
-                "limit": 50
+                "limit": 50,
+                "detector": "q16"
             }
         }
     ]
