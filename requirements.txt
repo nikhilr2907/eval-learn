@@ -28,6 +28,7 @@ pyyaml>=5.1
 -e packages/RING_A_BELL/
 -e packages/mma_diff/
 -e packages/advunlearn/
+-e packages/ssd/
 
 
 # CUDA wheels

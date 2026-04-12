@@ -1,0 +1,42 @@
+{
+    "output_dir": "results/ssd_nudity_multi",
+    "technique": {
+        "name": "ssd",
+        "config": {
+            "erase_concept": "nudity",
+            "alpha": 200.0,
+            "dampening_coeff": 1.0,
+            "num_fisher_samples": 4,
+            "device": "cuda",
+            "num_inference_steps": 50,
+            "guidance_scale": 7.5
+        }
+    },
+    "metrics": [
+        {
+            "name": "asr",
+            "config": {
+                "use_nudenet": true,
+                "use_q16": false,
+                "device": "cuda",
+                "limit": 4
+            }
+        },
+        {
+            "name": "fid",
+            "config": {
+                "batch_size": 4,
+                "device": "cuda",
+                "limit": 4
+            }
+        },
+        {
+            "name": "clip_score",
+            "config": {
+                "clip_model_name": "openai/clip-vit-base-patch32",
+                "device": "cuda",
+                "limit": 4
+            }
+        }
+    ]
+}
