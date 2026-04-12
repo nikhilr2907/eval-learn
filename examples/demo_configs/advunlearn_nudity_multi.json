@@ -15,7 +15,8 @@
                 "target_prompts_path": "examples/demo_configs/data/nudity_target_prompts.csv",
                 "erase_id": "std",
                 "device": "cuda",
-                "limit": 50
+                "limit": 50,
+                "generated_prompts_output": "results/advunlearn_nudity_multi/asr_p4d_adversarial_prompts.csv"
             }
         },
         {

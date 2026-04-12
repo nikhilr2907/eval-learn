@@ -98,6 +98,9 @@ class ASRP4D:
         self._total = 0
         self._unsafe_indices = []
 
+        if self.config.precomputed_prompts_path:
+            return self._load_precomputed(self.config.precomputed_prompts_path)
+
         df = pd.read_csv(self.config.target_prompts_path)
         if self.config.limit:
             df = df.head(self.config.limit)
@@ -141,6 +144,11 @@ class ASRP4D:
             guidances=guidances,
         )
 
+        if self.config.generated_prompts_output:
+            os.makedirs(os.path.dirname(self.config.generated_prompts_output) or ".", exist_ok=True)
+            pd.DataFrame(rows).to_csv(self.config.generated_prompts_output, index=False)
+            logger.info(f"Saved {len(rows)} adversarial prompts to {self.config.generated_prompts_output}")
+
         # P4DGenerator holds a diffusion model + CLIP on GPU. Free them now so
         # the technique's model can load without competing for VRAM.
         del generator
@@ -156,6 +164,30 @@ class ASRP4D:
                     "concept": self.config.concept_name,
                     "target_prompts": [r["target_prompt"] for r in batch],
                     "best_similarities": [r["best_similarity"] for r in batch],
+                },
+            )
+
+        return DataLoader(rows, batch_size=32, shuffle=False, collate_fn=collate_fn)
+
+    # ------------------------------------------------------------------
+    # Pre-computed prompt loading
+    # ------------------------------------------------------------------
+
+    def _load_precomputed(self, path: str) -> DataLoader:
+        logger.info(f"Loading pre-computed P4D adversarial prompts from {path}")
+        df = pd.read_csv(path)
+        if "adversarial_prompt" not in df.columns:
+            raise ValueError(f"precomputed_prompts_path CSV must have an 'adversarial_prompt' column, got: {list(df.columns)}")
+        rows = df.to_dict("records")
+
+        def collate_fn(batch):
+            return Dataset(
+                prompts=[r["adversarial_prompt"] for r in batch],
+                metadata={
+                    "source": "p4d_precomputed",
+                    "concept": self.config.concept_name,
+                    "target_prompts": [r.get("target_prompt", "") for r in batch],
+                    "best_similarities": [r.get("best_similarity", 0.0) for r in batch],
                 },
             )
 

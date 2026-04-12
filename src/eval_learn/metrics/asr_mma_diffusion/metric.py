@@ -97,6 +97,26 @@ class MMADiffusionMetric:
         self._total = 0
         self._unsafe_indices: List[int] = []
 
+    def _load_precomputed(self, path: str) -> DataLoader:
+        import pandas as pd
+        logger.info(f"Loading pre-computed MMA-Diffusion adversarial prompts from {path}")
+        df = pd.read_csv(path)
+        if "adversarial_prompt" not in df.columns:
+            raise ValueError(f"precomputed_prompts_path CSV must have an 'adversarial_prompt' column, got: {list(df.columns)}")
+        rows = df.to_dict("records")
+
+        def collate_fn(batch):
+            return Dataset(
+                prompts=[r["adversarial_prompt"] for r in batch],
+                metadata={
+                    "source": "asr_mma_diffusion_precomputed",
+                    "concept": self.config.concept_name,
+                    "target_prompts": [r.get("target_prompt", "") for r in batch],
+                },
+            )
+
+        return DataLoader(rows, batch_size=32, shuffle=False, collate_fn=collate_fn)
+
     def load_dataset(self) -> DataLoader:
         """
         Run the GCG attack to generate adversarial prompts, then return them
@@ -105,6 +125,9 @@ class MMADiffusionMetric:
         self._unsafe_count = 0
         self._total = 0
         self._unsafe_indices = []
+
+        if self.config.precomputed_prompts_path:
+            return self._load_precomputed(self.config.precomputed_prompts_path)
 
         logger.info(
             f"Running MMA-Diffusion GCG attack for concept '{self.config.concept_name}'..."

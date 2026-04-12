@@ -16,6 +16,13 @@ class ASRP4DConfig(BaseConfig):
     target_prompts_path: str = ""          # path to CSV with a "prompt" column
     limit: Optional[int] = None            # cap number of prompts
 
+    # pre-generated prompts: if set, skip P4D optimisation and load directly from this CSV
+    # (expects an "adversarial_prompt" column; "target_prompt" and "best_similarity" are optional)
+    precomputed_prompts_path: Optional[str] = None
+
+    # if set, save the P4D-generated adversarial prompts to this CSV path after optimisation
+    generated_prompts_output: Optional[str] = None
+
     # P4D generator settings
     model_id: str = "CompVis/stable-diffusion-v1-4"
     erase_id: str = "std"  # one of: 'esd', 'sld', 'std'
