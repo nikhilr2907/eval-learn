@@ -11,7 +11,8 @@
         {
             "name": "asr_i2p",
             "config": {
-                "limit": 50
+                "limit": 50,
+                "concept_name": "nudity"
             }
         },
         {

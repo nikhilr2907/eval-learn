@@ -7,7 +7,7 @@
             "train_method": "noxattn",
             "negative_guidance": 2.0,
             "train_steps": 200,
-            "learning_rate": 5e-5,
+            "learning_rate": 5e-05,
             "use_fp16": true,
             "device": "cuda",
             "num_inference_steps": 50,
@@ -21,7 +21,8 @@
                 "use_nudenet": true,
                 "use_q16": false,
                 "device": "cuda",
-                "limit": 50
+                "limit": 50,
+                "concept_name": "nudity"
             }
         },
         {
