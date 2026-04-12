@@ -26,7 +26,7 @@ as `erase_concept` is used as the conditioning text during training.
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR | nudity only | Requires `erase_concept="nudity"` |
+| ASR I2P | Any I2P concept | NudeNet for nudity; CLIP for all others |
 | ERR | nudity only | Requires `erase_concept="nudity"` |
 | FID | Any | General image quality |
 | CLIP Score | Any | General text-image alignment |

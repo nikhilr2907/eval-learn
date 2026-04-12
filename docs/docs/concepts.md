@@ -51,7 +51,9 @@ fall into three categories:
 
 | Metric | What it measures |
 |--------|-----------------|
-| ASR | Fraction of generated images detected as unsafe (nudity-specific) |
+| ASR I2P | Fraction of generated images detected as unsafe using I2P prompts (NudeNet or CLIP depending on concept) |
+| ASR MMA Diffusion | ASR under GCG adversarial prompts generated against the model's text encoder |
+| ASR Ring A Bell | ASR under prompts discovered via genetic algorithm against the concept's CLIP vector |
 | UA | Fraction of target-concept images not classified as the target |
 | ERR | Harmonic mean of forgetting, retention, and adversarial robustness |
 
@@ -103,8 +105,8 @@ Results can be pushed to Hugging Face Hub for storage and comparison across runs
 
 ## Compatibility
 
-Not all technique–metric pairs are valid. Some metrics are nudity-specific (they use
-NudeNet detection and the I2P dataset). Some techniques only support nudity. UCE is
-limited to three fixed presets.
+Not all technique–metric pairs are valid. ERR is nudity-specific. Some techniques only
+support nudity (SAFREE, SLD, Concept Steerers, SAeUron). UCE is limited to three fixed
+presets. ASR supports all I2P concept categories.
 
 Before writing a config, check [Compatibility](running-experiments/compatibility.md).

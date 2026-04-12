@@ -48,20 +48,18 @@ class TestValidateNudityMetrics:
     def test_asr_with_nudity_passes(self):
         validate_nudity_metrics("esd", "nudity", "asr")
 
+    def test_asr_with_non_nudity_concept_passes(self):
+        # ASR I2P supports all concepts — no restriction at the validation layer
+        validate_nudity_metrics("esd", "violence", "asr")
+        validate_nudity_metrics("esd", "dog", "asr")
+        validate_nudity_metrics("esd", None, "asr")
+
     def test_err_with_nudity_passes(self):
         validate_nudity_metrics("esd", "nudity", "err")
-
-    def test_asr_with_non_nudity_concept_raises(self):
-        with pytest.raises(ValidationError, match="nudity-specific"):
-            validate_nudity_metrics("esd", "dog", "asr")
 
     def test_err_with_none_concept_raises(self):
         with pytest.raises(ValidationError, match="nudity-specific"):
             validate_nudity_metrics("esd", None, "err")
-
-    def test_free_run_with_asr_passes_regardless_of_concept(self):
-        validate_nudity_metrics("free_run", None, "asr")
-        validate_nudity_metrics("free_run", "dog", "asr")
 
 
 # ---------------------------------------------------------------------------
@@ -146,9 +144,9 @@ class TestValidateTechniqueMetricPair:
     def test_valid_esd_asr_nudity(self):
         validate_technique_metric_pair("esd", {"erase_concept": "nudity"}, "asr")
 
-    def test_invalid_asr_with_dog_concept_raises(self):
-        with pytest.raises(ValidationError):
-            validate_technique_metric_pair("esd", {"erase_concept": "dog"}, "asr")
+    def test_asr_with_non_nudity_concept_passes(self):
+        # ASR is no longer nudity-restricted
+        validate_technique_metric_pair("esd", {"erase_concept": "dog"}, "asr")
 
     def test_nudity_only_technique_with_wrong_concept_raises(self):
         with pytest.raises(ValidationError):
@@ -193,29 +191,28 @@ class TestValidateTechniqueMetricMatrix:
             },
         )
 
-    def test_invalid_pair_in_matrix_raises_with_context(self):
-        with pytest.raises(ValidationError, match="technique='esd' × metric='asr'"):
-            validate_technique_metric_matrix(
-                technique_names=["esd"],
-                metric_names=["asr"],
-                technique_configs={"esd": {"erase_concept": "dog"}},
-            )
-
-    def test_error_includes_underlying_reason(self):
-        with pytest.raises(ValidationError, match="nudity-specific"):
-            validate_technique_metric_matrix(
-                technique_names=["esd"],
-                metric_names=["asr"],
-                technique_configs={"esd": {"erase_concept": "dog"}},
-            )
+    def test_asr_with_non_nudity_in_matrix_passes(self):
+        # ASR is no longer nudity-restricted
+        validate_technique_metric_matrix(
+            technique_names=["esd"],
+            metric_names=["asr"],
+            technique_configs={"esd": {"erase_concept": "dog"}},
+        )
 
     def test_missing_technique_config_defaults_to_empty(self):
-        # esd with no config → erase_concept=None → asr should raise
-        with pytest.raises(ValidationError):
+        # esd with no config → erase_concept=None → asr should pass (no concept restriction)
+        validate_technique_metric_matrix(
+            technique_names=["esd"],
+            metric_names=["asr"],
+            technique_configs={},
+        )
+
+    def test_err_with_non_nudity_in_matrix_raises(self):
+        with pytest.raises(ValidationError, match="technique='esd' × metric='err'"):
             validate_technique_metric_matrix(
                 technique_names=["esd"],
-                metric_names=["asr"],
-                technique_configs={},
+                metric_names=["err"],
+                technique_configs={"esd": {"erase_concept": "dog"}},
             )
 
     def test_metric_configs_passed_through(self):
@@ -234,9 +231,9 @@ class TestValidateTechniqueMetricMatrix:
 
     def test_stops_at_first_invalid_pair(self):
         # Only the first bad pair should be reported
-        with pytest.raises(ValidationError, match="technique='esd' × metric='asr'"):
+        with pytest.raises(ValidationError, match="technique='esd' × metric='err'"):
             validate_technique_metric_matrix(
                 technique_names=["esd"],
-                metric_names=["asr", "fid"],
+                metric_names=["err", "fid"],
                 technique_configs={"esd": {"erase_concept": "dog"}},
             )

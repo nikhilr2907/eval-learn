@@ -28,8 +28,8 @@ used as-is or overridden by setting individual parameters directly.
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR | Yes | nudity only |
-| ERR | Yes | nudity only |
+| ASR I2P | Yes | this technique only supports nudity |
+| ERR | Yes | this technique only supports nudity |
 | FID | Yes | General image quality |
 | CLIP Score | Yes | General text-image alignment |
 | UA_IRA | Yes | Requires custom prompt CSVs |

@@ -22,7 +22,7 @@ providing your own `uce_weights_path`.
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR | `nudity` preset only | Nudity-specific NudeNet detector |
+| ASR I2P | `nudity` or `violence` preset | NudeNet for nudity; CLIP for violence |
 | ERR | `nudity` preset only | Nudity-specific datasets |
 | FID | Any preset | General image quality |
 | CLIP Score | Any preset | General text-image alignment |
@@ -59,10 +59,14 @@ providing your own `uce_weights_path`.
     Passing any value other than `"nudity"`, `"violence"`, or `"dog"` to `preset` will
     raise a `ValidationError`. For arbitrary concept erasure, use ESD or MACE instead.
 
-!!! warning "ASR and ERR require nudity preset"
-    The ASR and ERR metrics use NudeNet and nudity-specific prompt datasets. Using them with
-    `preset="violence"` or `preset="dog"` will raise a `ValidationError`. Use UA_IRA,
-    FID, or CLIP Score for non-nudity presets.
+!!! warning "ERR requires nudity preset"
+    ERR is nudity-specific. Using it with `preset="violence"` or `preset="dog"` will raise
+    a `ValidationError`. Use ASR I2P, UA_IRA, FID, or CLIP Score for non-nudity presets.
+
+!!! warning "ASR I2P concept must match preset"
+    ASR I2P filters I2P prompts by concept. The `concept` in the metric config must match
+    the preset used — e.g. `preset="violence"` should pair with `concept="violence"`.
+    The `dog` preset has no matching I2P category; use UA_IRA or CLIP Score instead.
 
 ---
 

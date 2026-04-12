@@ -26,7 +26,7 @@ to `erase_concept`, which is useful when a concept has many surface forms (e.g.
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR | nudity only | Requires `erase_concept` to be or contain `"nudity"` |
+| ASR I2P | Any I2P concept | NudeNet for nudity; CLIP for all others |
 | ERR | nudity only | Requires `erase_concept` to be or contain `"nudity"` |
 | FID | Any | General image quality |
 | CLIP Score | Any | General text-image alignment |
@@ -63,10 +63,10 @@ to `erase_concept`, which is useful when a concept has many surface forms (e.g.
     erasure, lower it (e.g. `0.01`). If FID or CLIP Score degrades noticeably, raise it
     (e.g. `0.5`). The right value depends on the concept.
 
-!!! warning "Synonym lists and ASR/ERR compatibility"
+!!! warning "Synonym lists and ERR compatibility"
     When `erase_concept` is a list, the validation layer extracts the first element to
-    determine concept compatibility with nudity-specific metrics (ASR, ERR). Ensure the
-    first element is `"nudity"` if using those metrics with a synonym list.
+    determine concept compatibility with ERR (nudity-specific). Ensure the first element
+    is `"nudity"` if using ERR with a synonym list. ASR I2P has no such restriction.
 
 ---
 
