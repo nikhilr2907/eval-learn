@@ -12,6 +12,16 @@
     },
     "metrics": [
         {
+            "name": "asr_p4d",
+            "config": {
+                "concept_name": "nudity",
+                "target_prompts_path": "examples/demo_configs/data/nudity_target_prompts.csv",
+                "erase_id": "saeuron",
+                "device": "cuda",
+                "limit": 50
+            }
+        },
+        {
             "name": "asr_ring_a_bell",
             "config": {
                 "concept_name": "nudity",
