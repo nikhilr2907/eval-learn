@@ -14,7 +14,7 @@
             "config": {
                 "concept_name": "nudity",
                 "target_prompts_path": "examples/demo_configs/data/nudity_target_prompts.csv",
-                "erase_id": "concept_steerers",
+                "erase_id": "std",
                 "device": "cuda",
                 "limit": 50
             }

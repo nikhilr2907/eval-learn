@@ -14,7 +14,7 @@ class ASRP4DConfig(BaseConfig):
 
     # P4D generator settings
     model_id: str = "CompVis/stable-diffusion-v1-4"
-    erase_id: str = "esd"
+    erase_id: str = "std"  # one of: 'esd', 'sld', 'std'
     erase_concept_checkpoint: Optional[str] = None
     clip_model: str = "ViT-H-14"
     clip_pretrain: str = "laion2b_s32b_b79k"
