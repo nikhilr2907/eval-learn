@@ -17,6 +17,7 @@ TECHNIQUE_BASE_MODELS: Dict[str, str] = {
     "saeuron": "CompVis/stable-diffusion-v1-4",
     "uce": "CompVis/stable-diffusion-v1-4",
     "sld": "AIML-TUDA/stable-diffusion-safe",
+    "ssd": "CompVis/stable-diffusion-v1-4",
 }
 
 
