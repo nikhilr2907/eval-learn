@@ -67,6 +67,7 @@ safree = "eval_learn.techniques.SAFREE.wrapper:SAFREETechnique"
 concept_steerers = "eval_learn.techniques.concept_steerers.wrapper:ConceptSteerersWrapper"
 saeuron = "eval_learn.techniques.saeuron.wrapper:SAeUronWrapper"
 advunlearn = "eval_learn.techniques.advunlearn.wrapper:AdvUnlearnWrapper"
+ssd = "eval_learn.techniques.ssd.wrapper:SSDWrapper"
 
 [project.entry-points."eval_learn.metrics"]
 asr_p4d = "eval_learn.metrics.asr_p4d.metric:ASRP4D"
