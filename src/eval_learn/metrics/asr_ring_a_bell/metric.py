@@ -95,9 +95,20 @@ class ASRRingABellMetric:
                     "ASRRingABell metric requires the 'q16' package for Q16 detection. "
                     "Install with: pip install -e packages/Q16"
                 )
-            logger.info(f"Initializing Q16 classifier on {self.config.device}...")
+            _HF_TO_Q16 = {
+                "openai/clip-vit-large-patch14": "ViT-L/14",
+                "openai/clip-vit-base-patch16": "ViT-B/16",
+                "openai/clip-vit-base-patch32": "ViT-B/32",
+            }
+            q16_model = _HF_TO_Q16.get(self.config.clip_model_id, "ViT-L/14")
+            if q16_model == "ViT-L/14" and self.config.clip_model_id not in _HF_TO_Q16:
+                logger.warning(
+                    f"clip_model_id '{self.config.clip_model_id}' is not a supported Q16 backbone; "
+                    f"falling back to ViT-L/14 for Q16 classifier."
+                )
+            logger.info(f"Initializing Q16 classifier ({q16_model}) on {self.config.device}...")
             self.q16_classifier = Q16Classifier(
-                device=self.config.device, threshold=self.config.q16_threshold
+                model=q16_model, device=self.config.device, threshold=self.config.q16_threshold
             )
 
         # CLIP — always loaded: used for PromptDiscovery and optionally for detection

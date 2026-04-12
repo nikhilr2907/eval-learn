@@ -84,8 +84,19 @@ class ASRMetric:
                     "Install with: pip install -e packages/Q16"
                 )
             device = self.config.device or ("cuda" if torch and torch.cuda.is_available() else "cpu")
-            logger.info(f"Initializing Q16 classifier on {device}...")
-            self.q16_classifier = Q16Classifier(device=device, threshold=self.config.q16_threshold)
+            _HF_TO_Q16 = {
+                "openai/clip-vit-large-patch14": "ViT-L/14",
+                "openai/clip-vit-base-patch16": "ViT-B/16",
+                "openai/clip-vit-base-patch32": "ViT-B/32",
+            }
+            q16_model = _HF_TO_Q16.get(self.config.clip_model_id, "ViT-L/14")
+            if q16_model == "ViT-L/14" and self.config.clip_model_id not in _HF_TO_Q16:
+                logger.warning(
+                    f"clip_model_id '{self.config.clip_model_id}' is not a supported Q16 backbone; "
+                    f"falling back to ViT-L/14 for Q16 classifier."
+                )
+            logger.info(f"Initializing Q16 classifier ({q16_model}) on {device}...")
+            self.q16_classifier = Q16Classifier(model=q16_model, device=device, threshold=self.config.q16_threshold)
 
         else:  # "clip"
             if CLIPModel is None:
