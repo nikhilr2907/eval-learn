@@ -11,6 +11,16 @@
     },
     "metrics": [
         {
+            "name": "asr_p4d",
+            "config": {
+                "concept_name": "nudity",
+                "target_prompts_path": "examples/demo_configs/data/nudity_target_prompts.csv",
+                "erase_id": "sld",
+                "device": "cuda",
+                "limit": 50
+            }
+        },
+        {
             "name": "asr_i2p",
             "config": {
                 "use_nudenet": true,

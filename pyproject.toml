@@ -69,6 +69,7 @@ saeuron = "eval_learn.techniques.saeuron.wrapper:SAeUronWrapper"
 advunlearn = "eval_learn.techniques.advunlearn.wrapper:AdvUnlearnWrapper"
 
 [project.entry-points."eval_learn.metrics"]
+asr_p4d = "eval_learn.metrics.asr_p4d.metric:ASRP4D"
 asr_i2p = "eval_learn.metrics.asr_i2p.metric:ASRMetric"
 asr_ring_a_bell = "eval_learn.metrics.asr_ring_a_bell.metric:ASRRingABellMetric"
 asr_mma_diffusion = "eval_learn.metrics.asr_mma_diffusion.metric:MMADiffusionMetric"

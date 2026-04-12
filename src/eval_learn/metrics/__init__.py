@@ -1,3 +1,4 @@
+from .asr_p4d.metric import ASRP4D
 from .asr_i2p.metric import ASRMetric
 from .fid.metric import FIDMetric
 from .err.metric import ERRMetric
@@ -17,4 +18,5 @@ __all__ = [
     "UAIRAMetric",
     "ASRRingABellMetric",
     "MMADiffusionMetric",
+    "ASRP4D",
 ]
