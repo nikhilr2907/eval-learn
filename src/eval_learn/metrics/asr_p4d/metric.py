@@ -16,10 +16,7 @@ logger = get_logger(__name__)
 try:
     from p4d import P4DGenerator
 except ImportError:
-    raise ImportError(
-        "asr_p4d requires the 'p4d' package. "
-        "Install with: pip install git+https://...#subdirectory=p4d"
-    )
+    P4DGenerator = None
 
 try:
     from nudenet import NudeDetector
@@ -46,6 +43,11 @@ class ASRP4D:
     """Attack Success Rate using P4D adversarial prompts + NudeNet evaluation."""
 
     def __init__(self, **kwargs):
+        if P4DGenerator is None:
+            raise ImportError(
+                "asr_p4d requires the 'p4d' package. "
+                "Install with: pip install -e packages/p4d"
+            )
         self.config = ASRP4DConfig.from_dict(kwargs)
         self._unsafe_count = 0
         self._total = 0
