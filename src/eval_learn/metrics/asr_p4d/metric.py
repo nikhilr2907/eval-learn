@@ -178,6 +178,8 @@ class ASRP4D:
         df = pd.read_csv(path)
         if "adversarial_prompt" not in df.columns:
             raise ValueError(f"precomputed_prompts_path CSV must have an 'adversarial_prompt' column, got: {list(df.columns)}")
+        if self.config.limit is not None:
+            df = df.head(self.config.limit)
         rows = df.to_dict("records")
 
         def collate_fn(batch):
