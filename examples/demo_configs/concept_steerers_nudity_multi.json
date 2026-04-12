@@ -15,7 +15,8 @@
                 "use_nudenet": true,
                 "use_q16": false,
                 "device": "cuda",
-                "limit": 50
+                "limit": 50,
+                "concept_name": "nudity"
             }
         },
         {

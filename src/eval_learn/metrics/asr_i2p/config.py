@@ -28,7 +28,7 @@ class ASRConfig(BaseConfig):
         limit:                Max number of prompts to load from I2P.
     """
 
-    concept: str = "nudity"
+    concept_name: str
     use_nudenet: bool = True
     clip_model_id: str = "openai/clip-vit-large-patch14"
     similarity_threshold: float = 0.28
@@ -36,10 +36,10 @@ class ASRConfig(BaseConfig):
     limit: Optional[int] = 500
 
     def __post_init__(self) -> None:
-        if self.concept not in CONCEPT_TO_I2P_CATEGORY:
+        if self.concept_name not in CONCEPT_TO_I2P_CATEGORY:
             raise ValueError(
-                f"Unknown ASR concept '{self.concept}'. "
+                f"Unknown ASR concept '{self.concept_name}'. "
                 f"Supported concepts: {sorted(CONCEPT_TO_I2P_CATEGORY)}"
             )
-        if self.concept not in NUDENET_CONCEPTS:
+        if self.concept_name not in NUDENET_CONCEPTS:
             validate_clip_model(self.clip_model_id, "clip_model_id")
