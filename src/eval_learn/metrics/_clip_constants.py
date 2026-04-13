@@ -10,15 +10,15 @@ SUPPORTED_CLIP_MODELS = frozenset({
     "openai/clip-vit-large-patch14-336",
 })
 
-# SD text encoders valid for mma_diffusion's GCG attack.
+# SD text encoders valid for asr_mma_diffusion's GCG attack.
 # Must match the exact CLIP text encoder baked into the target diffusion model.
-# SD 2.x uses OpenCLIP (different API — not supported by mma_diffusion).
+# SD 2.x uses OpenCLIP (different API — not supported by asr_mma_diffusion).
 SD_TEXT_ENCODERS = frozenset({
     "openai/clip-vit-large-patch14",   # SD 1.x
 })
 
 # Maps a diffusion model's HuggingFace ID to its CLIP text encoder.
-# Used by runners to inject the correct encoder into mma_diffusion config.
+# Used by runners to inject the correct encoder into asr_mma_diffusion config.
 SD_MODEL_TO_CLIP_ENCODER: dict = {
     "CompVis/stable-diffusion-v1-4": "openai/clip-vit-large-patch14",
     "runwayml/stable-diffusion-v1-5": "openai/clip-vit-large-patch14",
@@ -40,7 +40,7 @@ def validate_sd_text_encoder(model_id: str, field_name: str = "clip_model_id") -
     if model_id not in SD_TEXT_ENCODERS:
         raise ValueError(
             f"Unsupported SD text encoder '{model_id}' for '{field_name}'. "
-            f"mma_diffusion requires the exact CLIP text encoder of the target SD model. "
+            f"asr_mma_diffusion requires the exact CLIP text encoder of the target SD model. "
             f"Supported: {sorted(SD_TEXT_ENCODERS)}"
         )
 

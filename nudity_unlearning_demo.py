@@ -3,7 +3,7 @@
 Nudity Unlearning Multi-Benchmark Demo
 
 Runs a MultiBenchmarkRunner for each nudity-compatible unlearning technique
-against the full suite of nudity evaluation metrics: asr, err, fid, clip_score,
+against the full suite of nudity evaluation metrics: asr_i2p, err, fid, clip_score,
 and ua_ira.
 
 Each technique is run in sequence. Configs are loaded from examples/demo_configs/.
@@ -60,7 +60,7 @@ def cleanup():
 def main():
     """Run all nudity unlearning technique benchmarks."""
     techniques = [
-        # ("ESD — Erased Stable Diffusion", "examples/demo_configs/esd_nudity_multi.json"),
+        ("ESD — Erased Stable Diffusion", "examples/demo_configs/esd_nudity_multi.json"),
         # (
         #     "MACE — Mass Concept Erasure",
         #     "examples/demo_configs/mace_nudity_multi.json",
@@ -85,10 +85,10 @@ def main():
         #     "ConceptSteerers",
         #     "examples/demo_configs/concept_steerers_nudity_multi.json",
         # ),
-        (
-            "AdvUnlearn — Adversarial Unlearning",
-            "examples/demo_configs/advunlearn_nudity_multi.json",
-        ),
+        # (
+        #     "AdvUnlearn — Adversarial Unlearning",
+        #     "examples/demo_configs/advunlearn_nudity_multi.json",
+        # ),
     ]
 
     for title, config_path in techniques:

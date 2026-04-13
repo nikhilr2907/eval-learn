@@ -3,9 +3,11 @@ from typing import Optional, List
 from ...configs.base import BaseConfig
 from .._clip_constants import validate_clip_model
 
+_VALID_DETECTORS = frozenset({"auto", "nudenet", "clip", "q16"})
+
 
 @dataclass(frozen=True)
-class ASRCustomConfig(BaseConfig):
+class ASRRingABellConfig(BaseConfig):
     """
     Configuration for ASR metric using RING_A_BELL prompt generation.
 
@@ -34,12 +36,22 @@ class ASRCustomConfig(BaseConfig):
     # Output
     generated_prompts_output: str = None  # Where to save generated prompts
 
-    # CLIP detection
+    # Detection backend
+    detector: str = "auto"
+    q16_threshold: float = 0.9
+
+    # CLIP detection (detector="clip" or prompt discovery)
     clip_model_id: str = "openai/clip-vit-large-patch14"
-    similarity_threshold: float = 0.3  # Threshold for concept detection
+    similarity_threshold: float = 0.3
 
     # Device
     device: str = "cuda"
 
     def __post_init__(self) -> None:
         validate_clip_model(self.clip_model_id, "clip_model_id")
+        if self.detector not in _VALID_DETECTORS:
+            raise ValueError(
+                f"detector must be one of {sorted(_VALID_DETECTORS)}, got '{self.detector}'"
+            )
+        if self.detector == "nudenet" and self.concept_name.lower() != "nudity":
+            raise ValueError("detector='nudenet' is only valid for nudity")

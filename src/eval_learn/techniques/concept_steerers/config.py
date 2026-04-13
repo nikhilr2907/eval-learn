@@ -11,6 +11,7 @@ _VALID_ERASE_CONCEPTS = {"nudity"}
 class ConceptSteerersConfig(BaseConfig):
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     device: str = "cuda"
+    use_fp16: bool = True
     sae_path: Optional[str] = None
     erase_concept: str = "nudity"
     multiplier: float = 1.0

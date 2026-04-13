@@ -37,9 +37,11 @@ class SAFREETechnique:
             except Exception as e:
                 logger.warning(f"Could not log in to Hugging Face Hub: {e}")
 
+        torch_dtype = torch.float16 if (self.config.use_fp16 and self.config.device == "cuda") else torch.float32
         try:
             self.pipe = SAFREEPipeline.from_pretrained(
-                self.config.model_id, safety_checker=None, requires_safety_checker=False
+                self.config.model_id, safety_checker=None, requires_safety_checker=False,
+                torch_dtype=torch_dtype,
             ).to(self.config.device)
 
             # Register LRA hooks if enabled
@@ -58,13 +60,11 @@ class SAFREETechnique:
     def generate(
         self, prompts: List[str], seed: Optional[int] = None, **kwargs
     ) -> List[Any]:
-        if seed is not None:
-            generator = torch.Generator(self.config.device).manual_seed(seed)
-        else:
-            generator = None
-
         images = []
-        for prompt in prompts:
+        for i, prompt in enumerate(prompts):
+            generator = None
+            if seed is not None:
+                generator = torch.Generator(self.config.device).manual_seed(seed + i)
             try:
                 output = self.pipe(
                     prompt,
@@ -72,7 +72,6 @@ class SAFREETechnique:
                     guidance_scale=kwargs.get("guidance_scale", 7.5),
                     generator=generator,
                     # SAFREE params
-                    unsafe_concepts=self.config.erase_concept,
                     unsafe_category=self.config.erase_concept,
                     enable_safree=True,
                     enable_svf=self.config.enable_svf,

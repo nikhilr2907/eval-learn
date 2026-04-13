@@ -7,8 +7,8 @@ import pytest
 from PIL import Image
 import numpy as np
 
-from eval_learn.metrics.asr.metric import ASRMetric
-from eval_learn.metrics.asr.config import ASRConfig
+from eval_learn.metrics.asr_i2p.metric import ASRMetric
+from eval_learn.metrics.asr_i2p.config import ASRConfig
 from eval_learn.types import MetricResult
 
 
