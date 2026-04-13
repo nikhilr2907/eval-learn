@@ -1,15 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
 from ...configs.base import BaseConfig
-
-# SLD parameter keys that presets control
-_SLD_PARAM_KEYS = {
-    "sld_guidance_scale",
-    "sld_warmup_steps",
-    "sld_threshold",
-    "sld_momentum_scale",
-    "sld_mom_beta",
-}
 
 _VALID_ERASE_CONCEPTS = {"nudity"}
 
@@ -53,7 +44,7 @@ _PRESETS: Dict[str, Dict[str, Any]] = {
 }
 
 
-@dataclass
+@dataclass(frozen=True)
 class SLDConfig(BaseConfig):
     """
     Configuration for Safe Latent Diffusion (SLD).
@@ -65,8 +56,9 @@ class SLDConfig(BaseConfig):
     SLD only supports nudity concept erasure.
     """
 
-    model_id: str = "AIML-TUDA/stable-diffusion-safe"
-    device: Optional[str] = None
+    model_id: str = field(init=False, default="AIML-TUDA/stable-diffusion-safe")
+    device: str = "cuda"
+    use_fp16: bool = True
     erase_concept: str = "nudity"
     preset: Optional[str] = None
     sld_guidance_scale: float = 5000
@@ -84,7 +76,6 @@ class SLDConfig(BaseConfig):
         the preset.
         """
         data = dict(data)
-        data.pop("model_id", None)
 
         erase_concept = data.get("erase_concept", "nudity")
         if erase_concept.lower() not in _VALID_ERASE_CONCEPTS:

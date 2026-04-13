@@ -1,25 +1,7 @@
-numpy>=2.4.0
-scipy>=1.17.0
-tqdm>=4.66.5
-requests>=2.28.1
-filelock>=3.25.0
-fsspec>=2026.2.0
-safetensors>=0.7.0
-diffusers>=0.37.0
-huggingface_hub>=1.8.0
-nudenet>=3.4.2
-pandas>=3.0.1
-Pillow>=12.1.0
-python-dotenv>=1.2.2
-torch>=2.11.0
-datasets>=4.8.0
-pyarrow>=22.0.0,<23.0.0
-tensorflow>=2.21.0
-pycocotools>=2.0.11
-pyyaml>=5.1
 
-# Local editable packages
--e packages/ccrt/
+
+
+# Local technique packages
 -e packages/esd/
 -e packages/mace/
 -e packages/uce/
@@ -29,5 +11,15 @@ pyyaml>=5.1
 -e packages/RING_A_BELL/
 -e packages/cogfd/
 
+-e packages/mma_diff/
+-e packages/advunlearn/
+-e packages/p4d
+-e packages/Q16/
+-e packages/ssd/
 # CUDA wheels
 --extra-index-url https://download.pytorch.org/whl/cu126
+
+
+######################## NEW INSTALL COMMAND ##########################
+
+# pip install -e ".[all]" -r requirements.txt

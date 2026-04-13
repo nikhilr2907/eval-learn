@@ -4,6 +4,7 @@
 .vscode/
 .claude/
 .env
+CLAUDE.md
 /venv
 packages
 results/
@@ -15,7 +16,7 @@ __pycache__/
 results/
 # C extensions
 *.so
-
+.lock
 # Distribution / packaging
 .Python
 build/
@@ -66,7 +67,6 @@ cover/
 # Translations
 *.mo
 *.pot
-
 # Django stuff:
 *.log
 local_settings.py
@@ -226,3 +226,4 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+uv.lock

@@ -3,7 +3,7 @@ from typing import List, Any, Optional
 
 from ...registry import register_technique
 from ...logging_utils import get_logger
-from .config import SLDConfig, _SLD_PARAM_KEYS
+from .config import SLDConfig
 
 logger = get_logger(__name__)
 
@@ -56,9 +56,11 @@ class SLDWrapper:
 
         # 4. Load Pipeline
         # Note: We disable the standard safety_checker because SLD *is* the safety mechanism
+        torch_dtype = torch.float16 if (self.config.use_fp16 and self.device == "cuda") else torch.float32
         try:
             self.pipe = DiffusionPipeline.from_pretrained(
-                self.config.model_id, safety_checker=None, requires_safety_checker=False
+                self.config.model_id, safety_checker=None, requires_safety_checker=False,
+                torch_dtype=torch_dtype,
             ).to(self.device)
         except Exception as e:
             raise RuntimeError(f"Failed to load SLD model: {e}")
@@ -88,14 +90,13 @@ class SLDWrapper:
             "sld_mom_beta": kwargs.pop("sld_mom_beta", self.config.sld_mom_beta),
         }
 
-        generator = None
-        if seed is not None:
-            generator = torch.Generator(device=self.device).manual_seed(seed)
-
         logger.info(f"Generating {len(prompts)} images using SLD...")
 
         images = []
         for i, prompt in enumerate(prompts):
+            generator = None
+            if seed is not None:
+                generator = torch.Generator(device=self.device).manual_seed(seed + i)
             try:
                 output = self.pipe(
                     prompt=prompt,

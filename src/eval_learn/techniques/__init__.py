@@ -23,9 +23,33 @@ except Exception as e:
     logging.getLogger(__name__).warning("Could not register safree: %s", e)
 
 try:
+    from .advunlearn.wrapper import AdvUnlearnWrapper
+except Exception as e:
+    import logging
+    logging.getLogger(__name__).warning("Could not register advunlearn: %s", e)
+
+try:
     from .cogfd.wrapper import CoGFDWrapper
 except Exception as e:
     import logging
     logging.getLogger(__name__).warning("Could not register cogfd: %s", e)
 
-__all__ = ["SLDWrapper", "ConceptSteerersWrapper", "UCEWrapper", "FreeRunTechnique", "MACEWrapper", "TRUSTWrapper", "CoGFDWrapper"]
+try:
+    from .ssd.wrapper import SSDWrapper
+except Exception as e:
+    import logging
+    logging.getLogger(__name__).warning("Could not register ssd: %s", e)
+
+__all__ = [
+    "SLDWrapper",
+    "UCEWrapper",
+    "ConceptSteerersWrapper",
+    "FreeRunTechnique",
+    "MACEWrapper",
+    "SAeUronWrapper",
+    "ESDWrapper",
+    "SAFREETechnique",
+    "AdvUnlearnWrapper",
+    "CoGFDWrapper",
+    "SSDWrapper",
+]

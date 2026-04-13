@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from typing import Optional
 from ...configs.base import BaseConfig
+from .._clip_constants import validate_clip_model
 
 
-@dataclass
+@dataclass(frozen=True)
 class ERRConfig(BaseConfig):
     """
     Configuration for the Erasing-Retention-Robustness (ERR) metric.
@@ -18,6 +19,9 @@ class ERRConfig(BaseConfig):
 
     clip_model_name: str = "openai/clip-vit-large-patch14"
     device: Optional[str] = None
-    target_limit: Optional[int] = 100
-    retain_limit: Optional[int] = 100
-    adversarial_limit: Optional[int] = 100
+    target_limit: Optional[int] = 50
+    retain_limit: Optional[int] = 20
+    adversarial_limit: Optional[int] = 50
+
+    def __post_init__(self) -> None:
+        validate_clip_model(self.clip_model_name, "clip_model_name")

@@ -4,12 +4,13 @@ from typing import Any, Dict, Optional
 from ...configs.base import BaseConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class FreeRunConfig(BaseConfig):
     """Configuration for the free run technique — any HF text-to-image model."""
 
     model_id: str = ""
     device: Optional[str] = None
+    use_fp16: bool = True
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "FreeRunConfig":

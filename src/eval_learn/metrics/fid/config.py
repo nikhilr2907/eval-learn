@@ -3,7 +3,7 @@ from typing import Optional
 from ...configs.base import BaseConfig
 
 
-@dataclass
+@dataclass(frozen=True)
 class FIDConfig(BaseConfig):
     """
     Configuration for Frechet Inception Distance (FID) metric.
