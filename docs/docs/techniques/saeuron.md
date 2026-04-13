@@ -51,8 +51,6 @@ which are loaded from bundled checkpoints.
 | `multiplier` | `float` | `-20.0` | Feature scaling factor. Negative values ablate (suppress) features; positive values amplify. |
 | `percentile` | `float` | `99.99` | Percentile threshold for feature selection. Only features with activation above this percentile are ablated. |
 | `target_latents` | `list[int]` | `[]` | Explicit list of SAE latent indices to ablate. If empty, latents are selected automatically from `acts_path` using `percentile`. |
-| `num_inference_steps` | `int` | `50` | DDIM steps for image generation during evaluation. |
-| `guidance_scale` | `float` | `7.5` | CFG guidance scale. Must be > 1.0. |
 | `use_fp16` | `bool` | `True` | Run in half precision. |
 | `device` | `str` | `"cuda"` | Device to run on. |
 
@@ -145,9 +143,7 @@ which are loaded from bundled checkpoints.
       "erase_concept": "nudity",
       "multiplier": -20.0,
       "percentile": 99.99,
-      "device": "cuda",
-      "num_inference_steps": 50,
-      "guidance_scale": 7.5
+      "device": "cuda"
     }
   },
   "metrics": [

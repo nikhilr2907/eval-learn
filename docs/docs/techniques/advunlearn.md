@@ -48,8 +48,8 @@ but the pre-built retention datasets are curated for nudity erasure.
 | `retain_loss_w` | `float` | `1.0` | Weight of the retention loss term. |
 | `start_guidance` | `float` | `3.0` | Initial classifier-free guidance scale during training. |
 | `negative_guidance` | `float` | `1.0` | Guidance scale for the erasing objective. |
-| `iterations` | `int` | `5` | Total training iterations. Must be > 0. |
-| `lr` | `float` | `1e-5` | Learning rate. Must be > 0. |
+| `train_steps` | `int` | `5` | Total training iterations. Must be > 0. |
+| `learning_rate` | `float` | `1e-5` | Learning rate. Must be > 0. |
 | `attack_method` | `str` | `"pgd"` | Inner-loop attack algorithm. `"pgd"` (Projected Gradient Descent) or `"fast_at"`. |
 | `attack_step` | `int` | `30` | Number of attack steps per iteration. Must be > 0. |
 | `attack_lr` | `float` | `1e-3` | Step size for the attack optimiser. Must be > 0. |
@@ -100,19 +100,19 @@ but the pre-built retention datasets are curated for nudity erasure.
 
 ## Warnings
 
-!!! warning "warmup_iter must be less than iterations"
-    If `warmup_iter >= iterations`, AdvUnlearn raises a `ValidationError` on startup.
-    With `iterations=5`, `warmup_iter` must be at most `4`.
+!!! warning "warmup_iter must be less than train_steps"
+    If `warmup_iter >= train_steps`, AdvUnlearn raises a `ValidationError` on startup.
+    With `train_steps=5`, `warmup_iter` must be at most `4`.
 
 !!! warning "Training time"
     AdvUnlearn is significantly slower than MACE or UCE. Each outer iteration runs
-    `attack_step` inner PGD steps. With defaults (`iterations=5`, `attack_step=30`),
+    `attack_step` inner PGD steps. With defaults (`train_steps=5`, `attack_step=30`),
     expect substantially longer wall-clock time than other techniques. Reduce `attack_step`
     for faster (but less robust) training.
 
-!!! warning "Low iterations default"
-    The default `iterations=5` is minimal. Published results typically use 100–1000
-    iterations. The default is set low to keep demo runs feasible — increase it for
+!!! warning "Low train_steps default"
+    The default `train_steps=5` is minimal. Published results typically use 100–1000
+    steps. The default is set low to keep demo runs feasible — increase it for
     production benchmarks.
 
 !!! warning "attack_embd_type"
@@ -133,7 +133,7 @@ but the pre-built retention datasets are curated for nudity erasure.
     "config": {
       "erase_concept": "nudity",
       "train_method": "text_encoder_full",
-      "iterations": 100,
+      "train_steps": 100,
       "attack_step": 30,
       "warmup_iter": 5,
       "save_dir": "checkpoints/advunlearn_nudity",
@@ -160,8 +160,8 @@ but the pre-built retention datasets are curated for nudity erasure.
     "config": {
       "erase_concept": "nudity",
       "train_method": "text_encoder_full",
-      "iterations": 100,
-      "lr": 1e-5,
+      "train_steps": 100,
+      "learning_rate": 1e-5,
       "attack_method": "pgd",
       "attack_step": 30,
       "attack_lr": 1e-3,

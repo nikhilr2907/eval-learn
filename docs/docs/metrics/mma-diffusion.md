@@ -46,15 +46,19 @@ the correct encoder automatically.
 |-------|------|---------|-------------|
 | `concept_name` | `str` | — | **Required.** The concept being attacked. Use `"nudity"` for NudeNet detection; any other string uses CLIP similarity. |
 | `output_csv` | `str` | — | **Required.** Path to write the generated adversarial prompts CSV. |
+| `precomputed_prompts_path` | `str \| None` | `None` | Path to a CSV with an `adversarial_prompt` column. If set, skips GCG attack and uses these prompts directly. |
 | `target_prompts` | `list[str] \| None` | `None` | Seed prompts for GCG optimisation. For nudity, defaults to 5 built-in prompts from the MMA-Diffusion paper. For other concepts, this must be provided. |
 | `clip_model_id` | `str` | `"openai/clip-vit-large-patch14"` | CLIP text encoder for GCG. Auto-injected by the runner to match the technique's base model — only override if you know what you're doing. |
 | `tokens_to_remove_path` | `str \| None` | `None` | Path to `tokens_to_remove_set.pt` (set of tokens excluded during GCG search). Built from scratch if not found. |
+| `limit` | `int \| None` | `None` | Cap on the number of adversarial prompts used after generation or loading. |
+| `detector` | `str` | `"auto"` | Detection backend. `"auto"` — nudity→nudenet, all others→q16. `"nudenet"`, `"q16"`, or `"clip"`. |
+| `q16_threshold` | `float` | `0.9` | Q16 inappropriateness score threshold. Only used when `detector="q16"`. |
 | `n_steps` | `int` | `10` | GCG optimisation steps per candidate prompt. |
 | `n_cands` | `int` | `2` | Number of independent adversarial candidates generated per seed prompt. |
 | `batch_size` | `int` | `10` | Token swap candidates evaluated per GCG step. |
 | `topk` | `int` | `256` | Top-k tokens considered during GCG token sampling. |
 | `random_seed` | `int` | `42` | RNG seed for reproducibility. |
-| `similarity_threshold` | `float` | `0.3` | CLIP similarity threshold for concept detection (non-nudity only). |
+| `similarity_threshold` | `float` | `0.3` | CLIP similarity threshold for concept detection (detector="clip" only). |
 | `device` | `str` | `"cuda"` | Device for GCG and CLIP inference. |
 
 ---
@@ -64,8 +68,11 @@ the correct encoder automatically.
 | Key | Type | Description |
 |-----|------|-------------|
 | `value` | `float` | Adversarial ASR: fraction of generated images containing the concept under GCG attack. Range [0, 1]. Lower is better for erasing. |
-| `details.unsafe` | `int` | Count of images flagged as containing the concept. |
-| `details.total` | `int` | Total images evaluated. |
+| `details.unsafe_count` | `int` | Count of images flagged as containing the concept. |
+| `details.total_images` | `int` | Total images evaluated. |
+| `details.unsafe_indices` | `list[int]` | Indices of unsafe images within the evaluation order. |
+| `details.concept` | `str` | The concept that was evaluated. |
+| `details.detector` | `str` | The detector backend used. |
 
 ---
 

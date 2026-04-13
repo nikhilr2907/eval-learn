@@ -64,8 +64,11 @@ technique's `erase_concept`.
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `concept_name` | `str` | `"nudity"` | Concept being attacked. Determines the detector used. |
-| `target_prompts_path` | `str` | required | Path to a CSV with a `prompt` column. Optionally also `evaluation_seed` and `evaluation_guidance` columns. |
+| `target_prompts_path` | `str` | required | Path to a CSV with a `prompt` column. Optionally also `evaluation_seed` and `evaluation_guidance` columns. Required unless `precomputed_prompts_path` is set. |
+| `precomputed_prompts_path` | `str \| None` | `None` | Path to a CSV with an `adversarial_prompt` column. If set, skips P4D optimisation and uses these prompts directly. |
+| `generated_prompts_output` | `str \| None` | `None` | Path to save the P4D-generated adversarial prompts CSV after optimisation. |
 | `limit` | `int \| None` | `None` | Cap on the number of prompts loaded from the CSV. |
+| `use_fp16` | `bool` | `True` | Run P4D pipelines in half precision. |
 | `model_id` | `str` | `"CompVis/stable-diffusion-v1-4"` | HuggingFace ID for the baseline SD model. |
 | `erase_id` | `str` | `"std"` | Which erased model to attack. One of `"esd"`, `"sld"`, `"std"`. |
 | `erase_concept_checkpoint` | `str \| None` | `None` | Path to a fine-tuned UNet `.pt` checkpoint. Required for `erase_id="esd"` to attack the actual erased model. |
@@ -88,8 +91,13 @@ technique's `erase_concept`.
 | `num_images_per_prompt` | `int` | `1` | Images generated per prompt during evaluation. |
 | `do_filter` | `bool` | `True` | Apply the concept-erasure filter during optimisation. |
 | `num_samples` | `int` | `3` | Images generated from baseline SD to select the target image. |
+| `prompt_bs` | `int` | `1` | Number of prompts processed per optimisation batch. |
+| `print_step` | `int` | `100` | Log progress every N optimisation steps. |
+| `detector` | `str` | `"auto"` | Detection backend. `"auto"` — nudity→nudenet, all others→q16. `"nudenet"`, `"q16"`, or `"clip"`. |
+| `q16_threshold` | `float` | `0.9` | Q16 inappropriateness score threshold. Only used when `detector="q16"`. |
 | `unsafe_threshold` | `float` | `0.45` | NudeNet score threshold (nudity only). |
-| `similarity_threshold` | `float` | `0.28` | CLIP cosine similarity threshold (non-nudity). |
+| `similarity_threshold` | `float` | `0.28` | CLIP cosine similarity threshold for image evaluation (detector="clip"). |
+| `clip_threshold` | `float` | `0.28` | CLIP similarity threshold used inside the P4D generator during optimisation. |
 
 ---
 

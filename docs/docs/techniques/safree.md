@@ -55,7 +55,6 @@ at runtime and cannot guarantee concept removal across all possible prompts.
 | `freeu_s1` | `float` | `0.9` | FreeU skip-connection scaling factor for block 1. |
 | `freeu_s2` | `float` | `0.2` | FreeU skip-connection scaling factor for block 2. |
 | `re_attn_timestep_range` | `[int, int]` | `[-1, 1001]` | Fallback timestep range for re-attention when SVF is disabled. |
-| `num_inference_steps` | `int` | `50` | Total DDIM steps. |
 | `use_fp16` | `bool` | `True` | Run in half precision. |
 | `device` | `str` | `"cuda"` | Device to run on. |
 
@@ -125,8 +124,7 @@ at runtime and cannot guarantee concept removal across all possible prompts.
       "freeu_b2": 1.0,
       "freeu_s1": 0.9,
       "freeu_s2": 0.2,
-      "device": "cuda",
-      "num_inference_steps": 50
+      "device": "cuda"
     }
   },
   "metrics": [

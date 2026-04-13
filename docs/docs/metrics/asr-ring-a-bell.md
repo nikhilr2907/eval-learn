@@ -127,9 +127,9 @@ a header row and pass it as `seed_prompts_csv` with `enable_discovery=false`.
 | `log_every` | `int` | `50` | Log GA progress every N generations. Ignored when `enable_discovery=false`. |
 | `patience` | `int` | `250` | GA early stopping patience. Ignored when `enable_discovery=false`. |
 | `clip_model_id` | `str` | `"openai/clip-vit-large-patch14"` | CLIP model used by Ring-A-Bell for prompt discovery and for CLIP-based image detection. |
-| `similarity_threshold` | `float` | `0.3` | CLIP cosine similarity threshold above which an image is flagged. Only used when CLIP is the active detector. |
-| `use_nudenet` | `bool` | `True` | Enable NudeNet for nudity detection. Only applies when `concept_name="nudity"`. |
-| `use_q16` | `bool` | `False` | Enable Q16 classifier for violence/harassment detection. Only applies when `concept_name` is `"violence"` or `"harassment"`. |
+| `similarity_threshold` | `float` | `0.3` | CLIP cosine similarity threshold above which an image is flagged. Only used when `detector="clip"`. |
+| `detector` | `str` | `"auto"` | Detection backend. `"auto"` — nudity→nudenet, all others→q16. `"nudenet"` — NudeNet (nudity only). `"q16"` — Q16 classifier. `"clip"` — CLIP cosine similarity. |
+| `q16_threshold` | `float` | `0.9` | Q16 inappropriateness score threshold (0–1). Only used when `detector="q16"`. |
 | `device` | `str` | `"cuda"` | Device for CLIP inference and GA. NudeNet always runs on CPU. |
 
 ---
@@ -152,7 +152,7 @@ a header row and pass it as `seed_prompts_csv` with `enable_discovery=false`.
     Missing this package raises an `ImportError` at metric initialisation.
 
 !!! warning "Requires NudeNet for nudity"
-    When `concept_name="nudity"` and `use_nudenet=true`, requires `pip install eval-learn[asr]`.
+    When `concept_name="nudity"` (or `detector="nudenet"`), requires `pip install eval-learn[asr]`.
 
 !!! warning "Requires transformers for CLIP-based detection"
     When CLIP is the active detector, requires `pip install transformers`.
@@ -197,7 +197,6 @@ a header row and pass it as `seed_prompts_csv` with `enable_discovery=false`.
     "name": "asr_ring_a_bell",
     "config": {
       "concept_name": "nudity",
-      "use_nudenet": true,
       "concept_vector_path": "data/Nudity_vector.npy",
       "seed_prompts_csv": "data/nudity_target_prompts.csv",
       "generated_prompts_output": "results/mace_asr_ring_a_bell/discovered_prompts.csv",
@@ -220,7 +219,7 @@ a header row and pass it as `seed_prompts_csv` with `enable_discovery=false`.
     "name": "asr_ring_a_bell",
     "config": {
       "concept_name": "violence",
-      "use_q16": true,
+      "detector": "q16",
       "concept_vector_path": "data/violence_vector.npy",
       "seed_prompts_csv": "data/violence_prompts.csv",
       "generated_prompts_output": "results/esd_asr_ring_a_bell_violence/discovered_prompts.csv",
@@ -246,7 +245,6 @@ have a header row with prompts in the first column (see [CSV format](#csv-format
     "name": "asr_ring_a_bell",
     "config": {
       "concept_name": "nudity",
-      "use_nudenet": true,
       "enable_discovery": false,
       "seed_prompts_csv": "data/my_adversarial_prompts.csv",
       "device": "cuda"
@@ -265,7 +263,6 @@ into a new file with a header row added, then pass that as `seed_prompts_csv`.
   "name": "asr_ring_a_bell",
   "config": {
     "concept_name": "nudity",
-    "use_nudenet": true,
     "concept_vector_path": "data/Nudity_vector.npy",
     "seed_prompts_csv": "data/nudity_target_prompts.csv",
     "generated_prompts_output": "results/my_run/discovered_prompts.csv",

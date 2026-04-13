@@ -20,7 +20,7 @@ SLD ships with five named presets that cover a range of safety strengths. These 
 used as-is or overridden by setting individual parameters directly.
 
 **Base model:** `AIML-TUDA/stable-diffusion-safe`  
-**Supported concepts:** nudity only
+**Supported concepts:** nudity, violence, hate, disturbing
 
 ---
 
@@ -37,7 +37,7 @@ used as-is or overridden by setting individual parameters directly.
 | ASR Custom | Yes | Concept-agnostic via CLIP |
 | MMA-Diffusion | Yes | Nudity-specific by default |
 
-SLD is nudity-only — all metrics that require `erase_concept="nudity"` are valid.
+SLD suppresses nudity, violence, hate, and disturbing content simultaneously. The `erase_concept` field indicates the primary category being benchmarked.
 
 ---
 
@@ -45,14 +45,13 @@ SLD is nudity-only — all metrics that require `erase_concept="nudity"` are val
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `erase_concept` | `str` | `"nudity"` | Must be `"nudity"`. SLD has no mechanism for other concepts. |
+| `erase_concept` | `str` | `"nudity"` | Concept to benchmark. One of `"nudity"`, `"violence"`, `"hate"`, `"disturbing"`. |
 | `preset` | `str \| None` | `None` | Named preset. If set, overrides all SLD parameter fields below. One of `"none"`, `"weak"`, `"medium"`, `"strong"`, `"max"`. |
 | `sld_guidance_scale` | `float` | `5000` | Safety guidance strength. Higher = stronger steering. Overridden by preset. |
 | `sld_warmup_steps` | `int` | `0` | Denoising steps to skip before applying safety guidance. Overridden by preset. |
 | `sld_threshold` | `float` | `1.0` | Activation threshold for safety guidance. Overridden by preset. |
 | `sld_momentum_scale` | `float` | `0.5` | Momentum applied to guidance signal. Overridden by preset. |
 | `sld_mom_beta` | `float` | `0.7` | Momentum decay factor. Overridden by preset. |
-| `num_inference_steps` | `int` | `50` | Total DDIM steps. |
 | `use_fp16` | `bool` | `True` | Run in half precision. |
 | `device` | `str` | `"cuda"` | Device to run on. |
 
@@ -70,9 +69,11 @@ SLD is nudity-only — all metrics that require `erase_concept="nudity"` are val
 
 ## Warnings
 
-!!! warning "nudity only"
-    SLD only supports `erase_concept="nudity"`. Passing any other concept raises a
-    `ValidationError`. For custom concept suppression at inference time, consider SAFREE.
+!!! warning "Supported concepts"
+    SLD accepts `erase_concept` of `"nudity"`, `"violence"`, `"hate"`, or `"disturbing"`.
+    Any other value raises a `ValidationError`. Note that SLD suppresses all four categories
+    simultaneously regardless of which is specified — `erase_concept` indicates which category
+    is being benchmarked, not which content is filtered.
 
 !!! warning "Preset overrides all SLD parameters"
     If `preset` is set, all individual SLD parameter fields (`sld_guidance_scale` etc.)
@@ -148,8 +149,7 @@ SLD is nudity-only — all metrics that require `erase_concept="nudity"` are val
     "config": {
       "erase_concept": "nudity",
       "preset": "max",
-      "device": "cuda",
-      "num_inference_steps": 50
+      "device": "cuda"
     }
   },
   "metrics": [
