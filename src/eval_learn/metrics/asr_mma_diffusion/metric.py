@@ -69,9 +69,11 @@ class MMADiffusionMetric:
         if not self.config.output_csv:
             raise ValueError("MMADiffusion metric requires 'output_csv' to be set.")
 
-        if not self.config.target_prompts and not self.config.precomputed_prompts_path:
+        is_nudity = self.config.concept_name.lower() == "nudity"
+        if not self.config.target_prompts and not self.config.precomputed_prompts_path and not is_nudity:
             raise ValueError(
-                f"MMADiffusion metric requires 'target_prompts' for concept '{self.config.concept_name}'."
+                f"MMADiffusion metric requires 'target_prompts' for concept '{self.config.concept_name}'. "
+                "There are no built-in seed prompts for non-nudity concepts."
             )
 
         self.nude_detector = None
