@@ -89,6 +89,11 @@ def main():
         #     "AdvUnlearn — Adversarial Unlearning",
         #     "examples/demo_configs/advunlearn_nudity_multi.json",
         # ),
+
+        (
+             "CoGFD — Concept Graph-based high-level Feature Decoupling",
+             "examples/demo configs/cogfd_nudity_multi.json",
+        ),
     ]
 
     for title, config_path in techniques:

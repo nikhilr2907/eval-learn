@@ -66,6 +66,7 @@ uce = "eval_learn.techniques.uce.wrapper:UCEWrapper"
 safree = "eval_learn.techniques.SAFREE.wrapper:SAFREETechnique"
 concept_steerers = "eval_learn.techniques.concept_steerers.wrapper:ConceptSteerersWrapper"
 saeuron = "eval_learn.techniques.saeuron.wrapper:SAeUronWrapper"
+cogfd = "eval_learn.techniques.cogfd.wrapper:CoGFDWrapper"
 advunlearn = "eval_learn.techniques.advunlearn.wrapper:AdvUnlearnWrapper"
 ssd = "eval_learn.techniques.ssd.wrapper:SSDWrapper"
 
