@@ -9,6 +9,8 @@
 -e packages/concept-steerers/
 -e packages/safree
 -e packages/RING_A_BELL/
+-e packages/cogfd/
+
 -e packages/mma_diff/
 -e packages/advunlearn/
 -e packages/p4d
