@@ -11,8 +11,6 @@
 -e packages/RING_A_BELL/
 -e packages/mma_diff/
 -e packages/advunlearn/
--e packages/p4d
--e packages/Q16/
 -e packages/ssd/
 -e packages/ssd/
 
