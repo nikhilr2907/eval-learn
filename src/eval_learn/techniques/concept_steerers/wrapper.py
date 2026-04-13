@@ -6,7 +6,7 @@ try:
     from concept_steerers import ConceptSteeringPipeline
 except ImportError:
     raise ImportError(
-        "ConceptSteerersWrapper requires the 'concept-steerers' package. Package not installed."
+        "ConceptSteerersTechnique requires the 'concept-steerers' package. Package not installed."
     )
 
 from ...registry import register_technique
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("concept_steerers")
-class ConceptSteerersWrapper:
+class ConceptSteerersTechnique:
     """
     Thin wrapper around the external concept-steerers package.
 

@@ -1,4 +1,4 @@
-from .wrapper import UCEWrapper
+from .wrapper import UCETechnique
 from .config import UCEConfig
 
-__all__ = ["UCEWrapper", "UCEConfig"]
+__all__ = ["UCETechnique", "UCEConfig"]

@@ -21,7 +21,7 @@ except ImportError as e:
 
 
 @register_technique("sld")
-class SLDWrapper:
+class SLDTechnique:
     """
     Wrapper for Safe Latent Diffusion (SLD) pipeline.
     """

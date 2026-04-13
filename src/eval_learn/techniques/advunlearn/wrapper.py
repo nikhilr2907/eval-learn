@@ -5,7 +5,7 @@ try:
     from advunlearn import AdvUnlearnPipeline
 except ImportError:
     raise ImportError(
-        "AdvUnlearnWrapper requires the 'advunlearn' package. "
+        "AdvUnlearnTechnique requires the 'advunlearn' package. "
         "Install it with: pip install -e packages/advunlearn"
     )
 
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("advunlearn")
-class AdvUnlearnWrapper:
+class AdvUnlearnTechnique:
     """
     Thin wrapper around the external advunlearn package.
 
@@ -43,8 +43,8 @@ class AdvUnlearnWrapper:
             retain_loss_w=self.config.retain_loss_w,
             start_guidance=self.config.start_guidance,
             negative_guidance=self.config.negative_guidance,
-            iterations=self.config.iterations,
-            lr=self.config.lr,
+            iterations=self.config.train_steps,
+            lr=self.config.learning_rate,
             attack_method=self.config.attack_method,
             attack_step=self.config.attack_step,
             attack_lr=self.config.attack_lr,

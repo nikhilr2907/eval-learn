@@ -6,7 +6,7 @@ try:
     from trasce import TraSCEPipeline
 except ImportError:
     raise ImportError(
-        "TraSCEWrapper requires the 'trasce' package. Package not installed."
+        "TraSCETechnique requires the 'trasce' package. Package not installed."
     )
 
 from ...registry import register_technique
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("trasce")
-class TraSCEWrapper:
+class TraSCETechnique:
     """
     Thin wrapper around the external TraSCE package.
 

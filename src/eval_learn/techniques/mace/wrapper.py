@@ -4,7 +4,7 @@ from PIL import Image
 try:
     from mace import MACEPipeline
 except ImportError:
-    raise ImportError("MACEWrapper requires the 'mace' package. Package not installed.")
+    raise ImportError("MACETechnique requires the 'mace' package. Package not installed.")
 
 from ...registry import register_technique
 from ...logging_utils import get_logger
@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("mace")
-class MACEWrapper:
+class MACETechnique:
     """
     Thin wrapper around the external MACE package.
 

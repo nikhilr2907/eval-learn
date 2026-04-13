@@ -12,15 +12,7 @@ TRAIN_METHODS = ["xattn", "noxattn", "selfattn", "full"]
 
 @dataclass(frozen=True)
 class ESDConfig(BaseConfig):
-    """
-    Configuration for Erased Stable Diffusion (ESD).
-
-    Two main variants:
-    - ESD-x (train_method='xattn'): Fine-tunes cross-attention layers
-      Best for specific concepts like artist styles, objects
-    - ESD-u (train_method='full'/'noxattn'): Fine-tunes broader layers
-      Best for general concepts like nudity, violence
-    """
+    """Configuration for Erased Stable Diffusion (ESD)."""
 
     # Model settings
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
@@ -48,7 +40,6 @@ class ESDConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ESDConfig":
-        """Create config from a dict, validating train_method."""
         train_method = data.get("train_method", "xattn")
         if train_method not in TRAIN_METHODS:
             raise ValueError(

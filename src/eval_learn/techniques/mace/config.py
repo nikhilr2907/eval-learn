@@ -5,18 +5,7 @@ from ...configs.base import BaseConfig
 
 @dataclass(frozen=True)
 class MACEConfig(BaseConfig):
-    """
-    Configuration for MACE (Mass Concept Erasure in Diffusion Models, CVPR 2024).
-
-    MACE uses Closed-Form Refinement (CFR) to analytically update the K/V
-    projection matrices in every cross-attention layer, mapping concept token
-    representations to neutral/empty representations without any training loop.
-
-    Key parameter:
-    - lambda_cfr: Regularization strength. Higher = more conservative
-      (better preservation of unrelated concepts, weaker erasure).
-      Lower = more aggressive erasure, but may affect unrelated content.
-    """
+    """Configuration for MACE (Mass Concept Erasure, CVPR 2024)."""
 
     # Model settings
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")

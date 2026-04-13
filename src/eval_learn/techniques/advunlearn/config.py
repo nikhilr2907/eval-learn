@@ -55,8 +55,8 @@ class AdvUnlearnConfig(BaseConfig):
     # Unlearning loss settings
     start_guidance: float = 3.0
     negative_guidance: float = 1.0
-    iterations: int = 5
-    lr: float = 1e-5
+    train_steps: int = 5
+    learning_rate: float = 1e-5
 
     # Adversarial attack settings
     attack_method: str = "pgd"
@@ -128,8 +128,8 @@ class AdvUnlearnConfig(BaseConfig):
         return super().from_dict(data)
 
     def __post_init__(self):
-        if self.iterations <= 0:
-            raise ValueError(f"iterations must be > 0, got {self.iterations}")
+        if self.train_steps <= 0:
+            raise ValueError(f"train_steps must be > 0, got {self.train_steps}")
         if self.attack_step <= 0:
             raise ValueError(f"attack_step must be > 0, got {self.attack_step}")
         if self.retain_batch <= 0:
@@ -138,11 +138,11 @@ class AdvUnlearnConfig(BaseConfig):
             raise ValueError(f"retain_step must be > 0, got {self.retain_step}")
         if self.adv_prompt_num <= 0:
             raise ValueError(f"adv_prompt_num must be > 0, got {self.adv_prompt_num}")
-        if self.lr <= 0:
-            raise ValueError(f"lr must be > 0, got {self.lr}")
+        if self.learning_rate <= 0:
+            raise ValueError(f"learning_rate must be > 0, got {self.learning_rate}")
         if self.attack_lr <= 0:
             raise ValueError(f"attack_lr must be > 0, got {self.attack_lr}")
-        if self.warmup_iter >= self.iterations:
+        if self.warmup_iter >= self.train_steps:
             raise ValueError(
-                f"warmup_iter must be < iterations, got warmup_iter={self.warmup_iter}, iterations={self.iterations}"
+                f"warmup_iter must be < train_steps, got warmup_iter={self.warmup_iter}, train_steps={self.train_steps}"
             )

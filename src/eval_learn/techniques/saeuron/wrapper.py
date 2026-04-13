@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("saeuron")
-class SAeUronWrapper:
+class SAeUronTechnique:
     """
     Wrapper for the SAeUron (Sparse Autoencoder Unlearning) technique.
 

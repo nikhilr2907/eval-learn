@@ -5,7 +5,7 @@ from PIL import Image
 try:
     from uce import UCEPipeline
 except ImportError:
-    raise ImportError("UCEWrapper requires the 'uce' package. Package not installed.")
+    raise ImportError("UCETechnique requires the 'uce' package. Package not installed.")
 
 from ...registry import register_technique
 from ...logging_utils import get_logger
@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("uce")
-class UCEWrapper:
+class UCETechnique:
     """
     Thin wrapper around the external UCE package.
 

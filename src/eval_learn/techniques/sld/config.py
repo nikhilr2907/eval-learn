@@ -46,18 +46,7 @@ _PRESETS: Dict[str, Dict[str, Any]] = {
 
 @dataclass(frozen=True)
 class SLDConfig(BaseConfig):
-    """
-    Configuration for Safe Latent Diffusion (SLD).
-
-    Use ``preset`` to select a named safety level (NONE, WEAK, MEDIUM, STRONG, MAX)
-    instead of setting individual SLD parameters. Individual parameters can still
-    be passed alongside a preset to override specific values.
-
-    SLD suppresses all unsafe content simultaneously (nudity, violence, hate,
-    disturbing). ``erase_concept`` indicates the primary category of interest
-    for benchmarking purposes but does not change what the model suppresses —
-    valid values are: "nudity", "violence", "hate", "disturbing".
-    """
+    """Configuration for Safe Latent Diffusion (SLD)."""
 
     model_id: str = field(init=False, default="AIML-TUDA/stable-diffusion-safe")
     device: str = "cuda"
@@ -72,12 +61,6 @@ class SLDConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SLDConfig":
-        """Create config from a dict, resolving preset values first.
-
-        If ``preset`` is provided, its parameter values are used as defaults.
-        Any SLD parameters explicitly present in *data* take precedence over
-        the preset.
-        """
         data = dict(data)
 
         erase_concept = data.get("erase_concept", "nudity")

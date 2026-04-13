@@ -5,23 +5,7 @@ from ...configs.base import BaseConfig
 
 @dataclass(frozen=True)
 class SSDConfig(BaseConfig):
-    """
-    Configuration for Selective Synaptic Dampening (SSD).
-
-    SSD estimates diagonal Fisher Information for a forget concept and a
-    neutral retain set, then dampens UNet parameters that are important for
-    the forget concept but not for the retain set. No training loop is required.
-
-    Key parameters:
-    - alpha: Controls selectivity. Higher = only parameters that are strongly
-      forget-specific get dampened. Lower = broader dampening.
-      Typical range: 100–2000. Default: 200.
-    - dampening_coeff: Global scale on the dampening strength. 1.0 applies the
-      full ratio; values < 1.0 reduce the effect globally (useful if 1.0
-      over-erases and hurts image quality).
-    - num_fisher_samples: Samples per prompt for Fisher estimation. More is
-      more accurate but slower (each sample is a full UNet forward+backward).
-    """
+    """Configuration for Selective Synaptic Dampening (SSD)."""
 
     # Model settings
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")

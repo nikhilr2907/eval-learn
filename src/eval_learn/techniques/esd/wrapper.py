@@ -5,7 +5,7 @@ from PIL import Image
 try:
     from esd import ESDPipeline
 except ImportError:
-    raise ImportError("ESDWrapper requires the 'esd' package. Package not installed.")
+    raise ImportError("ESDTechnique requires the 'esd' package. Package not installed.")
 
 from ...registry import register_technique
 from ...logging_utils import get_logger
@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("esd")
-class ESDWrapper:
+class ESDTechnique:
     """
     Thin wrapper around the external ESD package.
 

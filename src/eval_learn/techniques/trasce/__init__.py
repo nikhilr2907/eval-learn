@@ -1,4 +1,4 @@
-from .wrapper import TraSCEWrapper
+from .wrapper import TraSCETechnique
 from .config import TraSCEConfig
 
-__all__ = ["TraSCEWrapper", "TraSCEConfig"]
+__all__ = ["TraSCETechnique", "TraSCEConfig"]

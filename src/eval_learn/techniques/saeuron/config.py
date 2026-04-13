@@ -10,17 +10,7 @@ _VALID_ERASE_CONCEPTS = {"nudity"}
 
 @dataclass(frozen=True)
 class SAeUronConfig(BaseConfig):
-    """
-    Configuration for the SAeUron (Sparse Autoencoder Unlearning) technique.
-
-    SAeUron only supports nudity concept erasure. The cached activations pickle
-    file (cls_latents_dict_mini.pkl) contains pre-computed latent importance scores
-    only for the nudity concept.
-
-    This configuration defines the paths to the SAE checkpoints and cached
-    feature activations, as well as the hyper-parameters required to ablate
-    or steer specific concepts during the diffusion generation process.
-    """
+    """Configuration for SAeUron (Sparse Autoencoder Unlearning)."""
 
     # --- Base Model Parameters ---
     # Fixed: SAE was trained on SD 1.4 and is not compatible with other models.
@@ -58,14 +48,6 @@ class SAeUronConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "SAeUronConfig":
-        """
-        Creates a SAeUronConfig instance from a dictionary.
-
-        This method automatically resolves relative paths to absolute paths
-        based on the location of this config.py file, ensuring the wrapper
-        can always find the checkpoints and .pkl files regardless of where
-        the evaluation script is executed from.
-        """
         config_dict = dict(config_dict)
 
         # Validate erase_concept

@@ -5,7 +5,7 @@ try:
     from cogfd import CoGFDPipeline
 except ImportError:
     raise ImportError(
-        "CoGFDWrapper requires the 'cogfd' package. "
+        "CoGFDTechnique requires the 'cogfd' package. "
         "Install with: pip install -e packages/cogfd/"
     )
 
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("cogfd")
-class CoGFDWrapper:
+class CoGFDTechnique:
     """
     Eval-Learn wrapper for CoGFD (ICLR 2025).
 
