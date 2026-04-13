@@ -39,6 +39,7 @@ class SSDTechnique:
         self.pipeline = SSDPipeline(
             model_id=self.config.model_id,
             device=self.config.device,
+            use_fp16=self.config.use_fp16,
             erase_concept=self.config.erase_concept,
             alpha=self.config.alpha,
             num_fisher_samples=self.config.num_fisher_samples,

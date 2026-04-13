@@ -39,6 +39,7 @@ class CoGFDTechnique:
         self.pipeline = CoGFDPipeline(
             model_id=self.config.model_id,
             device=self.config.device,
+            use_fp16=self.config.use_fp16,
             erase_concept=self.config.erase_concept,
             combination_prompts=self.config.combination_prompts,
             preserve_concepts=self.config.preserve_concepts,

@@ -25,6 +25,10 @@ class MACEConfig(BaseConfig):
     # Save modified UNet weights (optional, to avoid re-running CFR)
     save_path: Optional[str] = None
 
+    def __post_init__(self):
+        if self.lambda_cfr <= 0:
+            raise ValueError(f"lambda_cfr must be > 0, got {self.lambda_cfr}")
+
     # Generation settings
     num_inference_steps: int = 50
     guidance_scale: float = 7.5

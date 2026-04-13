@@ -151,6 +151,7 @@ class ASRP4D:
 
         generator = P4DGenerator(
             model_id=self.config.model_id,
+            use_fp16=self.config.use_fp16,
             erase_id=self.config.erase_id,
             erase_concept_checkpoint=self.config.erase_concept_checkpoint,
             concept_name=self.config.concept_name,

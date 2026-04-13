@@ -34,11 +34,12 @@ class TraSCETechnique:
         self.pipeline = TraSCEPipeline(
             model_id = self.config.model_id,
             device = self.config.device,
+            use_fp16 = self.config.use_fp16,
             # guidance loss scale controls how far the latent values are steered from the erase concept
             # higher the value the greater the steering
-            guidance_loss_scale = self.config.guidance_loss_scale, 
+            guidance_loss_scale = self.config.guidance_loss_scale,
             sigma = self.config.sigma,
-            # discriminator guidance scale controls the extent to which latent values are updated per step 
+            # discriminator guidance scale controls the extent to which latent values are updated per step
             discriminator_guidance_scale = self.config.discriminator_guidance_scale,
             erase_concept = self.config.erase_concept,
         )

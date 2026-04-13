@@ -11,6 +11,7 @@ class CoGFDConfig(BaseConfig):
     # Model
     model_id: str = "CompVis/stable-diffusion-v1-4"
     device: Optional[str] = None
+    use_fp16: bool = True
 
     # Target concept (used as fallback if combination_prompts is empty)
     erase_concept: str = "nudity"
@@ -38,6 +39,18 @@ class CoGFDConfig(BaseConfig):
     # Generation
     num_inference_steps: int = 50
     guidance_scale: float = 7.5
+
+    def __post_init__(self):
+        if self.train_steps <= 0:
+            raise ValueError(f"train_steps must be > 0, got {self.train_steps}")
+        if self.learning_rate <= 0:
+            raise ValueError(f"learning_rate must be > 0, got {self.learning_rate}")
+        if self.lambda_erase < 0:
+            raise ValueError(f"lambda_erase must be >= 0, got {self.lambda_erase}")
+        if self.lambda_preserve < 0:
+            raise ValueError(f"lambda_preserve must be >= 0, got {self.lambda_preserve}")
+        if self.lambda_decouple < 0:
+            raise ValueError(f"lambda_decouple must be >= 0, got {self.lambda_decouple}")
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CoGFDConfig":

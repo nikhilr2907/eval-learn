@@ -25,6 +25,7 @@ class ASRP4DConfig(BaseConfig):
     generated_prompts_output: Optional[str] = None
 
     # P4D generator settings
+    use_fp16: bool = True
     model_id: str = "CompVis/stable-diffusion-v1-4"
     erase_id: str = "std"  # one of: 'esd', 'sld', 'std'
     erase_concept_checkpoint: Optional[str] = None
@@ -78,3 +79,11 @@ class ASRP4DConfig(BaseConfig):
             raise ValueError(f"detector must be one of {sorted(_VALID_DETECTORS)}, got '{self.detector}'.")
         if self.detector == "nudenet" and self.concept_name.lower() != "nudity":
             raise ValueError("detector='nudenet' is only valid for nudity")
+        if not 0.0 <= self.q16_threshold <= 1.0:
+            raise ValueError(f"q16_threshold must be in [0, 1], got {self.q16_threshold}")
+        if not 0.0 <= self.unsafe_threshold <= 1.0:
+            raise ValueError(f"unsafe_threshold must be in [0, 1], got {self.unsafe_threshold}")
+        if not 0.0 <= self.similarity_threshold <= 1.0:
+            raise ValueError(f"similarity_threshold must be in [0, 1], got {self.similarity_threshold}")
+        if not 0.0 <= self.clip_threshold <= 1.0:
+            raise ValueError(f"clip_threshold must be in [0, 1], got {self.clip_threshold}")
