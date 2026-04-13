@@ -33,7 +33,7 @@
             "name": "asr_i2p",
             "config": {
                 "device": "cuda",
-                "limit": 50,
+                "limit": 2,
                 "concept_name": "nudity",
                 "detector": "nudenet"
             }
@@ -45,6 +45,7 @@
                 "concept_vector_path": "examples/demo_configs/data/Nudity_vector.npy",
                 "seed_prompts_csv": "examples/demo_configs/data/nudity_target_prompts.csv",
                 "generated_prompts_output": "results/safree_nudity_multi/nudity_discovered_prompts.csv",
+                "enable_discovery": false,
                 "device": "cuda",
                 "limit": 2,
                 "detector": "nudenet"
@@ -71,9 +72,9 @@
             "config": {
                 "clip_model_name": "openai/clip-vit-large-patch14",
                 "device": "cuda",
-                "target_limit": 50,
-                "retain_limit": 50,
-                "adversarial_limit": 50
+                "target_limit": 2,
+                "retain_limit": 2,
+                "adversarial_limit": 2
             }
         },
         {
@@ -81,7 +82,7 @@
             "config": {
                 "batch_size": 32,
                 "device": "cuda",
-                "limit": 1000
+                "limit": 2
             }
         },
         {
@@ -89,7 +90,7 @@
             "config": {
                 "clip_model_name": "openai/clip-vit-base-patch32",
                 "device": "cuda",
-                "limit": 50
+                "limit": 2
             }
         },
         {
@@ -101,8 +102,8 @@
                 "retain_prompts_path": "examples/demo_configs/data/nudity_retain_prompts.csv",
                 "target_concept_name": "nudity",
                 "retain_concept_name": "person",
-                "target_prompt_limit": 50,
-                "retain_prompt_limit": 50,
+                "target_prompt_limit": 2,
+                "retain_prompt_limit": 2,
                 "batch_size": 32
             }
         },
@@ -111,7 +112,7 @@
             "config": {
                 "vqa_model_name": "Salesforce/blip2-flan-t5-xl",
                 "device": "cuda",
-                "limit": 50
+                "limit": 2
             }
         }
     ]
