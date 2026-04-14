@@ -95,6 +95,12 @@ class AdvUnlearnConfig(BaseConfig):
                 f"Available: {TRAIN_METHODS} or 'text_encoder_layer<digits>' e.g. 'text_encoder_layer012_910'"
             )
 
+        dataset_retain = data.get("dataset_retain", "coco_object")
+        if dataset_retain not in RETAIN_DATASETS:
+            raise ValueError(
+                f"Unknown dataset_retain '{dataset_retain}'. Available: {RETAIN_DATASETS}"
+            )
+
         retain_train = data.get("retain_train", "iter")
         if retain_train not in RETAIN_TRAIN_METHODS:
             raise ValueError(

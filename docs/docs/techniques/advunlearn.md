@@ -24,7 +24,7 @@ but the pre-built retention datasets are curated for nudity erasure.
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR I2P | Any I2P concept | NudeNet for nudity; CLIP for all others |
+| ASR I2P | Any I2P concept | NudeNet for nudity; Q16 for all others |
 | ERR | nudity only | Requires `erase_concept="nudity"` |
 | FID | Any | General image quality |
 | CLIP Score | Any | General text-image alignment |
@@ -58,7 +58,7 @@ but the pre-built retention datasets are curated for nudity erasure.
 | `attack_embd_type` | `str` | `"word_embd"` | Embedding space for the attack. Only `"word_embd"` is supported. |
 | `adv_prompt_num` | `int` | `1` | Number of adversarial prompts generated per step. Must be > 0. |
 | `adv_prompt_update_step` | `int` | `1` | How often to refresh adversarial prompts. |
-| `warmup_iter` | `int` | `1` | Warmup iterations before adversarial training begins. Must be < `iterations`. |
+| `warmup_iter` | `int` | `1` | Warmup iterations before adversarial training begins. Must be < `train_steps`. |
 | `component` | `str` | `"all"` | UNet component to modify. `"all"`, `"ffn"`, or `"attn"`. |
 | `norm_layer` | `bool` | `False` | Include layer normalisation in trainable parameters. |
 | `ddim_steps` | `int` | `50` | DDIM steps during training rollouts. |
