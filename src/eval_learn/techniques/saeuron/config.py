@@ -31,7 +31,7 @@ class SAeUronConfig(BaseConfig):
     # Hardcoded default for Object Unlearning based on the official repository.
     position: str = "unet.up_blocks.1.attentions.1"
 
-    # The specific concept name to unlearn. SAeUron only supports nudity.
+    # The specific concept name to unlearn. 
     erase_concept: str = "nudity"
 
     # Multiplier applied to the target latents.

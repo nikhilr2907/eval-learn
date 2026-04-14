@@ -32,6 +32,7 @@ class ArtifactWriter:
         images: List[Any],
         report: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        detailed_report: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Save images and report for a benchmark run.
@@ -41,13 +42,17 @@ class ArtifactWriter:
             technique_name: Name of the technique (e.g. ``"sld"``).
             metric_name: Name of the metric (e.g. ``"asr"``).
             images: List of generated PIL images.
-            report: Result dictionary to persist as JSON. If None, no report is saved.
+            report: Simplified result dictionary to persist as ``{run_id}_report.json``.
+                If None, no report is saved.
             metadata: Dataset metadata. If it contains a ``categories``
                 key (list parallel to *images*), images are saved into
                 per-category subdirectories.
+            detailed_report: Extended result dictionary including technique and metric
+                configs, saved alongside the simplified report as
+                ``{run_id}_report_full.json``. If None, no detailed report is saved.
 
         Returns:
-            Path to the saved report JSON (or where it would be saved).
+            Path to the saved simplified report JSON (or where it would be saved).
         """
         metadata = metadata or {}
         categories = metadata.get("categories")
@@ -86,17 +91,18 @@ class ArtifactWriter:
         else:
             logger.info("No images to save")
 
-        # Save report only if provided
-        if report is not None:
-            # If no images, save report directly to base_dir
-            if images:
-                folder_name = f"{technique_name}_{metric_name}_{run_id}"
-                run_dir = os.path.join(self.base_dir, folder_name)
-                report_path = os.path.join(run_dir, f"{run_id}_report.json")
-            else:
-                os.makedirs(self.base_dir, exist_ok=True)
-                report_path = os.path.join(self.base_dir, f"{run_id}_report.json")
+        # Resolve the directory where reports are saved
+        if images:
+            folder_name = f"{technique_name}_{metric_name}_{run_id}"
+            report_dir = os.path.join(self.base_dir, folder_name)
+        else:
+            os.makedirs(self.base_dir, exist_ok=True)
+            report_dir = self.base_dir
 
+        report_path = os.path.join(report_dir, f"{run_id}_report.json")
+
+        # Save simplified report
+        if report is not None:
             try:
                 with open(report_path, "w") as f:
                     json.dump(report, f, indent=4)
@@ -104,8 +110,17 @@ class ArtifactWriter:
             except Exception as e:
                 logger.error(f"Failed to save report: {e}")
         else:
-            logger.info(f"Skipping report save (not provided)")
-            report_path = os.path.join(self.base_dir, f"{run_id}_report.json")
+            logger.info("Skipping report save (not provided)")
+
+        # Save detailed report
+        if detailed_report is not None:
+            detailed_path = os.path.join(report_dir, f"{run_id}_report_full.json")
+            try:
+                with open(detailed_path, "w") as f:
+                    json.dump(detailed_report, f, indent=4)
+                logger.info(f"Detailed report saved to {detailed_path}")
+            except Exception as e:
+                logger.error(f"Failed to save detailed report: {e}")
 
         return report_path
 

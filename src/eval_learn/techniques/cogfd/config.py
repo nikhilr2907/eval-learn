@@ -124,6 +124,8 @@ class CoGFDConfig(BaseConfig):
             raise ValueError(f"lambda_preserve must be >= 0, got {self.lambda_preserve}")
         if self.lambda_decouple < 0:
             raise ValueError(f"lambda_decouple must be >= 0, got {self.lambda_decouple}")
+        if not self.erase_concept or not self.erase_concept.strip():
+            raise ValueError("erase_concept must not be empty.")
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CoGFDConfig":

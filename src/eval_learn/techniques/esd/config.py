@@ -41,6 +41,8 @@ class ESDConfig(BaseConfig):
     guidance_scale: float = 7.5
 
     def __post_init__(self):
+        if not self.erase_concept or not self.erase_concept.strip():
+            raise ValueError("erase_concept must not be empty.")
         if self.train_method not in TRAIN_METHODS:
             raise ValueError(
                 f"Unknown train_method '{self.train_method}'. Available: {TRAIN_METHODS}"

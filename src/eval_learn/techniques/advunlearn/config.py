@@ -275,3 +275,5 @@ class AdvUnlearnConfig(BaseConfig):
             raise ValueError(
                 f"warmup_iter must be < train_steps, got warmup_iter={self.warmup_iter}, train_steps={self.train_steps}"
             )
+        if not self.erase_concept or not self.erase_concept.strip():
+            raise ValueError("erase_concept must not be empty.")
