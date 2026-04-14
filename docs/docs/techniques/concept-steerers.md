@@ -2,20 +2,21 @@
 
 ## Overview
 
-Concept Steerers apply sparse autoencoder (SAE) steering at inference time by subtracting
-a pre-computed concept steering vector from the UNet's latent activations. During each
-denoising step, the SAE encodes the current activations, subtracts the concept direction
-scaled by `multiplier`, and decodes back to the activation space.
+Concept Steerers apply sparse autoencoder (SAE) steering at inference time through the
+**text encoder** (CLIP layer 9). For each generation, the pipeline first derives a
+steering direction by running the concept string through the text encoder and encoding
+the resulting activations with the SAE. During each denoising step, this direction is
+then added to the conditional text embedding and subtracted from the unconditional one,
+biasing classifier-free guidance away from the concept.
 
-A positive `multiplier` amplifies the concept; a negative value suppresses it. For concept
-erasure, use a positive `multiplier` (the steering vector points toward the concept, so
-subtracting it with a positive scale moves activations away).
+Because the steering direction is computed on-the-fly from the concept string, **any
+concept is supported** — no pre-built steering vectors or concept-specific checkpoints
+are needed. The SAE checkpoint is bundled with the package and loaded automatically.
 
-The pre-trained SAE and steering vectors are bundled with the package and are loaded
-automatically from `<config_dir>/checkpoints/i2p_sd14_l9` if `sae_path` is not specified.
+A positive `multiplier` suppresses the concept; a negative value amplifies it.
 
 **Base model:** `CompVis/stable-diffusion-v1-4`  
-**Supported concepts:** nudity only (bundled steering vectors are nudity-specific)
+**Supported concepts:** any string
 
 ---
 
@@ -23,14 +24,14 @@ automatically from `<config_dir>/checkpoints/i2p_sd14_l9` if `sae_path` is not s
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR I2P | Yes | this technique only supports nudity |
-| ERR | Yes | this technique only supports nudity |
+| ASR I2P | Yes | nudity concept |
+| ERR | Yes | nudity concept |
 | FID | Yes | General image quality |
 | CLIP Score | Yes | General text-image alignment |
 | UA_IRA | Yes | Requires custom prompt CSVs |
 | TIFA | Yes | General faithfulness |
 | ASR Custom | Yes | Concept-agnostic via CLIP |
-| MMA-Diffusion | Yes | Nudity-specific by default |
+| MMA-Diffusion | Yes | |
 
 ---
 
@@ -38,11 +39,10 @@ automatically from `<config_dir>/checkpoints/i2p_sd14_l9` if `sae_path` is not s
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `erase_concept` | `str` | `"nudity"` | Must be `"nudity"`. |
-| `sae_path` | `str \| None` | `None` | Path to SAE checkpoint directory containing `config.json` (architecture hyperparameters) and `state_dict.pth` (encoder/decoder weights). The SAE is a general feature decomposition of CLIP text encoder layer 9 activations — it is not concept-specific. The concept direction is derived at runtime by encoding the concept prompt through the SAE. Auto-resolved to bundled `checkpoints/i2p_sd14_l9` if `None`. |
-| `multiplier` | `float` | `1.0` | Steering strength. Positive values suppress the concept (subtract the concept direction). Increase to strengthen erasure; values that are too high may degrade generation quality. |
+| `erase_concept` | `str` | `"nudity"` | The concept to suppress. Any string is valid — the steering direction is derived at runtime by encoding this string through the text encoder and SAE. |
+| `multiplier` | `float` | `1.0` | Steering strength. Positive values suppress the concept. Increase to strengthen erasure; values that are too high may degrade generation quality. |
 | `num_inference_steps` | `int` | `50` | DDIM steps for image generation during evaluation. |
-| `guidance_scale` | `float` | `7.5` | CFG guidance scale for generation. |
+| `guidance_scale` | `float` | `7.5` | CFG guidance scale for generation. Must be > 1.0. |
 | `use_fp16` | `bool` | `True` | Run in half precision. |
 | `device` | `str \| None` | `None` | Device to run on. Auto-detects CUDA, then MPS, then CPU if `None`. |
 
@@ -50,21 +50,11 @@ automatically from `<config_dir>/checkpoints/i2p_sd14_l9` if `sae_path` is not s
 
 ## Warnings
 
-!!! warning "nudity only"
-    The bundled steering vectors are trained on I2P (nudity-focused) activations. Passing
-    any concept other than `"nudity"` raises a `ValidationError`.
-
 !!! warning "multiplier tuning"
     The default `multiplier=1.0` is conservative. If ASR remains high, increase it (e.g.
-    `5.0`, `10.0`). Very large values risk steering the latents far enough from the
-    original distribution to visibly degrade image quality — monitor FID and CLIP Score
+    `5.0`, `10.0`). Very large values risk steering the text embeddings far enough from
+    the original distribution to visibly degrade image quality — monitor FID and CLIP Score
     alongside ASR when tuning.
-
-!!! warning "sae_path resolution"
-    If `sae_path=None`, the path is resolved relative to the concept_steerers package
-    installation directory. If the package was installed from a non-standard location or
-    the checkpoints were not bundled, this will raise a `FileNotFoundError`. In that case,
-    provide an explicit `sae_path`.
 
 ---
 
@@ -84,7 +74,7 @@ automatically from `<config_dir>/checkpoints/i2p_sd14_l9` if `sae_path` is not s
     }
   },
   "metric": {
-    "name": "asr",
+    "name": "asr_i2p",
     "config": {
       "device": "cuda",
       "limit": 500
@@ -132,7 +122,7 @@ automatically from `<config_dir>/checkpoints/i2p_sd14_l9` if `sae_path` is not s
     }
   },
   "metrics": [
-    { "name": "asr", "config": { "device": "cuda", "limit": 500 } },
+    { "name": "asr_i2p", "config": { "device": "cuda", "limit": 500 } },
     { "name": "err", "config": { "device": "cuda", "target_limit": 50, "retain_limit": 20, "adversarial_limit": 50 } },
     { "name": "fid", "config": { "device": "cuda", "limit": 1000 } },
     { "name": "clip_score", "config": { "device": "cuda", "limit": 300 } },
@@ -147,6 +137,27 @@ automatically from `<config_dir>/checkpoints/i2p_sd14_l9` if `sae_path` is not s
       }
     },
     { "name": "tifa", "config": { "device": "cuda", "limit": 200 } }
+  ]
+}
+```
+
+### Multiple metrics — violence benchmark
+
+```json
+{
+  "output_dir": "results/concept_steerers_violence_multi",
+  "technique": {
+    "name": "concept_steerers",
+    "config": {
+      "erase_concept": "violence",
+      "multiplier": 1.0,
+      "device": "cuda"
+    }
+  },
+  "metrics": [
+    { "name": "asr_p4d", "config": { "concept_name": "violence", "detector": "q16", "device": "cuda", "limit": 500 } },
+    { "name": "fid", "config": { "device": "cuda", "limit": 1000 } },
+    { "name": "clip_score", "config": { "device": "cuda", "limit": 300 } }
   ]
 }
 ```

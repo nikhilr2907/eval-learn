@@ -4,7 +4,6 @@
         "name": "concept_steerers",
         "config": {
             "erase_concept": "violence",
-            "sae_path": "PATH/TO/violence_sae_checkpoint",
             "multiplier": 1.0,
             "device": "cuda"
         }
