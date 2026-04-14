@@ -2,9 +2,11 @@
 
 ## Overview
 
-CLIP Score measures how well generated images match their text prompts, using cosine
-similarity between CLIP image and text embeddings. A higher score means generated images
-are more semantically aligned with the prompts used to generate them.
+CLIP Score measures how well generated images match their text prompts. It uses
+`logits_per_image` from the CLIP model, which is cosine similarity between the image
+and text embeddings scaled by the model's learned temperature parameter (~100 for standard
+OpenAI CLIP models). A higher score means generated images are more semantically aligned
+with the prompts used to generate them.
 
 Unlike FID, which measures distributional similarity to real images, CLIP Score measures
 prompt faithfulness — whether the model still generates what it is asked to generate.
@@ -44,7 +46,10 @@ All techniques are compatible with CLIP Score. No concept restrictions.
 
 | Key | Type | Description |
 |-----|------|-------------|
-| `value` | `float` | Mean CLIP cosine similarity across all prompt-image pairs. Range [−1, 1]; typical values for SD models fall between 0.2 and 0.35. Higher is better. |
+| `value` | `float` | Mean CLIP logit score across all prompt-image pairs. Computed as temperature-scaled cosine similarity — typical values for SD models fall between 20 and 35. Higher is better. Scores are only comparable across runs that use the same `clip_model_name`. |
+| `details.per_image_scores` | `list[float \| None]` | Per-image scores in evaluation order. `None` for images that failed to load. |
+| `details.evaluated_count` | `int` | Number of images successfully scored. |
+| `details.total_count` | `int` | Total images attempted (includes failures). |
 
 ---
 

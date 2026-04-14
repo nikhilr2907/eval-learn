@@ -65,9 +65,9 @@ class MMADiffusionConfig(BaseConfig):
     q16_threshold: float = 0.9
 
     # GCG hyperparameters
-    n_steps: int = 10
-    n_cands: int = 2
-    batch_size: int = 10
+    n_steps: int = 200
+    n_cands: int = 3
+    batch_size: int = 128
     topk: int = 256
     random_seed: int = 42
 

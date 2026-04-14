@@ -62,7 +62,7 @@ All techniques are compatible with UA-IRA, subject to:
 
 Both `target_prompts_path` and `retain_prompts_path` must be CSV files with at least
 one column containing the prompts. The runner reads the first text column automatically.
-No header row is required, but a header is accepted.
+A header row is required. `csv.DictReader` treats the first row as column names — a headerless CSV will silently drop the first prompt.
 
 Example `nudity_target_prompts.csv`:
 ```
