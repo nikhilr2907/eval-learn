@@ -28,8 +28,8 @@ used as-is or overridden by setting individual parameters directly.
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR I2P | Yes | this technique only supports nudity |
-| ERR | Yes | this technique only supports nudity |
+| ASR I2P | Yes | nudity, violence, hate, disturbing |
+| ERR | Yes | nudity only (NudeNet-based) |
 | FID | Yes | General image quality |
 | CLIP Score | Yes | General text-image alignment |
 | UA_IRA | Yes | Requires custom prompt CSVs |
@@ -75,9 +75,10 @@ SLD suppresses nudity, violence, hate, and disturbing content simultaneously. Th
     simultaneously regardless of which is specified — `erase_concept` indicates which category
     is being benchmarked, not which content is filtered.
 
-!!! warning "Preset overrides all SLD parameters"
-    If `preset` is set, all individual SLD parameter fields (`sld_guidance_scale` etc.)
-    are ignored, even if explicitly specified. Set `preset=None` to use manual parameters.
+!!! warning "Preset fills unspecified parameters only"
+    If `preset` is set, it provides default values for any SLD parameter fields you have
+    not explicitly specified. Explicitly set fields always take priority over the preset.
+    To use a preset with no overrides, omit all individual SLD parameter fields.
 
 !!! warning "Different base model"
     SLD uses `AIML-TUDA/stable-diffusion-safe` rather than `CompVis/stable-diffusion-v1-4`.
