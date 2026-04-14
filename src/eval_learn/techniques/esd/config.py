@@ -23,7 +23,7 @@ class ESDConfig(BaseConfig):
     erase_from: Optional[str] = (
         None  # Target concept to erase from (defaults to erase_concept)
     )
-    train_method: str = "xattn"
+    train_method: str = "noxattn"
     negative_guidance: float = 2.0
 
     # Training settings
@@ -38,11 +38,12 @@ class ESDConfig(BaseConfig):
     num_inference_steps: int = 50
     guidance_scale: float = 7.5
 
+    def __post_init__(self):
+        if self.train_method not in TRAIN_METHODS:
+            raise ValueError(
+                f"Unknown train_method '{self.train_method}'. Available: {TRAIN_METHODS}"
+            )
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ESDConfig":
-        train_method = data.get("train_method", "xattn")
-        if train_method not in TRAIN_METHODS:
-            raise ValueError(
-                f"Unknown train_method '{train_method}'. " f"Available: {TRAIN_METHODS}"
-            )
         return super().from_dict(data)

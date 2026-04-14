@@ -41,6 +41,7 @@ class MACETechnique:
             erase_from=self.config.erase_from,
             lambda_cfr=self.config.lambda_cfr,
             save_path=self.config.save_path,
+            load_path=self.config.load_path,
             use_fp16=self.config.use_fp16,
         )
 

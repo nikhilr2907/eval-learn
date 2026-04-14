@@ -44,7 +44,7 @@ automatically from `<config_dir>/checkpoints/i2p_sd14_l9` if `sae_path` is not s
 | `num_inference_steps` | `int` | `50` | DDIM steps for image generation during evaluation. |
 | `guidance_scale` | `float` | `7.5` | CFG guidance scale for generation. |
 | `use_fp16` | `bool` | `True` | Run in half precision. |
-| `device` | `str` | `"cuda"` | Device to run on. |
+| `device` | `str \| None` | `None` | Device to run on. Auto-detects CUDA, then MPS, then CPU if `None`. |
 
 ---
 

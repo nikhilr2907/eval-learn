@@ -43,29 +43,50 @@ be used with Free Run regardless of concept.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `model_id` | `str` | `""` | **Required.** HuggingFace model ID for any text-to-image diffusion model. |
+| `model_id` | `str` | — | **Required.** HuggingFace model ID for any text-to-image model supported by `AutoPipelineForText2Image`. |
 | `device` | `str \| None` | `None` | Device to run on. Auto-detects CUDA → MPS → CPU if `None`. |
-| `use_fp16` | `bool` | `True` | Run in half precision. |
+| `use_fp16` | `bool` | `True` | Run in half precision on CUDA. Ignored on CPU and MPS (always float32). |
+| `num_inference_steps` | `int` | `50` | Number of denoising steps. Overridable per call. |
+| `guidance_scale` | `float` | `7.5` | Classifier-free guidance scale. Overridable per call. |
+
+### Supported models
+
+Free Run uses `AutoPipelineForText2Image`, which supports any HuggingFace model whose
+repo specifies a compatible pipeline class, including SD 1.x, SD 2.x, SDXL, FLUX,
+PixArt-α/Σ, Kandinsky, and HunyuanDiT.
+
+### Default value notes
+
+`num_inference_steps=50` and `guidance_scale=7.5` are calibrated for SD 1.x. For other
+model families these may not be optimal:
+
+| Model | Typical steps | Typical guidance |
+|-------|--------------|-----------------|
+| SD 1.x / SD 2.x | 50 | 7.5 |
+| SDXL | 25–40 | 5.0–7.5 |
+| FLUX | 20–28 | 3.5–4.0 |
+| PixArt | 20 | 4.5 |
+
+If you are baselining a non-SD model, override both in the config explicitly.
 
 ---
 
 ## Warnings
 
 !!! warning "model_id is required"
-    Free Run has no fixed base model. Leaving `model_id` as an empty string or omitting it
-    will raise an error when the pipeline is loaded. Always specify a valid HuggingFace
-    model ID.
+    Free Run has no fixed base model. Leaving `model_id` empty or omitting it will raise
+    a `ValueError` before the model is loaded.
 
-!!! warning "No num_inference_steps or guidance_scale"
-    Unlike other techniques, Free Run does not expose `num_inference_steps` or
-    `guidance_scale` in its config. These are controlled by each metric's own generation
-    parameters or the runner defaults.
+!!! warning "num_inference_steps and guidance_scale defaults are SD-centric"
+    The defaults (`50` steps, `7.5` guidance) are appropriate for SD 1.x. They will
+    produce valid output for other model families but may not reflect published results
+    for those models. Set them explicitly when baselining SDXL, FLUX, or PixArt.
 
 ---
 
 ## Examples
 
-### Single metric — ASR baseline
+### SD 1.4 — ASR baseline
 
 ```json
 {
@@ -87,15 +108,17 @@ be used with Free Run regardless of concept.
 }
 ```
 
-### Single metric — FID baseline with SD 1.5
+### SDXL — FID baseline
 
 ```json
 {
-  "output_dir": "results/free_run_fid_baseline",
+  "output_dir": "results/free_run_sdxl_fid_baseline",
   "technique": {
     "name": "free_run",
     "config": {
-      "model_id": "runwayml/stable-diffusion-v1-5",
+      "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
+      "num_inference_steps": 30,
+      "guidance_scale": 5.0,
       "device": "cuda"
     }
   },

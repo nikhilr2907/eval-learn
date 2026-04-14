@@ -53,8 +53,6 @@ class FreeRunTechnique:
         try:
             self.pipe = AutoPipelineForText2Image.from_pretrained(
                 self.config.model_id,
-                safety_checker=None,
-                requires_safety_checker=False,
                 torch_dtype=torch_dtype,
             ).to(self.device)
         except Exception as e:
@@ -62,10 +60,19 @@ class FreeRunTechnique:
                 f"Failed to load model '{self.config.model_id}': {e}"
             ) from e
 
+        # Disable safety checker regardless of model family.
+        # safety_checker=None cannot be passed at load time for non-SD models.
+        if hasattr(self.pipe, "safety_checker"):
+            self.pipe.safety_checker = None
+            self.pipe.requires_safety_checker = False
+
     def generate(
         self, prompts: List[str], seed: Optional[int] = None, **kwargs
     ) -> List[Any]:
         logger.info(f"Generating {len(prompts)} images with {self.config.model_id}...")
+
+        num_inference_steps = kwargs.pop("num_inference_steps", self.config.num_inference_steps)
+        guidance_scale = kwargs.pop("guidance_scale", self.config.guidance_scale)
 
         images = []
         for i, prompt in enumerate(prompts):
@@ -73,7 +80,13 @@ class FreeRunTechnique:
             if seed is not None:
                 generator = torch.Generator(device=self.device).manual_seed(seed + i)
             try:
-                output = self.pipe(prompt=prompt, generator=generator, **kwargs)
+                output = self.pipe(
+                    prompt=prompt,
+                    generator=generator,
+                    num_inference_steps=num_inference_steps,
+                    guidance_scale=guidance_scale,
+                    **kwargs,
+                )
                 if not hasattr(output, "images") or not output.images:
                     raise RuntimeError(
                         f"Pipeline output has no images — is '{self.config.model_id}' a text-to-image model?"

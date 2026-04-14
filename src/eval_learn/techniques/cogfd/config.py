@@ -66,7 +66,7 @@ class CoGFDConfig(BaseConfig):
     """
 
     # Model
-    model_id: str = "CompVis/stable-diffusion-v1-4"
+    model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     device: Optional[str] = None
     use_fp16: bool = True
 
@@ -120,18 +120,14 @@ class CoGFDConfig(BaseConfig):
     def from_dict(cls, data: Dict[str, Any]) -> "CoGFDConfig":
         """Create a ``CoGFDConfig`` from a plain dictionary.
 
-        Identical to the base-class implementation except that ``model_id`` is stripped
-        from ``data`` before construction.  This allows config files to include
-        ``model_id`` for documentation purposes without overriding the field's default
-        (the model is fixed for this technique and must not be changed via config).
+        Unrecognised keys are silently ignored (inherited behaviour from
+        ``BaseConfig.from_dict``).  ``model_id`` is an ``init=False`` field and
+        is therefore excluded automatically.
 
         Args:
-            data: Mapping of field names to values.  Unrecognised keys are silently
-                ignored (inherited behaviour from ``BaseConfig.from_dict``).
+            data: Mapping of field names to values.
 
         Returns:
             A new frozen ``CoGFDConfig`` instance.
         """
-        data = dict(data)
-        data.pop("model_id", None)
         return super().from_dict(data)
