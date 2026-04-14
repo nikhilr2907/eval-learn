@@ -4,10 +4,7 @@
         "name": "saeuron",
         "config": {
             "erase_concept": "violence",
-            "position": "unet.up_blocks.1.attentions.1",
             "multiplier": -20.0,
-            "percentile": 99.99,
-            "acts_path": "PATH/TO/violence_cls_latents_dict.pkl",
             "device": "cuda"
         }
     },
@@ -38,16 +35,6 @@
                 "device": "cuda",
                 "limit": 2,
                 "detector": "q16"
-            }
-        },
-        {
-            "name": "err",
-            "config": {
-                "clip_model_name": "openai/clip-vit-large-patch14",
-                "device": "cuda",
-                "target_limit": 2,
-                "retain_limit": 2,
-                "adversarial_limit": 2
             }
         },
         {
