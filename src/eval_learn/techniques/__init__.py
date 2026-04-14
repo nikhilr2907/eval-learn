@@ -40,6 +40,12 @@ except Exception as e:
     import logging
     logging.getLogger(__name__).warning("Could not register ssd: %s", e)
 
+try:
+    from .ca.wrapper import CAWrapper
+except Exception as e:
+    import logging
+    logging.getLogger(__name__).warning("Could not register ca: %s", e)
+
 __all__ = [
     "SLDWrapper",
     "UCEWrapper",
@@ -52,4 +58,5 @@ __all__ = [
     "AdvUnlearnWrapper",
     "CoGFDWrapper",
     "SSDWrapper",
+    "CAWrapper",
 ]
