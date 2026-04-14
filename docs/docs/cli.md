@@ -5,6 +5,7 @@ Hugging Face Hub, and inspecting installed plugins.
 
 ```
 eval-learn <command> [options]
+eval-learn --version
 ```
 
 ---
@@ -118,6 +119,8 @@ Output example:
 ```
 Techniques:
   advunlearn
+  ca
+  cogfd
   concept_steerers
   esd
   free_run
@@ -125,10 +128,12 @@ Techniques:
   safree
   saeuron
   sld
+  ssd
+  trasce
   uce
 
 Metrics:
-  asr
+  asr_i2p
   asr_mma_diffusion
   asr_p4d
   asr_ring_a_bell
@@ -137,6 +142,13 @@ Metrics:
   fid
   tifa
   ua_ira
+
+Datasets:
+  coco_parquet
+  err_composite
+  i2p_csv
+  tifa_csv
+  ua_ira_csv
 ```
 
 Use this to confirm that optional technique or metric packages are correctly installed and
@@ -165,7 +177,7 @@ Techniques:
 Metrics:
   name                 model                                         configurable
   -------------------- --------------------------------------------- ------------
-  asr                  nudenet / openai/clip-vit-large-patch14       no
+  asr_i2p              NudeNet / openai/clip-vit-large-patch14       yes  (config: clip_model_id: ...)
   clip_score           openai/clip-vit-base-patch32                  yes  (config: clip_model_name: ...)
   ...
 ```

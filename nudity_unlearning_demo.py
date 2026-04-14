@@ -101,6 +101,7 @@ def main():
             "AdvUnlearn — Adversarial Unlearning",
             "examples/demo_configs/advunlearn_nudity_multi.json",
         ),
+        (" CA — Concept Ablation", "examples/demo_configs/ca_nudity_multi.json"),
     ]
 
     for title, config_path in techniques:
