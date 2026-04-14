@@ -53,17 +53,21 @@ except Exception as e:
     logging.getLogger(__name__).warning("Could not register trasce: %s", e)
 
 __all__ = [
-    "SLDTechnique",
-    "UCETechnique",
-    "ConceptSteerersTechnique",
-    "FreeRunTechnique",
-    "MACETechnique",
-    "SAeUronTechnique",
-    "ESDTechnique",
-    "SAFREETechnique",
-    "AdvUnlearnTechnique",
-    "CoGFDTechnique",
-    "SSDTechnique",
-    "TraSCETechnique",
-    "CATechnique",
+    name
+    for name in [
+        "SLDTechnique",
+        "UCETechnique",
+        "ConceptSteerersTechnique",
+        "FreeRunTechnique",
+        "MACETechnique",
+        "SAeUronTechnique",
+        "ESDTechnique",
+        "SAFREETechnique",
+        "AdvUnlearnTechnique",
+        "CoGFDTechnique",
+        "SSDTechnique",
+        "TraSCETechnique",
+        "CATechnique",
+    ]
+    if name in globals()
 ]

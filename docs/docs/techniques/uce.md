@@ -15,7 +15,7 @@ UCE supports three initialisation paths:
 2. **Load path** — supply your own pre-built `.safetensors` file via `load_path`. Skips weight creation entirely.
 3. **Inline creation** — provide `erase_concept` (and `save_path`) to run UCEWeightCreator and build weights on the fly. Takes 5–30 minutes on GPU; result is persisted to `save_path` for reuse.
 
-Exactly one of `preset`, `load_path`, or `erase_concept` must be provided.
+`preset` and `load_path` are mutually exclusive weight sources. `erase_concept` is independent and may be combined with either to carry concept metadata (e.g. for metric routing). When provided alone, `erase_concept` triggers inline weight creation.
 
 ---
 
@@ -52,8 +52,11 @@ Exactly one of `preset`, `load_path`, or `erase_concept` must be provided.
 
 ## Warnings
 
-!!! warning "One of preset, load_path, or erase_concept is required"
-    UCE will raise a `ValueError` at startup if none of the three paths are specified.
+!!! warning "At least one of preset, load_path, or erase_concept is required"
+    UCE will raise a `ValueError` at startup if none of the three are specified.
+
+!!! warning "preset and load_path are mutually exclusive"
+    Both resolve pre-built weights — providing both raises a `ValueError`. Use one or the other.
 
 !!! warning "Only three bundled presets"
     Passing any value other than `"nudity"`, `"violence"`, or `"dog"` to `preset` raises a

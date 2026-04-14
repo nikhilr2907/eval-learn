@@ -33,11 +33,18 @@ class UCEConfig(BaseConfig):
                 "UCE requires one of: 'preset' (bundled concept), "
                 "'load_path' (pre-built weights), or 'erase_concept' (create weights inline)."
             )
+        if self.preset is not None and self.load_path is not None:
+            raise ValueError(
+                "UCE: 'preset' and 'load_path' are mutually exclusive weight sources. "
+                "Provide one or the other, not both."
+            )
         if self.preset is not None and self.preset.lower() not in _VALID_PRESETS:
             raise ValueError(
                 f"Unknown UCE preset '{self.preset}'. "
                 f"Available: {sorted(_VALID_PRESETS)}"
             )
+        if self.erase_concept is not None and not self.erase_concept.strip():
+            raise ValueError("'erase_concept' must be a non-empty string.")
         if self.preset is None and self.load_path is None and not self.save_path:
             raise ValueError(
                 "Creating UCE weights inline requires 'save_path' — "

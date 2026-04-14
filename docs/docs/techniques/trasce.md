@@ -81,9 +81,9 @@ FID alongside ASR when tuning.
     TraSCE does not modify weights. There is nothing to save or load. Every generation
     run applies steering live. Startup cost is model loading only.
 
-!!! warning "guidance_loss_scale=0 disables steering"
-    Setting `guidance_loss_scale` to `0` skips the TraSCE gradient step entirely,
-    reducing the technique to standard SD generation. The config rejects this value.
+!!! warning "guidance_loss_scale must be > 0"
+    Setting `guidance_loss_scale` to `0` disables steering entirely; a negative value
+    inverts the steering direction. Both are rejected by the config.
 
 !!! warning "Three UNet forward passes per step"
     TraSCE runs three UNet passes per denoising step (unconditional, conditional, negative)

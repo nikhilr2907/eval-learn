@@ -23,5 +23,8 @@ class TraSCEConfig(BaseConfig):
             raise ValueError(f"sigma must be > 0, got {self.sigma}.")
         if self.discriminator_guidance_scale <= 0:
             raise ValueError(f"discriminator_guidance_scale must be > 0, got {self.discriminator_guidance_scale}.")
-        if self.guidance_loss_scale == 0:
-            raise ValueError("guidance_loss_scale must not be 0 — setting it to 0 disables TraSCE steering entirely.")
+        if self.guidance_loss_scale <= 0:
+            raise ValueError(
+                f"guidance_loss_scale must be > 0, got {self.guidance_loss_scale}. "
+                "Setting it to 0 disables steering entirely; negative values invert the steering direction."
+            )
