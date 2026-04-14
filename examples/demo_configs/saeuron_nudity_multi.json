@@ -4,9 +4,7 @@
         "name": "saeuron",
         "config": {
             "erase_concept": "nudity",
-            "position": "unet.up_blocks.1.attentions.1",
             "multiplier": -20.0,
-            "percentile": 99.99,
             "device": "cuda"
         }
     },

@@ -4,26 +4,38 @@
 
 SAeUron uses a pre-trained Sparse Autoencoder (SAE) to intercept and ablate concept-specific
 features in the UNet's intermediate activations at inference time. A forward hook is
-registered on the target UNet module. At each denoising step, the hook:
+registered on a specific UNet layer. At each denoising step, the hook:
 
-1. Projects the activation into the SAE's sparse latent space
-2. Identifies and suppresses features associated with the target concept (determined
-   by pre-cached activation statistics and a percentile threshold)
-3. Reconstructs the modified activations with a residual correction to preserve
-   unrelated structure
+1. Projects the conditional activations into the SAE's sparse latent space
+2. Suppresses the feature indices associated with the target concept
+3. Reconstructs the modified activations with a residual correction to preserve unrelated structure
 
-The technique splits batches along the classifier-free guidance axis (unconditioned and
-conditioned chunks) and applies ablation only to the conditioned chunk, preserving
-unconditional generation quality.
+The hook operates only on the conditional half of the CFG batch, leaving the unconditional
+half untouched.
 
-Because ablation is applied via a hook at inference time, SAeUron does not retrain the
-model. However, it requires pre-computed SAE weights and concept activation statistics,
-which are loaded from bundled checkpoints.
+Because ablation is applied via a hook at inference time, SAeUron does not retrain the model.
+The SAE checkpoint, target layer, and all internal parameters are bundled and resolved
+automatically — only the concept and suppression strength are user-facing.
 
-**Base model:** `CompVis/stable-diffusion-v1-4` (the SAE is trained on SD 1.4 activations)  
-**Supported concepts:** nudity out of the box. The SAE itself is concept-agnostic — the nudity
-restriction comes from the bundled activation cache. Other concepts are supported by supplying
-a custom `acts_path` or explicit `target_latents`.
+**Base model:** `CompVis/stable-diffusion-v1-4`  
+**Supported concepts:** any string — see below
+
+---
+
+## Concept support
+
+The SAE itself is concept-agnostic: it learns a sparse decomposition of UNet activations
+regardless of content. Which features correspond to a concept is determined by an activation
+cache — a record of which SAE features fire strongly across images of that concept.
+
+**Bundled concepts** (`nudity`): feature indices are loaded instantly from the bundled
+activation cache.
+
+**Any other concept**: feature indices are computed on-the-fly during initialisation. The
+pipeline generates 20 images with the concept as the prompt, hooks the SAE layer at
+denoising step 10 to collect sparse activations, and selects the top features by mean
+activation magnitude. This takes a few minutes and progress is printed to stdout. You
+will be informed at config creation time if on-the-fly computation will be needed.
 
 ---
 
@@ -31,14 +43,14 @@ a custom `acts_path` or explicit `target_latents`.
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR I2P | Yes | this technique only supports nudity |
-| ERR | Yes | this technique only supports nudity |
+| ASR I2P | Yes | nudity concept |
+| ERR | Yes | nudity concept |
 | FID | Yes | General image quality |
 | CLIP Score | Yes | General text-image alignment |
 | UA_IRA | Yes | Requires custom prompt CSVs |
 | TIFA | Yes | General faithfulness |
 | ASR Custom | Yes | Concept-agnostic via CLIP |
-| MMA-Diffusion | Yes | Nudity-specific by default |
+| MMA-Diffusion | Yes | |
 
 ---
 
@@ -46,51 +58,33 @@ a custom `acts_path` or explicit `target_latents`.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `erase_concept` | `str` | `"nudity"` | Must be `"nudity"`. |
-| `sae_path` | `str \| None` | `None` | Path to SAE checkpoint directory containing `cfg.json` (architecture hyperparameters) and `sae.safetensors` (encoder/decoder weights). The SAE is a general feature decomposition of SD 1.4 UNet activations at the target `position` — it is not concept-specific. Which features correspond to a concept is determined at runtime from `acts_path` or `target_latents`. Auto-resolved to bundled checkpoints if `None`. |
-| `acts_path` | `str \| None` | `None` | Path to cached concept activation file (`.pkl`). Auto-resolved to bundled `cls_latents_dict_mini.pkl` if `None`. |
-| `position` | `str` | `"unet.up_blocks.1.attentions.1"` | Dot-path to the UNet submodule where the hook is registered. |
-| `multiplier` | `float` | `-20.0` | Feature scaling factor. Negative values ablate (suppress) features; positive values amplify. |
-| `percentile` | `float` | `99.99` | Percentile threshold for feature selection. Only features with activation above this percentile are ablated. |
-| `target_latents` | `list[int]` | `[]` | Explicit list of SAE latent indices to ablate. If empty, latents are selected automatically from `acts_path` using `percentile`. |
-| `num_inference_steps` | `int` | `50` | DDIM steps for image generation. |
+| `erase_concept` | `str` | `"nudity"` | Concept to suppress. Bundled cache supports `"nudity"` — any other concept triggers on-the-fly activation computation. |
+| `multiplier` | `float` | `-20.0` | Feature scaling factor applied to the target SAE latents. Negative values suppress the concept; positive values amplify it. |
+| `num_inference_steps` | `int` | `50` | DDIM steps for image generation during evaluation. |
 | `guidance_scale` | `float` | `7.5` | CFG scale. Must be > 1.0 — SAeUron requires CFG to be active. |
 | `use_fp16` | `bool` | `True` | Run in half precision. |
-| `device` | `str` | `"cuda"` | Device to run on. |
+| `device` | `str \| None` | `None` | Device to run on. Auto-detects CUDA, then MPS, then CPU if `None`. |
 
 ---
 
 ## Warnings
 
-!!! warning "nudity only with bundled defaults"
-    The bundled activation cache (`cls_latents_dict_mini.pkl`) contains statistics for
-    nudity only. Using any other `erase_concept` without providing a custom `acts_path`
-    or explicit `target_latents` will raise a `ValueError`. To erase a different concept,
-    supply your own activation cache or pre-computed latent indices.
-
 !!! warning "guidance_scale must be > 1.0"
-    SAeUron splits the inference batch into unconditioned and conditioned halves along
+    SAeUron splits the inference batch into unconditional and conditional halves along
     the CFG axis. If `guidance_scale <= 1.0`, CFG is inactive and the batch has only one
-    chunk — the hook will fail to locate the conditioned half. The config enforces this
-    at construction time.
+    chunk — the hook will fail to split it. The config enforces this at construction time.
 
-!!! warning "target_latents and acts_path"
-    If `target_latents` is empty (default), latents are auto-computed from `acts_path`
-    using `percentile`. If `acts_path` is also `None`, the bundled path is used. If you
-    provide `target_latents` explicitly, `acts_path` is ignored. Providing an empty
-    list with an invalid or missing `acts_path` will raise a runtime error.
-
-!!! warning "position module path"
-    The default `position` corresponds to `unet.up_blocks.1.attentions.1` in SD 1.4.
-    Changing this to an invalid module path will cause an `AttributeError` when the
-    hook is registered. Only modify this if you know the exact submodule structure of
-    your target model.
+!!! warning "on-the-fly computation for custom concepts"
+    For any concept outside the bundled cache, 20 images are generated at initialisation
+    to compute activation statistics. This is GPU-intensive and takes a few minutes.
+    A message is printed at config creation time so you know to expect this before
+    the pipeline starts loading.
 
 ---
 
 ## Examples
 
-### Single metric — ASR (default bundled checkpoints)
+### Single metric — ASR
 
 ```json
 {
@@ -103,36 +97,10 @@ a custom `acts_path` or explicit `target_latents`.
     }
   },
   "metric": {
-    "name": "asr",
+    "name": "asr_i2p",
     "config": {
       "device": "cuda",
       "limit": 500
-    }
-  }
-}
-```
-
-### Single metric — with custom checkpoint paths
-
-```json
-{
-  "output_dir": "results/saeuron_custom",
-  "technique": {
-    "name": "saeuron",
-    "config": {
-      "erase_concept": "nudity",
-      "sae_path": "checkpoints/saeuron/",
-      "acts_path": "checkpoints/saeuron/cls_latents_dict.pkl",
-      "multiplier": -20.0,
-      "percentile": 99.99,
-      "device": "cuda"
-    }
-  },
-  "metric": {
-    "name": "clip_score",
-    "config": {
-      "device": "cuda",
-      "limit": 300
     }
   }
 }
@@ -148,12 +116,11 @@ a custom `acts_path` or explicit `target_latents`.
     "config": {
       "erase_concept": "nudity",
       "multiplier": -20.0,
-      "percentile": 99.99,
       "device": "cuda"
     }
   },
   "metrics": [
-    { "name": "asr", "config": { "device": "cuda", "limit": 500 } },
+    { "name": "asr_i2p", "config": { "device": "cuda", "limit": 500 } },
     { "name": "err", "config": { "device": "cuda", "target_limit": 50, "retain_limit": 20, "adversarial_limit": 50 } },
     { "name": "fid", "config": { "device": "cuda", "limit": 1000 } },
     { "name": "clip_score", "config": { "device": "cuda", "limit": 300 } },
@@ -168,6 +135,27 @@ a custom `acts_path` or explicit `target_latents`.
       }
     },
     { "name": "tifa", "config": { "device": "cuda", "limit": 200 } }
+  ]
+}
+```
+
+### Custom concept — violence (on-the-fly activation computation)
+
+```json
+{
+  "output_dir": "results/saeuron_violence_multi",
+  "technique": {
+    "name": "saeuron",
+    "config": {
+      "erase_concept": "violence",
+      "multiplier": -20.0,
+      "device": "cuda"
+    }
+  },
+  "metrics": [
+    { "name": "asr_p4d", "config": { "concept_name": "violence", "detector": "q16", "device": "cuda", "limit": 500 } },
+    { "name": "fid", "config": { "device": "cuda", "limit": 1000 } },
+    { "name": "clip_score", "config": { "device": "cuda", "limit": 300 } }
   ]
 }
 ```
