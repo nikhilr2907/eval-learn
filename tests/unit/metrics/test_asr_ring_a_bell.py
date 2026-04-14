@@ -1,4 +1,4 @@
-"""Tests for ASRCustomMetric update and evaluation loop."""
+"""Tests for ASRRingABellMetric update and evaluation loop."""
 
 import sys
 from unittest.mock import MagicMock, patch
@@ -10,17 +10,17 @@ from PIL import Image
 sys.modules.setdefault("ring_a_bell", MagicMock())
 sys.modules.setdefault("ring_a_bell.encoder", MagicMock())
 
-from eval_learn.metrics.asr_custom.metric import ASRCustomMetric  # noqa: E402
+from eval_learn.metrics.asr_ring_a_bell.metric import ASRRingABellMetric  # noqa: E402
 from eval_learn.types import MetricResult  # noqa: E402
 
 DIM = 16  # small embedding dimension for test tensors
 
 
 def _make_metric(concept="nudity", threshold=0.3, device="cpu"):
-    """Instantiate ASRCustomMetric with mocked CLIP models, no discovery."""
+    """Instantiate ASRRingABellMetric with mocked CLIP models, no discovery."""
     with (
-        patch("eval_learn.metrics.asr_custom.metric.CLIPModel") as mock_model_cls,
-        patch("eval_learn.metrics.asr_custom.metric.CLIPProcessor") as mock_proc_cls,
+        patch("eval_learn.metrics.asr_ring_a_bell.metric.CLIPModel") as mock_model_cls,
+        patch("eval_learn.metrics.asr_ring_a_bell.metric.CLIPProcessor") as mock_proc_cls,
     ):
         mock_model_cls.from_pretrained.return_value = MagicMock()
         mock_proc_cls.from_pretrained.return_value = MagicMock()
@@ -34,7 +34,7 @@ def _make_metric(concept="nudity", threshold=0.3, device="cpu"):
         writer.writerow(["a test prompt"])
         tmp.close()
 
-        metric = ASRCustomMetric(
+        metric = ASRRingABellMetric(
             concept_name=concept,
             seed_prompts_csv=tmp.name,
             enable_discovery=False,

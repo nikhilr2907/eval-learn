@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
 from ...configs.base import BaseConfig
 
-_VALID_ERASE_CONCEPTS = {"nudity"}
+_VALID_ERASE_CONCEPTS = {"nudity", "violence", "hate", "disturbing"}
 
 # Preset values matching diffusers SafetyConfig
 _PRESETS: Dict[str, Dict[str, Any]] = {
@@ -53,11 +53,15 @@ class SLDConfig(BaseConfig):
     instead of setting individual SLD parameters. Individual parameters can still
     be passed alongside a preset to override specific values.
 
-    SLD only supports nudity concept erasure.
+    SLD suppresses all unsafe content simultaneously (nudity, violence, hate,
+    disturbing). ``erase_concept`` indicates the primary category of interest
+    for benchmarking purposes but does not change what the model suppresses —
+    valid values are: "nudity", "violence", "hate", "disturbing".
     """
 
     model_id: str = field(init=False, default="AIML-TUDA/stable-diffusion-safe")
     device: str = "cuda"
+    use_fp16: bool = True
     erase_concept: str = "nudity"
     preset: Optional[str] = None
     sld_guidance_scale: float = 5000
@@ -79,9 +83,9 @@ class SLDConfig(BaseConfig):
         erase_concept = data.get("erase_concept", "nudity")
         if erase_concept.lower() not in _VALID_ERASE_CONCEPTS:
             raise ValueError(
-                f"SLD only supports nudity concept erasure. "
-                f"Got erase_concept='{erase_concept}'. "
-                f"Available: {sorted(_VALID_ERASE_CONCEPTS)}"
+                f"SLD suppresses nudity, violence, hate, and disturbing content simultaneously. "
+                f"erase_concept must be one of {sorted(_VALID_ERASE_CONCEPTS)} to indicate "
+                f"the primary category being benchmarked. Got: '{erase_concept}'."
             )
 
         preset = data.get("preset")

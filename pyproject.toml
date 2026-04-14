@@ -6,45 +6,49 @@ build-backend = "setuptools.build_meta"
 name = "eval-learn"
 version = "0.1.0"
 description = "Unlearning Benchmark for Text-to-Image Models"
-readme = "readme.md"
+readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
     {name = "Eval-Learn Team"}
 ]
+keywords = ["diffusion", "unlearning", "evaluation", "text-to-image", "benchmark", "machine-learning"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
     "numpy>=2.4.0",
     "scipy>=1.17.0",
     "tqdm>=4.66.5",
     "requests>=2.28.1",
-    "filelock>=3.25.0",
-    "fsspec>=2026.2.0",
-    "torchmetrics>=1.0.3",
     "safetensors>=0.7.0",
     "diffusers>=0.37.0",
     "huggingface_hub>=1.8.0",
-    "pandas>=3.0.1",
     "Pillow>=12.1.0",
     "python-dotenv>=1.2.2",
     "torch>=2.11.0",
     "transformers>=5.3.0",
     "datasets>=4.8.0",
-    "pyarrow>=22.0.0,<23.0.0",
     "pyyaml>=5.1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/your-org/eval-learn"
+Documentation = "https://eval-learn.readthedocs.io"
+Source = "https://github.com/your-org/eval-learn"
+"Bug Tracker" = "https://github.com/your-org/eval-learn/issues"
 
 [project.optional-dependencies]
 # Metric extras (PyPI packages)
 asr = ["nudenet>=3.4.2"]
 fid = ["torchvision>=0.26.0"]
-tifa = ["tensorflow>=2.21.0"]
-coco = ["pycocotools>=2.0.11"]
+coco = ["torchvision>=0.26.0"]
 # Development
 dev = ["pytest>=7.0.0", "ruff>=0.0.1", "mypy>=1.0.0"]
+all = ["eval-learn[asr,fid,coco,dev]"]
 
 # Note: Technique packages (esd, mace, uce, safree, sld, saeuron)
 # are local editable installs declared in requirements.txt
@@ -62,13 +66,16 @@ uce = "eval_learn.techniques.uce.wrapper:UCEWrapper"
 safree = "eval_learn.techniques.SAFREE.wrapper:SAFREETechnique"
 concept_steerers = "eval_learn.techniques.concept_steerers.wrapper:ConceptSteerersWrapper"
 saeuron = "eval_learn.techniques.saeuron.wrapper:SAeUronWrapper"
+cogfd = "eval_learn.techniques.cogfd.wrapper:CoGFDWrapper"
 advunlearn = "eval_learn.techniques.advunlearn.wrapper:AdvUnlearnWrapper"
 ssd = "eval_learn.techniques.ssd.wrapper:SSDWrapper"
+trasce = "eval_learn.techniques.trasce.wrapper:TraSCEWrapper"
 
 [project.entry-points."eval_learn.metrics"]
-asr = "eval_learn.metrics.asr.metric:ASRMetric"
-asr_custom = "eval_learn.metrics.asr_custom.metric:ASRCustomMetric"
-mma_diffusion = "eval_learn.metrics.mma_diffusion.metric:MMADiffusionMetric"
+asr_p4d = "eval_learn.metrics.asr_p4d.metric:ASRP4D"
+asr_i2p = "eval_learn.metrics.asr_i2p.metric:ASRMetric"
+asr_ring_a_bell = "eval_learn.metrics.asr_ring_a_bell.metric:ASRRingABellMetric"
+asr_mma_diffusion = "eval_learn.metrics.asr_mma_diffusion.metric:MMADiffusionMetric"
 fid = "eval_learn.metrics.fid.metric:FIDMetric"
 err = "eval_learn.metrics.err.metric:ERRMetric"
 tifa = "eval_learn.metrics.tifa.metric:TIFAMetric"
@@ -84,6 +91,9 @@ ua_ira_csv = "eval_learn.datasets.ua_ira_csv:load_ua_ira_csv"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+eval_learn = ["**/*.pth", "**/*.json", "**/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

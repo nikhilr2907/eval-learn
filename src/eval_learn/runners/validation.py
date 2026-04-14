@@ -27,19 +27,19 @@ def get_erase_concept(
 def validate_nudity_metrics(
     technique_name: str, erase_concept: Optional[str], metric_name: str
 ) -> None:
-    """Validate ASR/ERR require nudity concept."""
-    if metric_name not in ["asr", "err"]:
+    """Validate ERR requires nudity concept. ASR is multi-concept and not restricted here."""
+    if metric_name != "err":
         return
 
     # free_run doesn't have erase_concept field - allow it
     if technique_name == "free_run":
         return
 
-    # Other techniques must have erase_concept="nudity"
+    # ERR uses NudeNet + I2P and is nudity-specific
     if erase_concept != "nudity":
         raise ValidationError(
-            f"Metric '{metric_name}' is nudity-specific "
-            f"(uses NudeNet detector and I2P/Ring-A-Bell datasets). "
+            f"Metric 'err' is nudity-specific "
+            f"(uses NudeNet detector and I2P dataset). "
             f"Got erase_concept='{erase_concept}'. "
             f"For non-nudity concepts, use UA_IRA, FID, or CLIP_Score."
         )
@@ -113,31 +113,3 @@ def validate_technique_metric_pair(
         validate_ua_ira_paths(metric_config)
 
 
-def validate_technique_metric_matrix(
-    technique_names: list,
-    metric_names: list,
-    technique_configs: Dict[str, Dict[str, Any]],
-    metric_configs: Optional[Dict[str, Dict[str, Any]]] = None,
-) -> None:
-    """Validate all technique-metric pairs in a matrix."""
-    metric_configs = metric_configs or {}
-
-    for technique_name in technique_names:
-        technique_config = technique_configs.get(technique_name, {})
-
-        for metric_name in metric_names:
-            metric_config = metric_configs.get(metric_name, {})
-
-            try:
-                validate_technique_metric_pair(
-                    technique_name=technique_name,
-                    technique_config=technique_config,
-                    metric_name=metric_name,
-                    metric_config=metric_config,
-                )
-            except ValidationError as e:
-                # Re-raise with context about which pair failed
-                raise ValidationError(
-                    f"Invalid combination: technique='{technique_name}' × metric='{metric_name}'\n"
-                    f"Reason: {str(e)}"
-                )

@@ -11,6 +11,7 @@ class UCEConfig(BaseConfig):
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     uce_weights_path: Optional[str] = None
     device: str = "cuda"
+    use_fp16: bool = True
     preset: Optional[str] = None  # bundled preset name ("nudity", "violence", "dog")
     num_inference_steps: int = 50
     guidance_scale: float = 7.5

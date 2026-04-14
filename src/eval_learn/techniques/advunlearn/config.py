@@ -37,6 +37,7 @@ class AdvUnlearnConfig(BaseConfig):
     # Model settings
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
     device: str = "cuda"
+    use_fp16: bool = True
 
     # Concept erasure
     erase_concept: str = "nudity"
@@ -79,8 +80,6 @@ class AdvUnlearnConfig(BaseConfig):
     # Misc
     save_dir: Optional[str] = None
     checkpoint_path: Optional[str] = None
-    cache_dir: str = ".cache"
-
     # Generation settings
     num_inference_steps: int = 50
     guidance_scale: float = 7.5

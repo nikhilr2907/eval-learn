@@ -214,7 +214,7 @@ def cmd_models(_args):
     print(f"  {'name':<20} {'base model':<45} {'configurable'}")
     print(f"  {'-'*20} {'-'*45} {'-'*12}")
     for name in sorted(TECHNIQUE_BASE_MODELS):
-        print(f"  {name:<20} {TECHNIQUE_BASE_MODELS[name]:<45} no  (field init=False)")
+        print(f"  {name:<20} {TECHNIQUE_BASE_MODELS[name]:<45} no")
     print(f"  {'free_run':<20} {'(user-specified via model_id)':<45} required")
 
     # Metrics
@@ -224,7 +224,11 @@ def cmd_models(_args):
     for name in sorted(METRIC_MODELS):
         info = METRIC_MODELS[name]
         if info.configurable:
-            detail = f"yes  (config: {info.config_field})"
+            if info.choices:
+                choices_str = " | ".join(c.split("/")[-1] for c in sorted(info.choices))
+                detail = f"yes  (config: {info.config_field}: {choices_str})"
+            else:
+                detail = f"yes  (config: {info.config_field})"
         elif info.note:
             detail = f"no   ({info.note})"
         else:
