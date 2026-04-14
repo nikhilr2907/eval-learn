@@ -123,7 +123,7 @@ class AdvUnlearnConfig(BaseConfig):
 
         save_dir: Optional directory path for saving model checkpoints.  When ``None``
             no checkpoints are written to disk.
-        checkpoint_path: Optional path to a previously saved checkpoint from which to
+        load_path: Optional path to a previously saved checkpoint from which to
             resume training.  When ``None`` training starts from the pretrained weights.
         num_inference_steps: Number of denoising steps used during evaluation / sample
             generation.
@@ -175,7 +175,7 @@ class AdvUnlearnConfig(BaseConfig):
 
     # Misc
     save_dir: Optional[str] = None
-    checkpoint_path: Optional[str] = None
+    load_path: Optional[str] = None
     # Generation settings
     num_inference_steps: int = 50
     guidance_scale: float = 7.5

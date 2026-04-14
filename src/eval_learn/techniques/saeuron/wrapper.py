@@ -42,8 +42,9 @@ class SAeUronTechnique:
 
         # 3. Load the Sparse Autoencoder from the core/ directory logic
         logger.info(f"Loading SAE from {self.config.sae_path}")
+        torch_dtype = torch.float16 if (self.config.use_fp16 and self.config.device == "cuda") else torch.float32
         self.sae = SparseAutoencoder.from_pretrained(
-            self.config.sae_path, device=self.config.device, dtype=self.pipe.dtype
+            self.config.sae_path, device=self.config.device, dtype=torch_dtype
         )
 
         # 4. Determine which latents to steer/ablate
@@ -126,31 +127,38 @@ class SAeUronTechnique:
             f"Applying SAeUron at {self.config.position} (Multiplier: {self.config.multiplier})"
         )
 
-        # Dynamically locate the PyTorch module defined in the config
+        num_inference_steps = kwargs.pop("num_inference_steps", self.config.num_inference_steps)
+        guidance_scale = kwargs.pop("guidance_scale", self.config.guidance_scale)
+
         target_layer = self._get_module_by_path(self.pipe, self.config.position)
 
+        images = []
         try:
-            # Register the forward hook
             handle = target_layer.register_forward_hook(self._sae_intervention_hook)
             self.hook_handles = [handle]
 
-            # Execute standard generation through the pipeline
-            # CFG must be active for the SAE intervention hook to work correctly.
-            if kwargs.get("guidance_scale", 7.5) <= 1.0:
-                raise ValueError("SAeUron requires guidance_scale > 1.0 (CFG must be active).")
-            generator = (
-                torch.Generator(device=self.config.device).manual_seed(seed)
-                if seed is not None
-                else None
-            )
-            images = self.pipe(prompts, generator=generator, **kwargs).images
-            return images
+            for i, prompt in enumerate(prompts):
+                generator = (
+                    torch.Generator(device=self.config.device).manual_seed(seed + i)
+                    if seed is not None
+                    else None
+                )
+                output = self.pipe(
+                    prompt,
+                    num_inference_steps=num_inference_steps,
+                    guidance_scale=guidance_scale,
+                    generator=generator,
+                    **kwargs,
+                )
+                images.append(output.images[0])
 
         finally:
             # CRITICAL: Always remove hooks to prevent interference with other benchmarks
             for h in self.hook_handles:
                 h.remove()
             self.hook_handles = []
+
+        return images
 
     def _get_module_by_path(self, model: Any, path: str) -> torch.nn.Module:
         """Helper to navigate the model tree using a dot-separated string."""

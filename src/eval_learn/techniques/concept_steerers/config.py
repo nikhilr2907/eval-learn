@@ -24,11 +24,12 @@ class ConceptSteerersConfig(BaseConfig):
         config_dict = dict(config_dict)
 
         erase_concept = config_dict.get("erase_concept", "nudity")
-        if erase_concept.lower() not in _VALID_ERASE_CONCEPTS:
+        has_custom_checkpoint = bool(config_dict.get("sae_path"))
+        if not has_custom_checkpoint and erase_concept.lower() not in _VALID_ERASE_CONCEPTS:
             raise ValueError(
-                f"ConceptSteerers only supports nudity concept erasure. "
+                f"The bundled ConceptSteerers checkpoint only supports nudity. "
                 f"Got erase_concept='{erase_concept}'. "
-                f"Available: {sorted(_VALID_ERASE_CONCEPTS)}"
+                f"To target a different concept, provide a custom 'sae_path'."
             )
 
         if not config_dict.get("device"):
@@ -46,3 +47,10 @@ class ConceptSteerersConfig(BaseConfig):
             )
 
         return super().from_dict(config_dict)
+
+    def __post_init__(self):
+        if self.guidance_scale <= 1.0:
+            raise ValueError(
+                f"guidance_scale must be > 1.0 — Concept Steerers requires CFG to be active, "
+                f"got {self.guidance_scale}."
+            )

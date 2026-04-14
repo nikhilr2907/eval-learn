@@ -63,8 +63,8 @@ but the pre-built retention datasets are curated for nudity erasure.
 | `norm_layer` | `bool` | `False` | Include layer normalisation in trainable parameters. |
 | `ddim_steps` | `int` | `50` | DDIM steps during training rollouts. |
 | `save_interval` | `int` | `1` | Checkpoint save frequency (in iterations). |
-| `save_dir` | `str \| None` | `None` | Directory to save checkpoints. |
-| `checkpoint_path` | `str \| None` | `None` | Path to a previously saved checkpoint to resume from. |
+| `save_dir` | `str \| None` | `None` | Directory to save checkpoints. After training, a `.pt` file is written here named `{concept}_{text_encoder\|unet}.pt` (e.g. `nudity_text_encoder.pt`). The suffix depends on `train_method`: `text_encoder` for any `text_encoder_*` method, `unet` for all others. |
+| `load_path` | `str \| None` | `None` | Path to a `.pt` file saved by a previous AdvUnlearn run (from `save_dir`). If the file exists, training is skipped and these weights are loaded. Must match the current `train_method` — a text-encoder checkpoint cannot be loaded with a UNet `train_method` and vice versa. |
 | `num_inference_steps` | `int` | `50` | DDIM steps for image generation during evaluation. |
 | `guidance_scale` | `float` | `7.5` | CFG scale for generation. |
 | `use_fp16` | `bool` | `True` | Run in half precision. |
@@ -99,6 +99,13 @@ but the pre-built retention datasets are curated for nudity erasure.
 ---
 
 ## Warnings
+
+!!! warning "Checkpoint format and train_method compatibility"
+    `load_path` must point to a `.pt` file written by `save_dir` from a previous run.
+    The file contains a state dict keyed with `text_encoder.*` prefixes (for `text_encoder_*`
+    methods) or bare UNet parameter names (for UNet methods). Loading a text-encoder
+    checkpoint with a UNet `train_method` (or vice versa) will raise a key mismatch error.
+    Always use the same `train_method` when resuming from a checkpoint.
 
 !!! warning "warmup_iter must be less than train_steps"
     If `warmup_iter >= train_steps`, AdvUnlearn raises a `ValidationError` on startup.

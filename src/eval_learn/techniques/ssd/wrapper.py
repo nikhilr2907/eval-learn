@@ -45,6 +45,7 @@ class SSDTechnique:
             num_fisher_samples=self.config.num_fisher_samples,
             dampening_coeff=self.config.dampening_coeff,
             save_path=self.config.save_path,
+            load_path=self.config.load_path,
         )
 
     def generate(

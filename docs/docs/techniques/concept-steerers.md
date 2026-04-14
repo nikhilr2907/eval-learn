@@ -39,7 +39,7 @@ automatically from `<config_dir>/checkpoints/i2p_sd14_l9` if `sae_path` is not s
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `erase_concept` | `str` | `"nudity"` | Must be `"nudity"`. |
-| `sae_path` | `str \| None` | `None` | Path to SAE checkpoint directory. Auto-resolved to bundled `checkpoints/i2p_sd14_l9` if `None`. |
+| `sae_path` | `str \| None` | `None` | Path to SAE checkpoint directory containing `config.json` (architecture hyperparameters) and `state_dict.pth` (encoder/decoder weights). The SAE is a general feature decomposition of CLIP text encoder layer 9 activations — it is not concept-specific. The concept direction is derived at runtime by encoding the concept prompt through the SAE. Auto-resolved to bundled `checkpoints/i2p_sd14_l9` if `None`. |
 | `multiplier` | `float` | `1.0` | Steering strength. Positive values suppress the concept (subtract the concept direction). Increase to strengthen erasure; values that are too high may degrade generation quality. |
 | `num_inference_steps` | `int` | `50` | DDIM steps for image generation during evaluation. |
 | `guidance_scale` | `float` | `7.5` | CFG guidance scale for generation. |

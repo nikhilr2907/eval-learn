@@ -31,6 +31,8 @@ class ESDConfig(BaseConfig):
     learning_rate: float = 5e-5
     use_fp16: bool = True
 
+    # Load pre-trained weights (skips training entirely)
+    load_path: Optional[str] = None
     # Save trained weights (optional)
     save_path: Optional[str] = None
 

@@ -16,6 +16,7 @@
 -e packages/ssd/
 -e packages/cogfd/
 -e packages/trasce/
+-e packages/ca/
 # CUDA wheels
 --extra-index-url https://download.pytorch.org/whl/cu126
 

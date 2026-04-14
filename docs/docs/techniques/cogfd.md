@@ -64,7 +64,8 @@ replace the defaults with LLM-generated expansions.
 | `lambda_decouple` | `float` | `0.5` | Weight for the feature decoupling loss. Must be >= 0. |
 | `train_steps` | `int` | `150` | Training iterations. Must be > 0. |
 | `learning_rate` | `float` | `1e-5` | Optimiser learning rate. Must be > 0. |
-| `save_path` | `str \| None` | `None` | Directory to save the modified UNet (via `save_pretrained`). Skipped if `None`. |
+| `load_path` | `str \| None` | `None` | Path to a directory saved by a previous CoGFD run (via `save_path`). Must contain a `unet/` subdirectory in HuggingFace `save_pretrained` format. If set, training is skipped entirely. |
+| `save_path` | `str \| None` | `None` | Directory to save the modified UNet using HuggingFace `save_pretrained` after training. Produces a `unet/` subdirectory — not a single `.pt` file. Only used when training runs (i.e. `load_path` is not set). Skipped if `None`. |
 | `num_inference_steps` | `int` | `50` | DDIM steps for image generation. |
 | `guidance_scale` | `float` | `7.5` | CFG scale for generation. |
 | `use_fp16` | `bool` | `True` | Run in half precision on CUDA. |
@@ -85,6 +86,12 @@ For `erase_concept="nudity"` and `erase_concept="violence"`, `combination_prompt
 ---
 
 ## Warnings
+
+!!! warning "Checkpoint format differs from ESD and MACE"
+    CoGFD uses HuggingFace `save_pretrained` format rather than a bare `.pt` state dict.
+    `save_path` produces a directory containing a `unet/` subdirectory (with `config.json`
+    and weight files). Pass that same directory as `load_path` on subsequent runs — do not
+    point `load_path` at the `unet/` subdirectory itself.
 
 !!! warning "Custom concepts require explicit combination_prompts"
     If `erase_concept` is not `"nudity"` or `"violence"`, `combination_prompts` must be

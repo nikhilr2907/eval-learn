@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional
+from typing import Optional
 from ...configs.base import BaseConfig
 
 
@@ -20,17 +20,20 @@ class SSDConfig(BaseConfig):
     dampening_coeff: float = 1.0
     num_fisher_samples: int = 4
 
-    # Save modified UNet weights (optional, to avoid re-running SSD)
+    # Save/load modified UNet weights (optional, to avoid re-running SSD)
     save_path: Optional[str] = None
+    load_path: Optional[str] = None
+
+    # Generation settings
+    num_inference_steps: int = 50
+    guidance_scale: float = 7.5
 
     def __post_init__(self):
+        if not self.erase_concept:
+            raise ValueError("erase_concept must not be empty.")
         if self.alpha <= 0:
             raise ValueError(f"alpha must be > 0, got {self.alpha}")
         if self.dampening_coeff <= 0:
             raise ValueError(f"dampening_coeff must be > 0, got {self.dampening_coeff}")
         if self.num_fisher_samples <= 0:
             raise ValueError(f"num_fisher_samples must be > 0, got {self.num_fisher_samples}")
-
-    # Generation settings
-    num_inference_steps: int = 50
-    guidance_scale: float = 7.5

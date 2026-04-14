@@ -49,7 +49,7 @@ def validate_nudity_techniques(
     technique_name: str, erase_concept: Optional[str]
 ) -> None:
     """Validate nudity-specific techniques can only be used with nudity."""
-    nudity_only_techniques = {"safree", "sld", "concept_steerers", "saeuron"}
+    nudity_only_techniques = {"saeuron"}
 
     if technique_name not in nudity_only_techniques:
         return

@@ -55,9 +55,16 @@ class CoGFDConfig(BaseConfig):
             Must be > 0.
         learning_rate: Optimiser learning rate.  Must be > 0.
 
+        load_path: Optional filesystem path to a directory saved by a previous CoGFD run
+            (via ``save_path``).  When set, training is skipped entirely and the modified
+            UNet is loaded directly from this directory.  The directory must have been
+            written by CoGFD's ``save_path`` (i.e. contain a ``unet/`` subdirectory in
+            HuggingFace ``save_pretrained`` format).
         save_path: Optional filesystem path at which to save the modified UNet weights
-            after fine-tuning.  When ``None`` the weights are kept in memory only and
-            not persisted.
+            after fine-tuning.  Produces a directory with a ``unet/`` subdirectory in
+            HuggingFace ``save_pretrained`` format.  When ``None`` the weights are kept
+            in memory only and not persisted.  Only used when training runs (i.e.
+            ``load_path`` is not set).
 
         num_inference_steps: Number of denoising steps used during evaluation / sample
             generation.
@@ -90,6 +97,8 @@ class CoGFDConfig(BaseConfig):
     train_steps: int = 150
     learning_rate: float = 1e-5
 
+    # Load pre-trained weights (skips training entirely)
+    load_path: Optional[str] = None
     # Save modified UNet weights
     save_path: Optional[str] = None
 

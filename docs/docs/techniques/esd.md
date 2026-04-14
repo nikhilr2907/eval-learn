@@ -48,7 +48,8 @@ as `erase_concept` is used as the conditioning text during training.
 | `train_steps` | `int` | `200` | Number of fine-tuning steps. |
 | `learning_rate` | `float` | `5e-5` | Optimiser learning rate. |
 | `use_fp16` | `bool` | `True` | Run in half precision. Disable if you encounter NaN losses. |
-| `save_path` | `str \| None` | `None` | Path to save the fine-tuned UNet weights (`.pt`). If `None`, weights are not persisted between runs. |
+| `load_path` | `str \| None` | `None` | Path to a `.pt` file containing a pre-trained UNet state dict (saved by a previous ESD run). If set, training is skipped entirely and these weights are loaded directly. |
+| `save_path` | `str \| None` | `None` | Path to save the fine-tuned UNet state dict as a `.pt` file after training. Only used when training runs (i.e. `load_path` is not set). |
 | `num_inference_steps` | `int` | `50` | DDIM steps used during image generation for evaluation. |
 | `guidance_scale` | `float` | `7.5` | Classifier-free guidance scale for generation. |
 | `device` | `str` | `"cuda"` | Device to run on. |
@@ -66,10 +67,17 @@ as `erase_concept` is used as the conditioning text during training.
 
 ## Warnings
 
-!!! warning "Saving weights"
-    If `save_path` is `None`, ESD re-trains from scratch on every run. For repeated evaluation
-    runs, always set `save_path` to avoid redundant compute. If the file already exists at
-    `save_path`, ESD will load it instead of re-training.
+!!! warning "load_path and save_path are distinct"
+    `load_path` and `save_path` serve different purposes and should not be set to the same
+    file. Set `save_path` on a training run to persist the weights. On all subsequent runs,
+    set `load_path` to those same weights to skip retraining. If neither is set, ESD retrains
+    from scratch on every run.
+
+!!! warning "Checkpoint format"
+    Both `load_path` and `save_path` refer to a single `.pt` file containing the full UNet
+    state dict (`torch.save(unet.state_dict(), path)`). Do not point `load_path` at a
+    HuggingFace model directory or a partial state dict — it will fail silently or raise a
+    key mismatch error.
 
 !!! warning "train_method and over-erasure"
     Using `"full"` trains all layers and carries a higher risk of degrading general image quality.

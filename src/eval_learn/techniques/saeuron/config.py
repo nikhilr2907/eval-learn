@@ -46,29 +46,47 @@ class SAeUronConfig(BaseConfig):
     # If left empty, the wrapper will calculate them dynamically using `acts_path` and `percentile`.
     target_latents: List[int] = field(default_factory=list)
 
+    # Generation settings
+    num_inference_steps: int = 50
+    guidance_scale: float = 7.5
+
+    def __post_init__(self):
+        if not self.erase_concept:
+            raise ValueError("erase_concept must not be empty.")
+        if self.multiplier == 0:
+            raise ValueError("multiplier must not be 0 — use a negative value to ablate.")
+        if not (0 < self.percentile <= 100):
+            raise ValueError(f"percentile must be in (0, 100], got {self.percentile}.")
+        if self.guidance_scale <= 1.0:
+            raise ValueError("guidance_scale must be > 1.0 — SAeUron requires CFG to be active.")
+
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "SAeUronConfig":
         config_dict = dict(config_dict)
 
-        # Validate erase_concept
         erase_concept = config_dict.get("erase_concept", "nudity")
-        if erase_concept.lower() not in _VALID_ERASE_CONCEPTS:
+        using_bundled_defaults = (
+            not config_dict.get("acts_path") and not config_dict.get("target_latents")
+        )
+
+        # Restrict to nudity only when using bundled activation cache.
+        # Custom acts_path or explicit target_latents can support any concept.
+        if using_bundled_defaults and erase_concept.lower() not in _VALID_ERASE_CONCEPTS:
             raise ValueError(
-                f"SAeUron only supports nudity concept erasure. "
+                f"The bundled activation cache only supports: {sorted(_VALID_ERASE_CONCEPTS)}. "
                 f"Got erase_concept='{erase_concept}'. "
-                f"Available: {sorted(_VALID_ERASE_CONCEPTS)}"
+                f"To erase a different concept, supply a custom acts_path or explicit target_latents."
             )
 
         # Get the absolute path of the saeuron package
         saeuron_pkg_path = os.path.dirname(saeuron.__file__)
 
-        # 1. Resolve SAE Checkpoint Path automatically
-        if "sae_path" not in config_dict or not config_dict["sae_path"]:
-            # Points to the 'checkpoints' folder in the saeuron package
+        # Resolve SAE checkpoint path to bundled default if not provided
+        if not config_dict.get("sae_path"):
             config_dict["sae_path"] = os.path.join(saeuron_pkg_path, "checkpoints")
 
-        # 2. Resolve Cached Activations Path automatically
-        if "acts_path" not in config_dict or not config_dict["acts_path"]:
+        # Resolve activation cache path to bundled default if not provided
+        if not config_dict.get("acts_path"):
             config_dict["acts_path"] = os.path.join(
                 saeuron_pkg_path, "core", "cls_latents_dict_mini.pkl"
             )

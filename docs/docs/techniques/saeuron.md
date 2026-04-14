@@ -21,7 +21,9 @@ model. However, it requires pre-computed SAE weights and concept activation stat
 which are loaded from bundled checkpoints.
 
 **Base model:** `CompVis/stable-diffusion-v1-4` (the SAE is trained on SD 1.4 activations)  
-**Supported concepts:** nudity only (cached activations only available for nudity)
+**Supported concepts:** nudity out of the box. The SAE itself is concept-agnostic — the nudity
+restriction comes from the bundled activation cache. Other concepts are supported by supplying
+a custom `acts_path` or explicit `target_latents`.
 
 ---
 
@@ -45,12 +47,14 @@ which are loaded from bundled checkpoints.
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `erase_concept` | `str` | `"nudity"` | Must be `"nudity"`. |
-| `sae_path` | `str \| None` | `None` | Path to SAE checkpoint directory containing `cfg.json` and `sae.safetensors`. Auto-resolved to bundled checkpoints if `None`. |
+| `sae_path` | `str \| None` | `None` | Path to SAE checkpoint directory containing `cfg.json` (architecture hyperparameters) and `sae.safetensors` (encoder/decoder weights). The SAE is a general feature decomposition of SD 1.4 UNet activations at the target `position` — it is not concept-specific. Which features correspond to a concept is determined at runtime from `acts_path` or `target_latents`. Auto-resolved to bundled checkpoints if `None`. |
 | `acts_path` | `str \| None` | `None` | Path to cached concept activation file (`.pkl`). Auto-resolved to bundled `cls_latents_dict_mini.pkl` if `None`. |
 | `position` | `str` | `"unet.up_blocks.1.attentions.1"` | Dot-path to the UNet submodule where the hook is registered. |
 | `multiplier` | `float` | `-20.0` | Feature scaling factor. Negative values ablate (suppress) features; positive values amplify. |
 | `percentile` | `float` | `99.99` | Percentile threshold for feature selection. Only features with activation above this percentile are ablated. |
 | `target_latents` | `list[int]` | `[]` | Explicit list of SAE latent indices to ablate. If empty, latents are selected automatically from `acts_path` using `percentile`. |
+| `num_inference_steps` | `int` | `50` | DDIM steps for image generation. |
+| `guidance_scale` | `float` | `7.5` | CFG scale. Must be > 1.0 — SAeUron requires CFG to be active. |
 | `use_fp16` | `bool` | `True` | Run in half precision. |
 | `device` | `str` | `"cuda"` | Device to run on. |
 
@@ -58,15 +62,17 @@ which are loaded from bundled checkpoints.
 
 ## Warnings
 
-!!! warning "nudity only"
+!!! warning "nudity only with bundled defaults"
     The bundled activation cache (`cls_latents_dict_mini.pkl`) contains statistics for
-    nudity only. Passing any other concept raises a `ValidationError`.
+    nudity only. Using any other `erase_concept` without providing a custom `acts_path`
+    or explicit `target_latents` will raise a `ValueError`. To erase a different concept,
+    supply your own activation cache or pre-computed latent indices.
 
 !!! warning "guidance_scale must be > 1.0"
     SAeUron splits the inference batch into unconditioned and conditioned halves along
     the CFG axis. If `guidance_scale <= 1.0`, CFG is inactive and the batch has only one
-    chunk — the hook will fail to locate the conditioned half. Always use
-    `guidance_scale > 1.0` (default 7.5 is safe).
+    chunk — the hook will fail to locate the conditioned half. The config enforces this
+    at construction time.
 
 !!! warning "target_latents and acts_path"
     If `target_latents` is empty (default), latents are auto-computed from `acts_path`

@@ -41,6 +41,7 @@ class ESDTechnique:
             learning_rate=self.config.learning_rate,
             use_fp16=self.config.use_fp16,
             save_path=self.config.save_path,
+            load_path=self.config.load_path,
         )
 
     def generate(

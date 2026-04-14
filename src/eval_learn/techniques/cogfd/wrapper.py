@@ -49,6 +49,7 @@ class CoGFDTechnique:
             train_steps=self.config.train_steps,
             learning_rate=self.config.learning_rate,
             save_path=self.config.save_path,
+            load_path=self.config.load_path,
             num_inference_steps=self.config.num_inference_steps,
             guidance_scale=self.config.guidance_scale,
         )
