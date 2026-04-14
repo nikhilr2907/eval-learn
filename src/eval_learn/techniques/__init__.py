@@ -41,7 +41,7 @@ except Exception as e:
     logging.getLogger(__name__).warning("Could not register ssd: %s", e)
 
 try:
-    from .ca.wrapper import CAWrapper
+    from .ca.wrapper import CATechnique
 except Exception as e:
     import logging
     logging.getLogger(__name__).warning("Could not register ca: %s", e)
@@ -65,5 +65,5 @@ __all__ = [
     "CoGFDTechnique",
     "SSDTechnique",
     "TraSCETechnique",
-    "CAWrapper",
+    "CATechnique",
 ]

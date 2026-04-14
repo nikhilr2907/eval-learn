@@ -15,6 +15,8 @@ class ConceptSteerersConfig(BaseConfig):
     sae_path: Optional[str] = None
     erase_concept: str = "nudity"
     multiplier: float = 1.0
+    num_inference_steps: int = 50
+    guidance_scale: float = 7.5
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "ConceptSteerersConfig":

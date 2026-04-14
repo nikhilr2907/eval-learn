@@ -55,7 +55,16 @@ class ConceptSteerersTechnique:
         Returns:
             List of PIL Images.
         """
+        num_inference_steps = kwargs.pop("num_inference_steps", self.config.num_inference_steps)
+        guidance_scale = kwargs.pop("guidance_scale", self.config.guidance_scale)
+
         logger.info(
             f"Generating {len(prompts)} images with concept steering (strength: {self.config.multiplier})"
         )
-        return self.pipeline.generate(prompts, seed=seed, **kwargs)
+        return self.pipeline.generate(
+            prompts,
+            seed=seed,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            **kwargs,
+        )
