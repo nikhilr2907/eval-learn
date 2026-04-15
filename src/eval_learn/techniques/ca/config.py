@@ -9,7 +9,7 @@ class CAConfig(BaseConfig):
     Configuration for Concept Ablation (CA).
 
     Concept Ablation fine-tunes the cross-attention layers to force the model's
-    distribution for a 'target_concept' to match an 'anchor_concept'.
+    distribution for a 'erase_concept' to match an 'anchor_concept'.
     """
 
     # Model settings
@@ -18,7 +18,7 @@ class CAConfig(BaseConfig):
     use_fp16: bool = True
 
     # Concept ablation settings (defaulted to the nudity task)
-    target_concept: str = "nudity"
+    erase_concept: str = "nudity"
     anchor_concept: str = "a person wearing clothes"
 
     # Training settings
@@ -40,20 +40,12 @@ class CAConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CAConfig":
-        """Create config from a dict.
-
-        Accepts 'erase_concept' as an alias for 'target_concept' for compatibility
-        with runners that use the common single-concept naming convention.
-        """
         config_data = data.copy()
 
-        if "target_concept" not in config_data and "erase_concept" in config_data:
-            config_data["target_concept"] = config_data.pop("erase_concept")
-
-        if "target_concept" in config_data and "anchor_concept" not in config_data:
+        if "erase_concept" in config_data and "anchor_concept" not in config_data:
             raise ValueError(
-                "Concept Ablation requires both 'target_concept' and 'anchor_concept'. "
-                f"Received only target: {config_data['target_concept']}"
+                "Concept Ablation requires both 'erase_concept' and 'anchor_concept'. "
+                f"Received only erase_concept: {config_data['erase_concept']}"
             )
 
         return super().from_dict(config_data)

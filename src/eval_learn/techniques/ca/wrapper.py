@@ -31,7 +31,7 @@ class CATechnique:
 
         logger.info(
             f"Initializing CA: model={self.config.model_id}, "
-            f"target='{self.config.target_concept}', "
+            f"erase='{self.config.erase_concept}', "
             f"anchor='{self.config.anchor_concept}'"
         )
 
@@ -39,7 +39,7 @@ class CATechnique:
             model_id=self.config.model_id,
             device=self.config.device,
             use_fp16=self.config.use_fp16,
-            target_concept=self.config.target_concept,
+            target_concept=self.config.erase_concept,
             anchor_concept=self.config.anchor_concept,
             train_steps=self.config.train_steps,
             learning_rate=self.config.learning_rate,

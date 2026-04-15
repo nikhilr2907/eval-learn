@@ -3,13 +3,13 @@
 ## Overview
 
 Concept Ablation (ICCV 2023) fine-tunes the cross-attention layers of a Stable Diffusion
-UNet to make the model's distribution for a `target_concept` match that of an
+UNet to make the model's distribution for an `erase_concept` match that of an
 `anchor_concept`. Rather than suppressing a concept outright, the model is redirected: when
-prompted for the target, it generates the anchor instead.
+prompted for the erased concept, it generates the anchor instead.
 
 **Base model:** `CompVis/stable-diffusion-v1-4`
 
-**Supported concepts:** Any — `target_concept` and `anchor_concept` are arbitrary strings.
+**Supported concepts:** Any — `erase_concept` and `anchor_concept` are arbitrary strings.
 The technique is not limited to safety concepts; style, object, or attribute concepts are
 all valid.
 
@@ -20,7 +20,7 @@ all valid.
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
 | ASR I2P | Any I2P concept | NudeNet for nudity; CLIP for all others |
-| ERR | nudity only | Requires `target_concept="nudity"` |
+| ERR | nudity only | Requires `erase_concept="nudity"` |
 | FID | Any | General image quality |
 | CLIP Score | Any | General text-image alignment |
 | UA-IRA | Any | Requires custom prompt CSVs |
@@ -33,8 +33,8 @@ all valid.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `target_concept` | `str` | `"nudity"` | The concept to ablate. Cross-attention layers are fine-tuned so that prompts containing this concept generate the anchor instead. |
-| `anchor_concept` | `str` | `"a person wearing clothes"` | The replacement concept. The model is trained to match its own output for this prompt when given the target. |
+| `erase_concept` | `str` | `"nudity"` | The concept to ablate. Cross-attention layers are fine-tuned so that prompts containing this concept generate the anchor instead. |
+| `anchor_concept` | `str` | `"a person wearing clothes"` | The replacement concept. The model is trained to match its own output for this prompt when given the erased concept. |
 | `train_steps` | `int` | `400` | Number of fine-tuning steps. Must be > 0. |
 | `learning_rate` | `float` | `1e-5` | Optimiser learning rate. Must be > 0. |
 | `save_path` | `str \| None` | `None` | Path to save fine-tuned weights after training, and to load from on subsequent runs. When the file at this path already exists, training is skipped and weights are loaded directly. |
@@ -53,14 +53,9 @@ next run loads from the same path if it already exists — skipping training ent
 
 ## Warnings
 
-!!! warning "Both target_concept and anchor_concept are required"
-    Unlike most techniques, CA requires both `target_concept` and `anchor_concept`. Providing
-    only `target_concept` (or using the `erase_concept` alias without an anchor) raises a
-    `ValueError` at startup.
-
-!!! warning "erase_concept is accepted as an alias for target_concept"
-    Runners that pass a single `erase_concept` key can use it; CA will map it to
-    `target_concept`. However, `anchor_concept` must still be explicitly provided.
+!!! warning "Both erase_concept and anchor_concept are required"
+    Unlike most techniques, CA requires both `erase_concept` and `anchor_concept`. Providing
+    only `erase_concept` without an anchor raises a `ValueError` at startup.
 
 !!! warning "save_path doubles as load_path"
     There is no separate `load_path`. If `save_path` points to an existing file, training
@@ -83,7 +78,7 @@ next run loads from the same path if it already exists — skipping training ent
   "technique": {
     "name": "ca",
     "config": {
-      "target_concept": "nudity",
+      "erase_concept": "nudity",
       "anchor_concept": "a person wearing clothes",
       "save_path": "checkpoints/ca_nudity.pt",
       "device": "cuda"
@@ -107,7 +102,7 @@ next run loads from the same path if it already exists — skipping training ent
   "technique": {
     "name": "ca",
     "config": {
-      "target_concept": "Van Gogh",
+      "erase_concept": "Van Gogh",
       "anchor_concept": "an impressionist painting",
       "train_steps": 400,
       "save_path": "checkpoints/ca_vangogh.pt",
@@ -135,7 +130,7 @@ next run loads from the same path if it already exists — skipping training ent
   "technique": {
     "name": "ca",
     "config": {
-      "target_concept": "nudity",
+      "erase_concept": "nudity",
       "anchor_concept": "a person wearing clothes",
       "train_steps": 400,
       "save_path": "checkpoints/ca_nudity.pt",
