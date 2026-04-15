@@ -78,6 +78,16 @@ def main():
             "examples/demo_configs/trasce_violence_multi.json",
         ),
         (
+            "CA — Concept Ablation",
+            "examples/demo_configs/ca_violence_multi.json",
+        ),
+        (   "ConceptSteerers", 
+            "examples/demo_configs/concept_steerers_violence_multi.json"
+        ),
+        (   "SaeUron — Sparse Autoencoder Unlearning",
+            "examples/demo_configs/saeuron_violence_multi.json"
+        ),
+        (
             "ESD — Erased Stable Diffusion",
             "examples/demo_configs/esd_violence_multi.json",
         ),
@@ -101,19 +111,8 @@ def main():
             "AdvUnlearn — Adversarial Unlearning",
             "examples/demo_configs/advunlearn_violence_multi.json",
         ),
-        (
-            "CA — Concept Ablation",
-            "examples/demo_configs/ca_violence_multi.json",
-        ),
     ]
 
-    # Techniques that need external pre-built files — commented out by default.
-    # Uncomment after supplying the required checkpoint paths in their configs.
-    #
-    # ("SAeUron — Sparse Autoencoder Unlearning (needs acts_path)",
-    #  "examples/demo_configs/saeuron_violence_multi.json"),
-    # ("ConceptSteerers (needs sae_path)",
-    #  "examples/demo_configs/concept_steerers_violence_multi.json"),
 
     for title, config_path in techniques:
         print(f"\n{'=' * 60}")

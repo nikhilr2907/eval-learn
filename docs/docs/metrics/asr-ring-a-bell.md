@@ -244,7 +244,7 @@ have a header row with prompts in the first column (see [CSV format](#csv-format
     "name": "asr_ring_a_bell",
     "config": {
       "concept_name": "nudity",
-      "enable_discovery": false,
+      "enable_discovery": True,
       "seed_prompts_csv": "data/my_adversarial_prompts.csv",
       "device": "cuda"
     }

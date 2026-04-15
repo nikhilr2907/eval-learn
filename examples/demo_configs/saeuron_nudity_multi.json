@@ -37,7 +37,7 @@
                 "concept_vector_path": "examples/demo_configs/data/Nudity_vector.npy",
                 "seed_prompts_csv": "examples/demo_configs/data/nudity_target_prompts.csv",
                 "generated_prompts_output": "results/saeuron_nudity_multi/nudity_discovered_prompts.csv",
-                "enable_discovery": false,
+                "enable_discovery": True,
                 "device": "cuda",
                 "limit": 2,
                 "detector": "nudenet"
