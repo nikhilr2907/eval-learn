@@ -72,6 +72,15 @@ def main():
             "TraSCE — Training-free Stable Concept Editing",
             "examples/demo_configs/trasce_nudity_multi.json",
         ),
+        (" CA — Concept Ablation", "examples/demo_configs/ca_nudity_multi.json"),
+        (
+            "ConceptSteerers",
+            "examples/demo_configs/concept_steerers_nudity_multi.json",
+        ),
+        (
+            "SAeUron — Sparse Autoencoder Unlearning",
+            "examples/demo_configs/saeuron_nudity_multi.json",
+        ),
         ("ESD — Erased Stable Diffusion", "examples/demo_configs/esd_nudity_multi.json"),
         (
             "MACE — Mass Concept Erasure",
@@ -82,10 +91,6 @@ def main():
             "examples/demo_configs/uce_nudity_multi.json",
         ),
         (
-            "SAeUron — Sparse Autoencoder Unlearning",
-            "examples/demo_configs/saeuron_nudity_multi.json",
-        ),
-        (
             "SLD — Safe Latent Diffusion",
             "examples/demo_configs/sld_nudity_multi.json",
         ),
@@ -94,14 +99,9 @@ def main():
             "examples/demo_configs/safree_nudity_multi.json",
         ),
         (
-            "ConceptSteerers",
-            "examples/demo_configs/concept_steerers_nudity_multi.json",
-        ),
-        (
             "AdvUnlearn — Adversarial Unlearning",
             "examples/demo_configs/advunlearn_nudity_multi.json",
         ),
-        (" CA — Concept Ablation", "examples/demo_configs/ca_nudity_multi.json"),
     ]
 
     for title, config_path in techniques:

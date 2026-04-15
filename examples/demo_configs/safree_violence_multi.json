@@ -4,7 +4,13 @@
         "name": "safree",
         "config": {
             "erase_concept": "violence",
-            "custom_unsafe_concepts": ["violence", "gore", "bloodshed", "brutal assault", "graphic injury"],
+            "custom_unsafe_concepts": [
+                "violence",
+                "gore",
+                "bloodshed",
+                "brutal assault",
+                "graphic injury"
+            ],
             "enable_svf": false,
             "device": "cuda",
             "alpha": 0.01,

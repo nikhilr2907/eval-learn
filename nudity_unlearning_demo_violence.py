@@ -65,10 +65,10 @@ def cleanup():
 def main():
     """Run all violence unlearning technique benchmarks."""
     techniques = [
-        (
-            "CoGFD — Concept Graph-based high-level Feature Decoupling",
-            "examples/demo_configs/cogfd_violence_multi.json",
-        ),
+        # (
+        #     "CoGFD — Concept Graph-based high-level Feature Decoupling",
+        #     "examples/demo_configs/cogfd_violence_multi.json",
+        # ),
         (
             "SSD — Selective Synaptic Dampening",
             "examples/demo_configs/ssd_violence_multi.json",
