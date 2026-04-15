@@ -60,14 +60,14 @@ def cleanup():
 def main():
     """Run all nudity unlearning technique benchmarks."""
     techniques = [
-        (
-            "CoGFD — Concept Graph-based high-level Feature Decoupling",
-            "examples/nudity/cogfd.json",
-        ),
-        (
-            "SSD — Selective Synaptic Dampening",
-            "examples/nudity/ssd.json",
-        ),
+        # (
+        #     "CoGFD — Concept Graph-based high-level Feature Decoupling",
+        #     "examples/nudity/cogfd.json",
+        # ),
+        # (
+        #     "SSD — Selective Synaptic Dampening",
+        #     "examples/nudity/ssd.json",
+        # ),
         (
             "TraSCE — Training-free Stable Concept Editing",
             "examples/nudity/trasce.json",

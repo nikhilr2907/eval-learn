@@ -56,6 +56,10 @@ Technique implementations are hosted on [Hugging Face](https://huggingface.co/da
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=esd"
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=mace"
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=uce"
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=ssd"
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=ca"
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=cogfd"
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=trasce"
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=saeuron"
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=safree"
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=concept-steerers"
@@ -67,9 +71,17 @@ SLD is built into eval-learn via the `diffusers` library and requires no extra i
 ### 3. Install metric packages
 
 ```bash
-# Adversarial prompt generation
+# P4D adversarial attack
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=p4d"
+
+# MMA-Diffusion adversarial attack
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=mma_diff"
+
+# Ring-A-Bell adversarial prompt discovery
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=RING_A_BELL"
+
+# Q16 classifier (used by P4D and Ring-A-Bell for non-nudity concepts)
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=Q16"
 
 # NudeNet (nudity ASR)
 pip install "eval-learn[asr]"
