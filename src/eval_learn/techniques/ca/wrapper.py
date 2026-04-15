@@ -69,7 +69,7 @@ class CATechnique:
         guidance_scale = kwargs.pop("guidance_scale", self.config.guidance_scale)
 
         logger.info(
-            f"Generating {len(prompts)} images ('{self.config.target_concept}' ablated)"
+            f"Generating {len(prompts)} images ('{self.config.erase_concept}' ablated)"
         )
 
         return self.pipeline.generate(

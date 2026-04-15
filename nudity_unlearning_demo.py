@@ -68,11 +68,11 @@ def main():
         #     "SSD — Selective Synaptic Dampening",
         #     "examples/nudity/ssd.json",
         # ),
-        (
-            "TraSCE — Training-free Stable Concept Editing",
-            "examples/nudity/trasce.json",
-        ),
-        ("CA — Concept Ablation", "examples/nudity/ca.json"),
+        # (
+        #     "TraSCE — Training-free Stable Concept Editing",
+        #     "examples/nudity/trasce.json",
+        # ),
+        # ("CA — Concept Ablation", "examples/nudity/ca.json"),
         (
             "ConceptSteerers",
             "examples/nudity/concept_steerers.json",
