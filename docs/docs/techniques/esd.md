@@ -186,3 +186,13 @@ as `erase_concept` is used as the conditioning text during training.
   ]
 }
 ```
+
+
+---
+
+!!! tip "Reusing trained weights across runs"
+    Set `save_path` on the first run to persist the trained weights, then use `load_path`
+    on all subsequent runs to skip retraining. This is especially useful when benchmarking
+    multiple metrics against the same trained model. See
+    [Caching adversarial prompts and technique weights](../running-experiments/caching-adversarial-prompts.md)
+    for the full workflow.

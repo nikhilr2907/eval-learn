@@ -1,9 +1,12 @@
 import os
 import tempfile
+from pathlib import Path
 from typing import List, Any, Dict, Optional
 from torch.utils.data import DataLoader
 import torch
 from PIL import Image
+
+_BUNDLED_NUDITY_VECTOR = Path(__file__).parent / "data" / "nudity_vector.npy"
 
 from ...types import MetricResult, Dataset
 from ...registry import register_metric
@@ -68,6 +71,7 @@ class ASRRingABellMetric:
 
     def __init__(self, **kwargs):
         self.config = ASRRingABellConfig.from_dict(kwargs)
+        self._concept_vector_path: Optional[str] = None
 
         self._validate_config()
 
@@ -134,13 +138,30 @@ class ASRRingABellMetric:
                 raise ValueError(
                     "enable_discovery=True requires seed_prompts_csv to be specified"
                 )
-            if not self.config.concept_vector_path:
-                raise ValueError(
-                    "enable_discovery=True requires concept_vector_path to be specified"
+
+            # Resolve concept vector path
+            if self.config.concept_vector_path:
+                self._concept_vector_path = self.config.concept_vector_path
+            elif self.config.concept_name.lower() == "nudity":
+                self._concept_vector_path = str(_BUNDLED_NUDITY_VECTOR)
+                logger.info(
+                    "No concept_vector_path provided; using bundled nudity concept vector "
+                    f"({_BUNDLED_NUDITY_VECTOR}). This is a (77, 768) float32 array of CLIP "
+                    "ViT-L/14 embeddings representing the nudity concept direction."
                 )
-            if not os.path.exists(self.config.concept_vector_path):
+            else:
+                raise ValueError(
+                    f"concept_vector_path is required for concept '{self.config.concept_name}'. "
+                    "No bundled vector is available for non-nudity concepts. "
+                    "Provide a .npy file containing a float32 array of CLIP text embeddings "
+                    "representing the target concept direction (shape: [n_tokens, embed_dim], "
+                    "e.g. (77, 768) for CLIP ViT-L/14). See the Ring-A-Bell paper or "
+                    "packages/RING_A_BELL/examples/ for how to compute one."
+                )
+
+            if not os.path.exists(self._concept_vector_path):
                 raise FileNotFoundError(
-                    f"Concept vector not found: {self.config.concept_vector_path}"
+                    f"Concept vector not found: {self._concept_vector_path}"
                 )
             if not self.config.generated_prompts_output:
                 raise ValueError(
@@ -203,7 +224,7 @@ class ASRRingABellMetric:
         )
         discovery = PromptDiscovery(
             seed_prompts_path=self.config.seed_prompts_csv,
-            concept_vector_path=self.config.concept_vector_path,
+            concept_vector_path=self._concept_vector_path,
             output_path=self.config.generated_prompts_output,
             filter_fn=lambda row: True,
             config=ga_config,

@@ -6,12 +6,12 @@ Runs a MultiBenchmarkRunner for each violence-compatible unlearning technique
 against the full suite of violence evaluation metrics: asr_p4d, asr_mma_diffusion,
 err, fid, clip_score, ua_ira, and tifa.
 
-Each technique is run in sequence. Configs are loaded from examples/demo_configs/.
+Each technique is run in sequence. Configs are loaded from examples/violence/.
 
 NOTE: SAeUron and ConceptSteerers require external pre-built violence checkpoint
 files before they can be run. Update the placeholder paths in their configs:
-  - saeuron_violence_multi.json        → acts_path
-  - concept_steerers_violence_multi.json → sae_path
+  - examples/violence/saeuron.json         → acts_path
+  - examples/violence/concept_steerers.json → sae_path
 """
 
 import gc
@@ -67,49 +67,51 @@ def main():
     techniques = [
         # (
         #     "CoGFD — Concept Graph-based high-level Feature Decoupling",
-        #     "examples/demo_configs/cogfd_violence_multi.json",
+        #     "examples/violence/cogfd.json",
         # ),
         (
             "SSD — Selective Synaptic Dampening",
-            "examples/demo_configs/ssd_violence_multi.json",
+            "examples/violence/ssd.json",
         ),
         (
             "TraSCE — Training-free Stable Concept Editing",
-            "examples/demo_configs/trasce_violence_multi.json",
+            "examples/violence/trasce.json",
         ),
         (
             "CA — Concept Ablation",
-            "examples/demo_configs/ca_violence_multi.json",
+            "examples/violence/ca.json",
         ),
-        (   "ConceptSteerers", 
-            "examples/demo_configs/concept_steerers_violence_multi.json"
+        (
+            "ConceptSteerers",
+            "examples/violence/concept_steerers.json",
         ),
-        (   "SaeUron — Sparse Autoencoder Unlearning",
-            "examples/demo_configs/saeuron_violence_multi.json"
+        (
+            "SAeUron — Sparse Autoencoder Unlearning",
+            "examples/violence/saeuron.json",
         ),
         (
             "ESD — Erased Stable Diffusion",
-            "examples/demo_configs/esd_violence_multi.json",
+            "examples/violence/esd.json",
         ),
         (
             "MACE — Mass Concept Erasure",
-            "examples/demo_configs/mace_violence_multi.json",
+            "examples/violence/mace.json",
         ),
         (
             "UCE — Unlearning with Concept Erasure",
-            "examples/demo_configs/uce_violence_multi.json",
+            "examples/violence/uce.json",
         ),
         (
             "SLD — Safe Latent Diffusion",
-            "examples/demo_configs/sld_violence_multi.json",
+            "examples/violence/sld.json",
         ),
         (
             "SAFREE — Selective and Attribute Free (SVF disabled for violence)",
-            "examples/demo_configs/safree_violence_multi.json",
+            "examples/violence/safree.json",
         ),
         (
             "AdvUnlearn — Adversarial Unlearning",
-            "examples/demo_configs/advunlearn_violence_multi.json",
+            "examples/violence/advunlearn.json",
         ),
     ]
 

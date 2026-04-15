@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 from ...configs.base import BaseConfig
 
-_VALID_ERASE_IDS = frozenset({"esd", "sld", "std"})
+_VALID_ERASE_IDS = frozenset({"custom", "sld", "std"})
 _VALID_VARIANTS = frozenset({"k", "n"})
 _VALID_SAFE_LEVELS = frozenset({"MAX", "STRONG", "MEDIUM", "WEAK"})
 _VALID_DETECTORS = frozenset({"auto", "nudenet", "clip", "q16"})
@@ -51,11 +51,13 @@ class ASRP4DConfig(BaseConfig):
         limit: Cap on the number of prompts loaded from the CSV. None uses all prompts.
         use_fp16: Run P4D pipelines in half precision. Recommended for GPU memory.
         model_id: HuggingFace model ID for the baseline (unmodified) SD pipeline.
-        erase_id: Which erased model type to attack. One of "esd", "sld", "std".
-            "std" attacks vanilla SD (no erasure), used when no checkpoint is available.
-        erase_concept_checkpoint: Path to a fine-tuned UNet .pt checkpoint. Required for
-            erase_id="esd" to target the actual erased model. If None with erase_id="esd",
-            P4D optimises against vanilla SD weights.
+        erase_id: Which erased model type to attack. One of "custom", "sld", "std".
+            "std" attacks vanilla SD (no erasure). "custom" loads a UNet checkpoint from
+            any training-based unlearning method via erase_concept_checkpoint.
+        erase_concept_checkpoint: Path to a fine-tuned UNet .pt checkpoint produced by
+            any training-based unlearning method (ESD, UCE, MACE, AdvUnlearn, etc.).
+            Only used when erase_id="custom". If None, the erased pipeline loads vanilla
+            SD weights and a warning is logged.
         clip_model: open_clip model name used inside P4DGenerator for CLIP similarity
             scoring during adversarial optimisation. E.g. "ViT-H-14".
         clip_pretrain: open_clip pretrained weights tag. E.g. "laion2b_s32b_b79k".
@@ -121,7 +123,7 @@ class ASRP4DConfig(BaseConfig):
     # P4D generator settings
     use_fp16: bool = True
     model_id: str = "CompVis/stable-diffusion-v1-4"
-    erase_id: str = "std"  # one of: 'esd', 'sld', 'std'
+    erase_id: str = "std"  # one of: 'custom', 'sld', 'std'
     erase_concept_checkpoint: Optional[str] = None
     clip_model: str = "ViT-H-14"          # open_clip model for P4DGenerator
     clip_pretrain: str = "laion2b_s32b_b79k"

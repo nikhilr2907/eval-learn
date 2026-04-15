@@ -45,10 +45,10 @@ For each target prompt, P4D:
 4. Returns the best adversarial prompt string.
 
 !!! note "White-box assumption"
-    P4D requires access to the weights of the model being attacked. When `erase_id="esd"`,
-    you must provide `erase_concept_checkpoint` pointing to the fine-tuned UNet. If no
-    checkpoint is provided, the erased pipeline loads vanilla SD weights — prompts are still
-    generated but are not targeted at any specific erased model. See [Limitations](#limitations).
+    P4D requires access to the weights of the model being attacked. When `erase_id="custom"`,
+    provide `erase_concept_checkpoint` pointing to a fine-tuned UNet `.pt` file from any
+    training-based unlearning method. If no checkpoint is provided, the metric logs a warning
+    and falls back to vanilla SD weights — equivalent to `erase_id="std"`. See [Limitations](#limitations).
 
 ---
 
@@ -70,8 +70,8 @@ technique's `erase_concept`.
 | `limit` | `int \| None` | `None` | Cap on the number of prompts loaded from the CSV. |
 | `use_fp16` | `bool` | `True` | Run P4D pipelines in half precision. |
 | `model_id` | `str` | `"CompVis/stable-diffusion-v1-4"` | HuggingFace ID for the baseline SD model. |
-| `erase_id` | `str` | `"std"` | Which erased model pipeline to load as the attack target. One of `"esd"`, `"sld"`, `"std"`. See [Erased model options](#erased-model-options). |
-| `erase_concept_checkpoint` | `str \| None` | `None` | Path to a fine-tuned UNet `.pt` checkpoint. Required for `erase_id="esd"` to attack the actual erased model. Ignored for `"sld"` and `"std"`. |
+| `erase_id` | `str` | `"std"` | Which erased model pipeline to load as the attack target. One of `"custom"`, `"sld"`, `"std"`. See [Erased model options](#erased-model-options). |
+| `erase_concept_checkpoint` | `str \| None` | `None` | Path to a fine-tuned UNet `.pt` checkpoint from any training-based unlearning method. Only used when `erase_id="custom"`. If `None`, falls back to vanilla SD weights with a warning. |
 | `clip_model` | `str` | `"ViT-H-14"` | open_clip model used inside P4DGenerator for CLIP similarity scoring during optimisation. |
 | `clip_pretrain` | `str` | `"laion2b_s32b_b79k"` | open_clip pretrained weights tag. |
 | `clip_model_id` | `str` | `"openai/clip-vit-large-patch14"` | HuggingFace CLIP model used for image evaluation (non-nudity only). |
@@ -105,11 +105,12 @@ technique's `erase_concept`.
 
 The `erase_id` field controls which pipeline is loaded as the **attack target** — the model P4D is trying to break. P4D always loads two pipelines: a baseline unmodified SD and the erased model. Gradient information from both drives the adversarial prompt search.
 
-### `erase_id="esd"` — fine-tuned UNet checkpoint
+### `erase_id="custom"` — fine-tuned UNet checkpoint
 
-Uses the same Stable Diffusion pipeline architecture as baseline SD, but replaces the UNet weights with a fine-tuned checkpoint provided via `erase_concept_checkpoint`. This is the correct mode for training-based erasure techniques (ESD, MACE, UCE, AdvUnlearn) where the technique produces a modified UNet `.pt` file.
+Uses the same Stable Diffusion pipeline architecture as baseline SD, but replaces the UNet weights with a checkpoint provided via `erase_concept_checkpoint`. This is the correct mode when you have a pre-trained UNet `.pt` file from any training-based unlearning method (ESD, UCE, MACE, AdvUnlearn, CA, SSD, etc.) that you want P4D to optimise against.
 
-If `erase_concept_checkpoint` is `None` with `erase_id="esd"`, the erased pipeline loads vanilla SD weights — P4D still runs but the prompts are not targeted at any specific erased model.
+!!! warning "Checkpoint required for targeted attack"
+    If `erase_concept_checkpoint` is not provided, the erased pipeline loads vanilla SD weights — identical to `erase_id="std"`. The metric will log a warning. Provide `erase_concept_checkpoint` to actually target a trained model.
 
 ### `erase_id="std"` — vanilla SD (no erasure)
 
@@ -179,7 +180,7 @@ In practice this means:
 }
 ```
 
-### Targeting a pre-trained ESD checkpoint
+### Targeting a pre-trained checkpoint (any training-based method)
 
 ```json
 {
@@ -187,7 +188,7 @@ In practice this means:
   "config": {
     "concept_name": "nudity",
     "target_prompts_path": "data/nudity_target_prompts.csv",
-    "erase_id": "esd",
+    "erase_id": "custom",
     "erase_concept_checkpoint": "checkpoints/esd_nudity.pt",
     "device": "cuda:0",
     "device_2": "cuda:1",
