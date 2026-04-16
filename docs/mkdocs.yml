@@ -35,6 +35,13 @@ nav:
     - SSD: techniques/ssd.md
     - TraSCE: techniques/trasce.md
     - CA: techniques/ca.md
+  - Running Experiments:
+    - GPU Requirements: running-experiments/gpu-requirements.md
+    - Compatibility: running-experiments/compatibility.md
+    - Single Runner: running-experiments/single-runner.md
+    - Multi Runner: running-experiments/multi-runner.md
+    - Cluster: running-experiments/cluster.md
+    - Caching Weights & Prompts: running-experiments/caching-adversarial-prompts.md
   - Metrics:
     - FID: metrics/fid.md
     - CLIP Score: metrics/clip-score.md

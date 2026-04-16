@@ -13,3 +13,9 @@ and evaluate these techniques under consistent conditions.
 - **13 techniques** — ESD, MACE, UCE, SSD, CA, CoGFD, TraSCE, AdvUnlearn, SAeUron, SAFREE, SLD, Concept Steerers, Free Run
 - **9 metrics** — ASR I2P, ASR P4D, ASR MMA-Diffusion, ASR Ring-A-Bell, FID, CLIP Score, ERR, TIFA, UA-IRA
 - **2 evaluation modes** — single metric or multiple metrics per technique run
+
+## Hardware
+
+A CUDA GPU is required. Inference-only techniques need ~5 GB VRAM; training-based
+techniques peak at 10–16 GB during the training phase. See
+[GPU Requirements](running-experiments/gpu-requirements.md) for details.

@@ -51,26 +51,26 @@ def cleanup():
 def main():
     """Run all violence unlearning technique benchmarks."""
     techniques = [
-        (
-            "CoGFD — Concept Graph-based high-level Feature Decoupling",
-            "examples/violence/cogfd.json",
-        ),
-        (
-            "SSD — Selective Synaptic Dampening",
-            "examples/violence/ssd.json",
-        ),
-        (
-            "TraSCE — Training-free Stable Concept Editing",
-            "examples/violence/trasce.json",
-        ),
-        (
-            "CA — Concept Ablation",
-            "examples/violence/ca.json",
-        ),
-        (
-            "ConceptSteerers",
-            "examples/violence/concept_steerers.json",
-        ),
+        # (
+        #     "CoGFD — Concept Graph-based high-level Feature Decoupling",
+        #     "examples/violence/cogfd.json",
+        # ),
+        # (
+        #     "SSD — Selective Synaptic Dampening",
+        #     "examples/violence/ssd.json",
+        # ),
+        # (
+        #     "TraSCE — Training-free Stable Concept Editing",
+        #     "examples/violence/trasce.json",
+        # ),
+        # (
+        #     "CA — Concept Ablation",
+        #     "examples/violence/ca.json",
+        # ),
+        # (
+        #     "ConceptSteerers",
+        #     "examples/violence/concept_steerers.json",
+        # ),
         (
             "SAeUron — Sparse Autoencoder Unlearning",
             "examples/violence/saeuron.json",

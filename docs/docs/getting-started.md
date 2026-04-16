@@ -3,7 +3,13 @@
 ## Requirements
 
 - Python >= 3.8
-- CUDA-capable GPU recommended — most techniques require one
+- CUDA GPU with at least **8 GB VRAM** for inference-only techniques; **16 GB+** for training-based techniques (ESD, CoGFD, AdvUnlearn)
+
+!!! info "VRAM requirements"
+    VRAM needs vary significantly across techniques — inference-only methods need ~5 GB
+    while training-based methods with frozen model copies can peak at 12–16 GB during
+    training. See [GPU Requirements](running-experiments/gpu-requirements.md) for a full
+    per-technique breakdown.
 
 ## Installation
 
