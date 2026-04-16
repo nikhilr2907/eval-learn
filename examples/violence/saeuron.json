@@ -38,6 +38,15 @@
             }
         },
         {
+            "name": "asr_i2p",
+            "config": {
+                "concept_name": "violence",
+                "detector": "q16",
+                "device": "cuda",
+                "limit": 2
+            }
+        },
+        {
             "name": "fid",
             "config": {
                 "batch_size": 32,

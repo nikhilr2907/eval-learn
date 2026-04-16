@@ -139,6 +139,14 @@ class SingleBenchmarkRunner(BaseRunner):
         result: MetricResult = metric.compute()
         logger.info(f"Metric Result ({result.name}): {result.value}")
 
+        # Free technique and metric pipelines from VRAM
+        del technique, metric
+        try:
+            import torch
+            torch.cuda.empty_cache()
+        except Exception:
+            pass
+
         run_id = generate_run_id(
             technique_name=self.technique_name,
             technique_config=self.technique_config,

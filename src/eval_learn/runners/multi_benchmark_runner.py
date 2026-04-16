@@ -201,6 +201,14 @@ class MultiBenchmarkRunner(BaseRunner):
             except Exception:
                 pass
 
+        # Free technique pipeline from VRAM now that all generation is done
+        del technique
+        try:
+            import torch
+            torch.cuda.empty_cache()
+        except Exception:
+            pass
+
         # 4. Build final reports
         erase_concept = get_erase_concept(self.technique_name, self.technique_config)
         base_fields = dict(
