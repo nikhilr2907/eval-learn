@@ -1,18 +1,4 @@
 #!/usr/bin/env python
-"""
-Violence Unlearning Multi-Benchmark Demo
-
-Runs a MultiBenchmarkRunner for each violence-compatible unlearning technique
-against the full suite of violence evaluation metrics: asr_p4d, asr_mma_diffusion,
-err, fid, clip_score, ua_ira, and tifa.
-
-Each technique is run in sequence. Configs are loaded from examples/violence/.
-
-NOTE: SAeUron and ConceptSteerers require external pre-built violence checkpoint
-files before they can be run. Update the placeholder paths in their configs:
-  - examples/violence/saeuron.json         → acts_path
-  - examples/violence/concept_steerers.json → sae_path
-"""
 
 import gc
 import json
@@ -65,10 +51,10 @@ def cleanup():
 def main():
     """Run all violence unlearning technique benchmarks."""
     techniques = [
-        # (
-        #     "CoGFD — Concept Graph-based high-level Feature Decoupling",
-        #     "examples/violence/cogfd.json",
-        # ),
+        (
+            "CoGFD — Concept Graph-based high-level Feature Decoupling",
+            "examples/violence/cogfd.json",
+        ),
         (
             "SSD — Selective Synaptic Dampening",
             "examples/violence/ssd.json",
