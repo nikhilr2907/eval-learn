@@ -59,7 +59,7 @@ class AdvUnlearnTechnique:
             ddim_steps=self.config.ddim_steps,
             save_interval=self.config.save_interval,
             save_dir=self.config.save_dir,
-            load_path=self.config.load_path,
+            checkpoint_path=self.config.load_path,
             num_inference_steps=self.config.num_inference_steps,
             guidance_scale=self.config.guidance_scale,
             use_fp16=self.config.use_fp16,
