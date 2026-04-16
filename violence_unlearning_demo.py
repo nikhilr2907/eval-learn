@@ -51,10 +51,10 @@ def cleanup():
 def main():
     """Run all violence unlearning technique benchmarks."""
     techniques = [
-        # (
-        #     "CoGFD — Concept Graph-based high-level Feature Decoupling",
-        #     "examples/violence/cogfd.json",
-        # ),
+        (
+            "CoGFD — Concept Graph-based high-level Feature Decoupling",
+            "examples/violence/cogfd.json",
+        ),
         # (
         #     "SSD — Selective Synaptic Dampening",
         #     "examples/violence/ssd.json",
@@ -71,34 +71,34 @@ def main():
         #     "ConceptSteerers",
         #     "examples/violence/concept_steerers.json",
         # ),
-        (
-            "SAeUron — Sparse Autoencoder Unlearning",
-            "examples/violence/saeuron.json",
-        ),
-        (
-            "ESD — Erased Stable Diffusion",
-            "examples/violence/esd.json",
-        ),
-        (
-            "MACE — Mass Concept Erasure",
-            "examples/violence/mace.json",
-        ),
-        (
-            "UCE — Unlearning with Concept Erasure",
-            "examples/violence/uce.json",
-        ),
-        (
-            "SLD — Safe Latent Diffusion",
-            "examples/violence/sld.json",
-        ),
-        (
-            "SAFREE — Selective and Attribute Free (SVF disabled for violence)",
-            "examples/violence/safree.json",
-        ),
-        (
-            "AdvUnlearn — Adversarial Unlearning",
-            "examples/violence/advunlearn.json",
-        ),
+        # (
+        #     "SAeUron — Sparse Autoencoder Unlearning",
+        #     "examples/violence/saeuron.json",
+        # ),
+        # (
+        #     "ESD — Erased Stable Diffusion",
+        #     "examples/violence/esd.json",
+        # ),
+        # (
+        #     "MACE — Mass Concept Erasure",
+        #     "examples/violence/mace.json",
+        # ),
+        # (
+        #     "UCE — Unlearning with Concept Erasure",
+        #     "examples/violence/uce.json",
+        # ),
+        # (
+        #     "SLD — Safe Latent Diffusion",
+        #     "examples/violence/sld.json",
+        # ),
+        # (
+        #     "SAFREE — Selective and Attribute Free (SVF disabled for violence)",
+        #     "examples/violence/safree.json",
+        # ),
+        # (
+        #     "AdvUnlearn — Adversarial Unlearning",
+        #     "examples/violence/advunlearn.json",
+        # ),
     ]
 
 

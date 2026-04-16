@@ -223,7 +223,7 @@ In practice this means:
 !!! warning "Requires p4d package"
     `asr_p4d` requires the `p4d` package. Install with:
     ```bash
-    pip install -e packages/p4d
+    pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=p4d"
     ```
 
 !!! warning "Requires NudeNet for nudity"

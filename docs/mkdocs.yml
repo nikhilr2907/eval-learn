@@ -22,6 +22,7 @@ nav:
   - Getting Started: getting-started.md
   - Concepts: concepts.md
   - Techniques:
+    - Overview: techniques/index.md
     - ESD: techniques/esd.md
     - MACE: techniques/mace.md
     - UCE: techniques/uce.md
@@ -43,6 +44,7 @@ nav:
     - Cluster: running-experiments/cluster.md
     - Caching Weights & Prompts: running-experiments/caching-adversarial-prompts.md
   - Metrics:
+    - Overview: metrics/index.md
     - FID: metrics/fid.md
     - CLIP Score: metrics/clip-score.md
     - ERR: metrics/err.md
