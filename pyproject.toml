@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Unlearning Benchmark for Text-to-Image Models"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.8"
-license = "MIT"
+license = {text = "MIT"}
 authors = [
     {name = "Eval-Learn Team"}
 ]
