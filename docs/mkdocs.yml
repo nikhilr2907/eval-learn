@@ -21,6 +21,8 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Concepts: concepts.md
+  - Index: index.md
+  - CLI: cli.md
   - Techniques:
     - Overview: techniques/index.md
     - ESD: techniques/esd.md
