@@ -6,17 +6,6 @@ Not all technique–metric combinations are valid. This page documents the const
 
 ## Technique constraints
 
-### Nudity-only techniques
-
-The following techniques only support `erase_concept="nudity"` and cannot be used with other concepts:
-
-| Technique | Reason |
-|-----------|--------|
-| SAFREE | Training-free self-guidance is tuned for nudity filtering |
-| SLD | Safe latent diffusion suppression targets sexual content |
-| Concept Steerers | Steering vectors shipped with the package target nudity |
-| SAeUron | SAE features identified for nudity concept only |
-
 ### UCE presets
 
 UCE is limited to three fixed pretrained presets: `nudity`, `violence`, `dog`. Custom concepts are not supported — use ESD or MACE instead.
@@ -70,10 +59,14 @@ ASR Ring A Bell can be run against any concept with a matching CLIP concept vect
 | MACE | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | UCE (nudity/violence) | ✓ | ✓* | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ |
 | AdvUnlearn | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| SAFREE | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
-| SLD | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
-| Concept Steerers | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
-| SAeUron | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
+| SAFREE | ✓ | ✓† | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| SLD | ✓ | ✓‡ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Concept Steerers | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| SAeUron | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Free Run | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 \* UCE only supports its fixed presets (`nudity`, `violence`, `dog`) — the metric concept must match the preset used.
+
+† SAFREE supports named calibrated concepts (`nudity`, `artists-VanGogh`, `artists-KellyMcKernan`) via `erase_concept`, plus any custom concept via `custom_unsafe_concepts` (SVF disabled automatically).
+
+‡ SLD supports `nudity`, `violence`, `hate`, `disturbing` only.

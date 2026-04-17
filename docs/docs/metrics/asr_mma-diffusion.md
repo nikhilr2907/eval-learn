@@ -35,10 +35,10 @@ the correct encoder automatically.
 | MACE | Yes | Any concept |
 | UCE | Yes | Any preset |
 | AdvUnlearn | Yes | Any concept |
-| SAeUron | Yes | nudity only (technique constraint) |
-| SAFREE | Yes | nudity only (technique constraint) |
-| SLD | Yes | nudity only (technique constraint) |
-| Concept Steerers | Yes | nudity only (technique constraint) |
+| SAeUron | Yes | Any concept; non-nudity triggers on-the-fly cache |
+| SAFREE | Yes | Named calibrated concepts or `custom_unsafe_concepts` |
+| SLD | Yes | nudity, violence, hate, disturbing |
+| Concept Steerers | Yes | Any concept |
 | Free Run | Yes | Any concept |
 
 ---

@@ -38,10 +38,10 @@ ERR is a nudity-specific metric.
 | MACE | Yes | `erase_concept="nudity"` required |
 | UCE | Yes | `preset="nudity"` required |
 | AdvUnlearn | Yes | `erase_concept="nudity"` required |
-| SAeUron | Yes | nudity only |
-| SAFREE | Yes | nudity only |
-| SLD | Yes | nudity only |
-| Concept Steerers | Yes | nudity only |
+| SAeUron | Yes | `erase_concept="nudity"` required |
+| SAFREE | Yes | `erase_concept="nudity"` required |
+| SLD | Yes | `erase_concept="nudity"` required |
+| Concept Steerers | Yes | `erase_concept="nudity"` required |
 | Free Run | Yes | Exempt from concept check — baseline use |
 
 ---

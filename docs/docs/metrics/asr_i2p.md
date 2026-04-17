@@ -36,9 +36,6 @@ must exceed `similarity_threshold` (default 0.28) to count as unsafe.
 All techniques are compatible with `asr_i2p`. The `concept_name` in the metric config should
 match the technique's `erase_concept` (or `preset` for UCE).
 
-Note that some techniques are nudity-only (SAFREE, SLD, Concept Steerers, SAeUron) — these
-cannot be paired with non-nudity ASR concepts. See [Compatibility](../running-experiments/compatibility.md).
-
 ---
 
 ## Configuration reference

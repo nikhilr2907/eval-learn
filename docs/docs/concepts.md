@@ -105,8 +105,7 @@ Results can be pushed to Hugging Face Hub for storage and comparison across runs
 
 ## Compatibility
 
-Not all technique–metric pairs are valid. ERR is nudity-specific. Some techniques only
-support nudity (SAFREE, SLD, Concept Steerers, SAeUron). UCE is limited to three fixed
+Not all technique–metric pairs are valid. ERR is nudity-specific. UCE is limited to three fixed
 presets. ASR supports all I2P concept categories.
 
 Before writing a config, check [Compatibility](running-experiments/compatibility.md).

@@ -21,7 +21,7 @@ Because SAFREE is training-free, it is fast to initialise. However, it only filt
 at runtime and cannot guarantee concept removal across all possible prompts.
 
 **Base model:** `CompVis/stable-diffusion-v1-4`  
-**Supported concepts:** nudity only
+**Supported concepts:** `nudity`, `artists-VanGogh`, `artists-KellyMcKernan` (named calibrated); any concept via `custom_unsafe_concepts`
 
 ---
 
@@ -29,8 +29,8 @@ at runtime and cannot guarantee concept removal across all possible prompts.
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR I2P | Yes | this technique only supports nudity |
-| ERR | Yes | this technique only supports nudity |
+| ASR I2P | Yes | |
+| ERR | Yes | `erase_concept="nudity"` required (ERR is nudity-specific) |
 | FID | Yes | General image quality |
 | CLIP Score | Yes | General text-image alignment |
 | UA_IRA | Yes | Requires custom prompt CSVs |
@@ -44,7 +44,7 @@ at runtime and cannot guarantee concept removal across all possible prompts.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `erase_concept` | `str` | `"nudity"` | Must be `"nudity"`. |
+| `erase_concept` | `str` | `"nudity"` | Named concept category. Must be one of the SVF-calibrated concepts (`nudity`, `artists-VanGogh`, `artists-KellyMcKernan`) unless `custom_unsafe_concepts` is also set. |
 | `alpha` | `float` | `0.01` | Stage 1: scaling factor applied to the concept text embedding. Values near 0 suppress the concept text signal strongly. |
 | `enable_svf` | `bool` | `True` | Enable Stage 2 Self-Validation Filter. |
 | `upperbound_timestep` | `int` | `10` | Stage 2: only apply SVF at timesteps above this value. Lower values = SVF active for more of the denoising trajectory. |
@@ -62,10 +62,8 @@ at runtime and cannot guarantee concept removal across all possible prompts.
 
 ## Warnings
 
-!!! warning "nudity only"
-    SAFREE only supports `erase_concept="nudity"`. Any other value raises a
-    `ValidationError`. For custom concept filtering without training, there is no direct
-    alternative in the current suite.
+!!! warning "SVF calibration"
+    SVF (Stage 2) is only calibrated for `nudity`, `artists-VanGogh`, and `artists-KellyMcKernan`. For any other concept, pass `custom_unsafe_concepts=['phrase1', ...]` — SVF will be disabled automatically and Stage 3 LRA will handle suppression. Using `erase_concept` with an uncalibrated concept name without `custom_unsafe_concepts` raises a `ValueError`.
 
 !!! warning "All three stages are cooperative"
     Disabling SVF or LRA (`enable_svf=false`, `enable_lra=false`) weakens erasure

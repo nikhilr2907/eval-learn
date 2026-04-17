@@ -26,8 +26,6 @@ objects).
 
 All techniques are compatible with UA-IRA, subject to:
 
-- The technique must support the target concept (nudity-only techniques cannot be used
-  with a non-nudity `target_concept`)
 - Both CSV paths must be provided
 
 | Technique | Compatible | Notes |
@@ -36,10 +34,10 @@ All techniques are compatible with UA-IRA, subject to:
 | MACE | Yes | Any concept |
 | UCE | Yes | nudity, violence, or dog only |
 | AdvUnlearn | Yes | Any concept |
-| SAeUron | Yes | nudity only (technique constraint) |
-| SAFREE | Yes | nudity only (technique constraint) |
-| SLD | Yes | nudity only (technique constraint) |
-| Concept Steerers | Yes | nudity only (technique constraint) |
+| SAeUron | Yes | Any concept |
+| SAFREE | Yes | Named calibrated concepts or `custom_unsafe_concepts` |
+| SLD | Yes | nudity, violence, hate, disturbing |
+| Concept Steerers | Yes | Any concept |
 | Free Run | Yes | Any concept |
 
 ---

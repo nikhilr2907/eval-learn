@@ -24,8 +24,8 @@ A positive `multiplier` suppresses the concept; a negative value amplifies it.
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR I2P | Yes | nudity concept |
-| ERR | Yes | nudity concept |
+| ASR I2P | Yes | Any I2P concept |
+| ERR | Yes | `erase_concept="nudity"` required (ERR is nudity-specific) |
 | FID | Yes | General image quality |
 | CLIP Score | Yes | General text-image alignment |
 | UA_IRA | Yes | Requires custom prompt CSVs |
