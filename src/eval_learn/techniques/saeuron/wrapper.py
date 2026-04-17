@@ -3,10 +3,10 @@ from PIL import Image
 
 try:
     from saeuron import SAeUronPipeline
-except ImportError:
+except ImportError as e:
     raise ImportError(
-        "SAeUronTechnique requires the 'saeuron' package. Package not installed."
-    )
+        f"SAeUronTechnique requires the 'saeuron' package. Package not installed or failed to import: {e}"
+    ) from e
 
 from ...registry import register_technique
 from ...logging_utils import get_logger

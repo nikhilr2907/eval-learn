@@ -143,25 +143,37 @@ class MultiBenchmarkRunner(BaseRunner):
             loader = metric.load_dataset()
             logger.info(f"Loaded dataset for metric '{metric_name}'")
 
-            # Generate and evaluate with this metric's prompts
-            metric_images: List[Any] = []
+            # Generate, evaluate, and flush images batch by batch
             metric_metadata: Dict[str, Any] = {}
             total_generated = 0
+            category_counters: Dict[str, int] = {}
 
             for batch in loader:
                 batch_images = technique.generate(prompts=batch.prompts)
-                metric_images.extend(batch_images)
+                metric.update(batch_images, batch.prompts, batch.metadata)
+
+                self.writer.save_run(
+                    run_id=run_id,
+                    technique_name=self.technique_name,
+                    metric_name=metric_name,
+                    images=batch_images,
+                    report=None,
+                    metadata=batch.metadata,
+                    image_index_offset=total_generated,
+                    category_counters_init=category_counters,
+                )
+
+                if "categories" in batch.metadata:
+                    for cat in batch.metadata["categories"]:
+                        category_counters[cat.lower()] = category_counters.get(cat.lower(), 0) + 1
+
                 total_generated += len(batch_images)
 
-                # Accumulate metadata
                 for key, val in batch.metadata.items():
                     if isinstance(val, list):
                         metric_metadata.setdefault(key, []).extend(val)
                     else:
                         metric_metadata[key] = val
-
-                # Evaluate this batch with this metric
-                metric.update(batch_images, batch.prompts, batch.metadata)
 
             dataset_source = metric_metadata.get("source", "unknown")
             logger.info(
@@ -182,14 +194,14 @@ class MultiBenchmarkRunner(BaseRunner):
             # Track dataset source for report
             metric_datasets[metric_name] = dataset_source
 
-            # Save images immediately (don't keep in memory)
+            # Save per-metric report stub (images already flushed per-batch)
             self._log_phase(f"Saving artifacts for metric '{metric_name}'")
             self.writer.save_run(
                 run_id=run_id,
                 technique_name=self.technique_name,
                 metric_name=metric_name,
-                images=metric_images,
-                report=None,  # Report will be saved after all metrics computed
+                images=[],
+                report=None,
                 metadata=metric_metadata,
             )
 

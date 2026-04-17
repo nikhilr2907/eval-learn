@@ -18,7 +18,6 @@ def generate_run_id(
     technique_config: Dict[str, Any],
     metric_name: str,
     metric_config: Dict[str, Any],
-    dataset_name: str,
     timestamp: float,
 ) -> str:
     """Generate a short hash from run configuration and timestamp."""
@@ -28,7 +27,6 @@ def generate_run_id(
             "technique_config": technique_config,
             "metric": metric_name,
             "metric_config": metric_config,
-            "dataset": dataset_name,
             "timestamp": timestamp,
         },
         sort_keys=True,
@@ -91,7 +89,17 @@ class SingleBenchmarkRunner(BaseRunner):
         logger.info("Starting Benchmark Run...")
         timestamp = time.time()
 
-        # 1. Initialize Metric
+        # 1. Generate run_id upfront so images can be flushed to disk per-batch
+        run_id = generate_run_id(
+            technique_name=self.technique_name,
+            technique_config=self.technique_config,
+            metric_name=self.metric_name,
+            metric_config=self.metric_config,
+            timestamp=timestamp,
+        )
+        logger.info(f"Run ID: {run_id}")
+
+        # 2. Initialize Metric
         self._log_phase("Initializing metric")
         resolved = self._resolve_mma_clip_model(
             {self.metric_name: self.metric_config},
@@ -101,20 +109,20 @@ class SingleBenchmarkRunner(BaseRunner):
         metric_config = resolved.get(self.metric_name, self.metric_config)
         metric = self.metric_factory(**metric_config)
 
-        # 2. Load Dataset
+        # 3. Load Dataset
         self._log_phase("Loading dataset")
         loader = metric.load_dataset()
 
-        # 3. Initialize Technique
+        # 4. Initialize Technique
         self._log_phase("Initializing technique")
         technique = self.technique_factory(**self.technique_config)
 
-        # 4+5. Generate and evaluate batch by batch
+        # 5. Generate, evaluate, and flush images batch by batch
         self._log_phase("Generating images and computing metrics")
-        all_images: List[Any] = []
         dataset_name = "unknown"
         total_generated = 0
         accumulated_metadata: Dict[str, Any] = {}
+        category_counters: Dict[str, int] = {}
 
         for batch in loader:
             dataset_name = batch.metadata.get("source", dataset_name)
@@ -122,7 +130,21 @@ class SingleBenchmarkRunner(BaseRunner):
             batch_images = technique.generate(prompts=batch.prompts)
             metric.update(batch_images, batch.prompts, batch.metadata)
 
-            all_images.extend(batch_images)
+            self.writer.save_run(
+                run_id=run_id,
+                technique_name=self.technique_name,
+                metric_name=self.metric_name,
+                images=batch_images,
+                report=None,
+                metadata=batch.metadata,
+                image_index_offset=total_generated,
+                category_counters_init=category_counters,
+            )
+
+            if "categories" in batch.metadata:
+                for cat in batch.metadata["categories"]:
+                    category_counters[cat.lower()] = category_counters.get(cat.lower(), 0) + 1
+
             total_generated += len(batch_images)
 
             for key, val in batch.metadata.items():
@@ -146,16 +168,6 @@ class SingleBenchmarkRunner(BaseRunner):
             torch.cuda.empty_cache()
         except Exception:
             pass
-
-        run_id = generate_run_id(
-            technique_name=self.technique_name,
-            technique_config=self.technique_config,
-            metric_name=self.metric_name,
-            metric_config=self.metric_config,
-            dataset_name=dataset_name,
-            timestamp=timestamp,
-        )
-        logger.info(f"Run ID: {run_id}")
 
         # 7. Prepare Reports
         erase_concept = get_erase_concept(self.technique_name, self.technique_config)
@@ -181,12 +193,12 @@ class SingleBenchmarkRunner(BaseRunner):
             metric_config=self.metric_config,
         )
 
-        # 8. Save Artifacts
+        # 8. Save Reports (images already flushed per-batch)
         self.writer.save_run(
             run_id=run_id,
             technique_name=self.technique_name,
             metric_name=self.metric_name,
-            images=all_images,
+            images=[],
             report=report,
             metadata=accumulated_metadata,
             detailed_report=detailed_report,

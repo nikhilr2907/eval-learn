@@ -33,6 +33,8 @@ class ArtifactWriter:
         report: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
         detailed_report: Optional[Dict[str, Any]] = None,
+        image_index_offset: int = 0,
+        category_counters_init: Optional[Dict[str, int]] = None,
     ) -> str:
         """
         Save images and report for a benchmark run.
@@ -50,6 +52,11 @@ class ArtifactWriter:
             detailed_report: Extended result dictionary including technique and metric
                 configs, saved alongside the simplified report as
                 ``{run_id}_report_full.json``. If None, no detailed report is saved.
+            image_index_offset: Starting index for flat image filenames. Pass
+                ``total_generated`` before the current batch to avoid overwriting
+                images saved in earlier batches.
+            category_counters_init: Per-category filename counters accumulated from
+                previous batches, used to continue numbering in category-aware saving.
 
         Returns:
             Path to the saved simplified report JSON (or where it would be saved).
@@ -72,7 +79,7 @@ class ArtifactWriter:
 
             if categories and len(categories) == len(images):
                 # Category-aware: save into subdirectories
-                category_counters: Dict[str, int] = {}
+                category_counters: Dict[str, int] = dict(category_counters_init or {})
                 for img, cat in zip(images, categories):
                     cat_dir = os.path.join(images_dir, cat.lower())
                     os.makedirs(cat_dir, exist_ok=True)
@@ -83,8 +90,9 @@ class ArtifactWriter:
             else:
                 # Flat: save numbered images directly
                 for i, img in enumerate(images):
-                    path = os.path.join(images_dir, f"{technique_name}_{metric_name}_{run_id}_{i}.png")
-                    image_paths.append(self._save_image(img, path, i))
+                    global_i = i + image_index_offset
+                    path = os.path.join(images_dir, f"{technique_name}_{metric_name}_{run_id}_{global_i}.png")
+                    image_paths.append(self._save_image(img, path, global_i))
 
             # Filter out None (failed saves)
             image_paths = [p for p in image_paths if p is not None]
