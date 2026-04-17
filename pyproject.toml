@@ -36,10 +36,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/your-org/eval-learn"
+Homepage = "https://github.com/nikhilr2907/eval-learn"
 Documentation = "https://eval-learn.readthedocs.io"
-Source = "https://github.com/your-org/eval-learn"
-"Bug Tracker" = "https://github.com/your-org/eval-learn/issues"
+Source = "https://github.com/nikhilr2907/eval-learn"
+"Bug Tracker" = "https://github.com/nikhilr2907/eval-learn/issues"
 
 [project.optional-dependencies]
 # Metric extras (PyPI packages)
