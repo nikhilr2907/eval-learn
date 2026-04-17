@@ -64,6 +64,8 @@ coverage.xml
 .pytest_cache/
 cover/
 **.txt
+!docs/requirements.txt
+!requirements.txt
 # Translations
 *.mo
 *.pot
