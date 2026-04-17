@@ -6,9 +6,9 @@ Not all technique–metric combinations are valid. This page documents the const
 
 ## Technique constraints
 
-### UCE presets
+### UCE concepts
 
-UCE is limited to three fixed pretrained presets: `nudity`, `violence`, `dog`. Custom concepts are not supported — use ESD or MACE instead.
+UCE supports three built-in presets (`nudity`, `violence`, `dog`) as well as custom concepts. Pass `erase_concept` (with `save_path`) to run UCEWeightCreator inline and build weights for any concept — this takes 5–30 minutes on GPU. Pre-built weights for any concept can also be loaded directly via `load_path`.
 
 ---
 
@@ -57,7 +57,7 @@ ASR Ring A Bell can be run against any concept with a matching CLIP concept vect
 |-----------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | ESD | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | MACE | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| UCE (nudity/violence) | ✓ | ✓* | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ |
+| UCE | ✓ | ✓* | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ |
 | AdvUnlearn | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | SAFREE | ✓ | ✓† | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | SLD | ✓ | ✓‡ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -65,7 +65,7 @@ ASR Ring A Bell can be run against any concept with a matching CLIP concept vect
 | SAeUron | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Free Run | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-\* UCE only supports its fixed presets (`nudity`, `violence`, `dog`) — the metric concept must match the preset used.
+\* For ASR I2P and ERR: the metric concept must match the erased concept. ERR is nudity-specific and requires `nudity` to be the erased concept. The `dog` preset/concept has no matching I2P category — use UA_IRA or CLIP Score instead.
 
 † SAFREE supports named calibrated concepts (`nudity`, `artists-VanGogh`, `artists-KellyMcKernan`) via `erase_concept`, plus any custom concept via `custom_unsafe_concepts` (SVF disabled automatically).
 

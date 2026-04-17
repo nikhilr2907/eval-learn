@@ -3,9 +3,10 @@
 ## Overview
 
 UCE (Unified Concept Editing) edits the cross-attention layers of a Stable Diffusion UNet
-using pre-computed concept vectors. Rather than fine-tuning from scratch, UCE loads a set
-of pre-trained editing weights and applies them to steer generation away from the target
-concept.
+using pre-computed concept vectors. Rather than fine-tuning from scratch, UCE applies
+editing weights to steer generation away from the target concept. Three built-in presets
+are provided (`nudity`, `violence`, `dog`), and custom concepts are fully supported via
+inline weight creation or pre-built weight files.
 
 **Base model:** `CompVis/stable-diffusion-v1-4`
 
@@ -23,14 +24,14 @@ UCE supports three initialisation paths:
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR I2P | `nudity` or `violence` preset | NudeNet for nudity; CLIP for violence |
-| ERR | `nudity` preset only | Nudity-specific datasets |
-| FID | Any preset | General image quality |
-| CLIP Score | Any preset | General text-image alignment |
-| UA_IRA | Any preset | Requires custom prompt CSVs |
-| TIFA | Any preset | General faithfulness |
-| ASR Custom | Any preset | Concept-agnostic via CLIP |
-| MMA-Diffusion | Any preset | Requires explicit target prompts for non-nudity presets |
+| ASR I2P | `nudity` or `violence` concept | NudeNet for nudity; CLIP for violence |
+| ERR | `nudity` concept only | Nudity-specific datasets |
+| FID | Any concept | General image quality |
+| CLIP Score | Any concept | General text-image alignment |
+| UA_IRA | Any concept | Requires custom prompt CSVs |
+| TIFA | Any concept | General faithfulness |
+| ASR Custom | Any concept | Concept-agnostic via CLIP |
+| MMA-Diffusion | Any concept | Requires explicit target prompts for non-nudity concepts |
 
 ---
 
