@@ -23,4 +23,4 @@ Each technique is a concept unlearning method that modifies a Stable Diffusion m
 | [SAeUron](saeuron.md) | [ICML 2025](https://arxiv.org/abs/2501.18052) | Sparse autoencoder feature suppression |
 | [Concept Steerers](concept-steerers.md) | [arXiv 2025](https://arxiv.org/abs/2501.19066) | Steers activations away from concept directions at inference |
 | [TraSCE](trasce.md) | [arXiv 2024](https://arxiv.org/abs/2412.07658) | Training-free concept erasure via trajectory steering |
-| [Free Run](free-run.md) | — | Unmodified baseline model with no unlearning applied |
+| [Free Run](free-run.md) | — |Custom Model Evaluation|
