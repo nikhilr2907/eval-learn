@@ -28,6 +28,6 @@ def load_entrypoints():
             try:
                 plugin_obj = ep.load()
                 register(ep.name)(plugin_obj)
-                logger.info("Registered plugin '%s' (%s)", ep.name, group_name)
+                logger.debug("Registered plugin '%s' (%s)", ep.name, group_name)
             except Exception as e:
                 logger.error("Failed to load plugin %s: %s", ep.name, e)

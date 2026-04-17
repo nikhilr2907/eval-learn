@@ -1,50 +1,81 @@
-from dataclasses import dataclass, field
-from typing import Dict, Any, Optional
-from ...configs.base import BaseConfig
+from typing import List, Optional
+from PIL import Image
 
-@dataclass(frozen=True)
-class CAConfig(BaseConfig):
+try:
+    from ca import CAPipeline
+except ImportError:
+    raise ImportError(
+        "CATechnique requires the 'ca' package. "
+        "Install it with: pip install -e packages/ca"
+    )
+
+from ...registry import register_technique
+from ...logging_utils import get_logger
+from .config import CAConfig
+
+logger = get_logger(__name__)
+
+
+@register_technique("ca")
+class CATechnique:
     """
-    Configuration for Concept Ablation (CA).
+    Thin wrapper around the external ca package.
 
-    Concept Ablation fine-tunes the cross-attention layers to force the model's
-    distribution for a 'target_concept' to match an 'anchor_concept'.
+    Integrates Concept Ablation (ICCV 2023) into the eval-learn benchmarking
+    framework via the standard technique interface.
     """
 
-    # Model settings
-    model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
-    device: str = "cuda"
+    def __init__(self, **kwargs):
+        """Initialize wrapper by delegating to CAPipeline."""
+        self.config = CAConfig.from_dict(kwargs)
 
-    # Concept ablation settings (Defaulted to the nudity task)
-    target_concept: str = "nudity"
-    anchor_concept: str = "a person wearing clothes" 
+        logger.info(
+            f"Initializing CA: model={self.config.model_id}, "
+            f"erase='{self.config.erase_concept}', "
+            f"anchor='{self.config.anchor_concept}'"
+        )
 
-    # Training settings
-    train_steps: int = 400
-    learning_rate: float = 1e-5
-    use_fp16: bool = True
+        self.pipeline = CAPipeline(
+            model_id=self.config.model_id,
+            device=self.config.device,
+            use_fp16=self.config.use_fp16,
+            target_concept=self.config.erase_concept,
+            anchor_concept=self.config.anchor_concept,
+            train_steps=self.config.train_steps,
+            learning_rate=self.config.learning_rate,
+            save_path=self.config.save_path,
+            load_path=self.config.save_path,
+            num_inference_steps=self.config.num_inference_steps,
+            guidance_scale=self.config.guidance_scale,
+        )
 
-    # Save trained weights (Highly recommended for evaluation efficiency)
-    save_path: Optional[str] = None
+    def generate(
+        self, prompts: List[str], seed: Optional[int] = None, **kwargs
+    ) -> List[Image.Image]:
+        """
+        Generate images using the ablated model.
 
-    # Generation settings
-    num_inference_steps: int = 50
-    guidance_scale: float = 7.5
+        Args:
+            prompts: List of text prompts.
+            seed: Random seed for reproducibility.
+            **kwargs: Additional generation parameters.
 
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CAConfig":
-        """Create config from a dict, with compatibility for ESD runner kwargs."""
-        # Ensure we don't modify the original dict unexpectedly
-        config_data = data.copy()
-        
-        # Compatibility with caller that might use ESD's 'erase_concept'
-        if "target_concept" not in config_data and "erase_concept" in config_data:
-            config_data["target_concept"] = config_data.pop("erase_concept")
-            
-        if "target_concept" in config_data and "anchor_concept" not in config_data:
-            raise ValueError(
-                "Concept Ablation requires both 'target_concept' and 'anchor_concept'. "
-                f"Received only target: {config_data['target_concept']}"
-            )
-            
-        return super().from_dict(config_data)
+        Returns:
+            List of PIL Images.
+        """
+        num_inference_steps = kwargs.pop(
+            "num_inference_steps", self.config.num_inference_steps
+        )
+        guidance_scale = kwargs.pop("guidance_scale", self.config.guidance_scale)
+
+        logger.info(
+            f"Generating {len(prompts)} images ('{self.config.erase_concept}' ablated)"
+        )
+
+        return self.pipeline.generate(
+            prompts,
+            seed=seed,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            **kwargs,
+        )

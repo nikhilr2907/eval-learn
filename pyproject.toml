@@ -36,10 +36,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/your-org/eval-learn"
+Homepage = "https://github.com/nikhilr2907/eval-learn"
 Documentation = "https://eval-learn.readthedocs.io"
-Source = "https://github.com/your-org/eval-learn"
-"Bug Tracker" = "https://github.com/your-org/eval-learn/issues"
+Source = "https://github.com/nikhilr2907/eval-learn"
+"Bug Tracker" = "https://github.com/nikhilr2907/eval-learn/issues"
 
 [project.optional-dependencies]
 # Metric extras (PyPI packages)
@@ -59,17 +59,18 @@ eval-learn = "eval_learn.cli:main"
 # Entry points for plugin discovery
 [project.entry-points."eval_learn.techniques"]
 free_run = "eval_learn.techniques.free_run.wrapper:FreeRunTechnique"
-esd = "eval_learn.techniques.esd.wrapper:ESDWrapper"
-mace = "eval_learn.techniques.mace.wrapper:MACEWrapper"
-sld = "eval_learn.techniques.sld.wrapper:SLDWrapper"
-uce = "eval_learn.techniques.uce.wrapper:UCEWrapper"
+esd = "eval_learn.techniques.esd.wrapper:ESDTechnique"
+mace = "eval_learn.techniques.mace.wrapper:MACETechnique"
+sld = "eval_learn.techniques.sld.wrapper:SLDTechnique"
+uce = "eval_learn.techniques.uce.wrapper:UCETechnique"
 safree = "eval_learn.techniques.SAFREE.wrapper:SAFREETechnique"
-concept_steerers = "eval_learn.techniques.concept_steerers.wrapper:ConceptSteerersWrapper"
-saeuron = "eval_learn.techniques.saeuron.wrapper:SAeUronWrapper"
-cogfd = "eval_learn.techniques.cogfd.wrapper:CoGFDWrapper"
-advunlearn = "eval_learn.techniques.advunlearn.wrapper:AdvUnlearnWrapper"
-ssd = "eval_learn.techniques.ssd.wrapper:SSDWrapper"
-trasce = "eval_learn.techniques.trasce.wrapper:TraSCEWrapper"
+concept_steerers = "eval_learn.techniques.concept_steerers.wrapper:ConceptSteerersTechnique"
+saeuron = "eval_learn.techniques.saeuron.wrapper:SAeUronTechnique"
+cogfd = "eval_learn.techniques.cogfd.wrapper:CoGFDTechnique"
+advunlearn = "eval_learn.techniques.advunlearn.wrapper:AdvUnlearnTechnique"
+ssd = "eval_learn.techniques.ssd.wrapper:SSDTechnique"
+trasce = "eval_learn.techniques.trasce.wrapper:TraSCETechnique"
+ca = "eval_learn.techniques.ca.wrapper:CATechnique"
 
 [project.entry-points."eval_learn.metrics"]
 asr_p4d = "eval_learn.metrics.asr_p4d.metric:ASRP4D"
@@ -93,7 +94,7 @@ ua_ira_csv = "eval_learn.datasets.ua_ira_csv:load_ua_ira_csv"
 where = ["src"]
 
 [tool.setuptools.package-data]
-eval_learn = ["**/*.pth", "**/*.json", "**/*.yaml"]
+eval_learn = ["**/*.pth", "**/*.json", "**/*.yaml", "**/*.npy"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

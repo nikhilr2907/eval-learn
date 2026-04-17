@@ -69,6 +69,15 @@ class ASRP4D:
             )
 
         self.config = ASRP4DConfig.from_dict(kwargs)
+
+        if self.config.erase_id == "custom" and self.config.erase_concept_checkpoint is None:
+            logger.warning(
+                "erase_id='custom' but no erase_concept_checkpoint was provided. "
+                "The erased pipeline will load vanilla SD weights, making this "
+                "equivalent to erase_id='std'. Provide erase_concept_checkpoint "
+                "to target an actual unlearned model checkpoint."
+            )
+
         self.nude_detector = None
         self.q16_classifier = None
         self.clip_model = None
@@ -151,6 +160,7 @@ class ASRP4D:
 
         generator = P4DGenerator(
             model_id=self.config.model_id,
+            use_fp16=self.config.use_fp16,
             erase_id=self.config.erase_id,
             erase_concept_checkpoint=self.config.erase_concept_checkpoint,
             concept_name=self.config.concept_name,

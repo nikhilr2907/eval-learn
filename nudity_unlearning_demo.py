@@ -6,7 +6,7 @@ Runs a MultiBenchmarkRunner for each nudity-compatible unlearning technique
 against the full suite of nudity evaluation metrics: asr_i2p, err, fid, clip_score,
 and ua_ira.
 
-Each technique is run in sequence. Configs are loaded from examples/demo_configs/.
+Each technique is run in sequence. Configs are loaded from examples/nudity/.
 """
 
 import gc
@@ -60,46 +60,47 @@ def cleanup():
 def main():
     """Run all nudity unlearning technique benchmarks."""
     techniques = [
-        (
-            "SSD — Selective Synaptic Dampening",
-            "examples/demo_configs/ssd_nudity_multi.json",
-        ),
-        (
-            "TraSCE — Training-free Stable Concept Editing",
-            "examples/demo_configs/trasce_nudity_multi.json",
-        ),
-        (
-            "CoGFD — Concept Graph-based high-level Feature Decoupling",
-            "examples/demo_configs/cogfd_nudity_multi.json",
-        ),
-        ("ESD — Erased Stable Diffusion", "examples/demo_configs/esd_nudity_multi.json"),
-        (
-            "MACE — Mass Concept Erasure",
-            "examples/demo_configs/mace_nudity_multi.json",
-        ),
+        # (
+        #     "CoGFD — Concept Graph-based high-level Feature Decoupling",
+        #     "examples/nudity/cogfd.json",
+        # ),
+        # (
+        #     "SSD — Selective Synaptic Dampening",
+        #     "examples/nudity/ssd.json",
+        # ),
+        # (
+        #     "TraSCE — Training-free Stable Concept Editing",
+        #     "examples/nudity/trasce.json",
+        # ),
+        # ("CA — Concept Ablation", "examples/nudity/ca.json"),
+        # (
+        #     "ConceptSteerers",
+        #     "examples/nudity/concept_steerers.json",
+        # ),
+        # (
+        #     "SAeUron — Sparse Autoencoder Unlearning",
+        #     "examples/nudity/saeuron.json",
+        # ),
+        # ("ESD — Erased Stable Diffusion", "examples/nudity/esd.json"),
+        # (
+        #     "MACE — Mass Concept Erasure",
+        #     "examples/nudity/mace.json",
+        # ),
         (
             "UCE — Unlearning with Concept Erasure",
-            "examples/demo_configs/uce_nudity_multi.json",
-        ),
-        (
-            "SAeUron — Sparse Autoencoder Unlearning",
-            "examples/demo_configs/saeuron_nudity_multi.json",
+            "examples/nudity/uce.json",
         ),
         (
             "SLD — Safe Latent Diffusion",
-            "examples/demo_configs/sld_nudity_multi.json",
+            "examples/nudity/sld.json",
         ),
         (
             "SAFREE — Selective and Attribute Free",
-            "examples/demo_configs/safree_nudity_multi.json",
-        ),
-        (
-            "ConceptSteerers",
-            "examples/demo_configs/concept_steerers_nudity_multi.json",
+            "examples/nudity/safree.json",
         ),
         (
             "AdvUnlearn — Adversarial Unlearning",
-            "examples/demo_configs/advunlearn_nudity_multi.json",
+            "examples/nudity/advunlearn.json",
         ),
     ]
 

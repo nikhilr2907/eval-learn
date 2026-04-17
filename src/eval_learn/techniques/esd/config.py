@@ -12,15 +12,7 @@ TRAIN_METHODS = ["xattn", "noxattn", "selfattn", "full"]
 
 @dataclass(frozen=True)
 class ESDConfig(BaseConfig):
-    """
-    Configuration for Erased Stable Diffusion (ESD).
-
-    Two main variants:
-    - ESD-x (train_method='xattn'): Fine-tunes cross-attention layers
-      Best for specific concepts like artist styles, objects
-    - ESD-u (train_method='full'/'noxattn'): Fine-tunes broader layers
-      Best for general concepts like nudity, violence
-    """
+    """Configuration for Erased Stable Diffusion (ESD)."""
 
     # Model settings
     model_id: str = field(init=False, default="CompVis/stable-diffusion-v1-4")
@@ -31,7 +23,7 @@ class ESDConfig(BaseConfig):
     erase_from: Optional[str] = (
         None  # Target concept to erase from (defaults to erase_concept)
     )
-    train_method: str = "xattn"
+    train_method: str = "noxattn"
     negative_guidance: float = 2.0
 
     # Training settings
@@ -39,6 +31,8 @@ class ESDConfig(BaseConfig):
     learning_rate: float = 5e-5
     use_fp16: bool = True
 
+    # Load pre-trained weights (skips training entirely)
+    load_path: Optional[str] = None
     # Save trained weights (optional)
     save_path: Optional[str] = None
 
@@ -46,12 +40,14 @@ class ESDConfig(BaseConfig):
     num_inference_steps: int = 50
     guidance_scale: float = 7.5
 
+    def __post_init__(self):
+        if not self.erase_concept or not self.erase_concept.strip():
+            raise ValueError("erase_concept must not be empty.")
+        if self.train_method not in TRAIN_METHODS:
+            raise ValueError(
+                f"Unknown train_method '{self.train_method}'. Available: {TRAIN_METHODS}"
+            )
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ESDConfig":
-        """Create config from a dict, validating train_method."""
-        train_method = data.get("train_method", "xattn")
-        if train_method not in TRAIN_METHODS:
-            raise ValueError(
-                f"Unknown train_method '{train_method}'. " f"Available: {TRAIN_METHODS}"
-            )
         return super().from_dict(data)

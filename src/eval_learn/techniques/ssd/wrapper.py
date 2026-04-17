@@ -4,7 +4,7 @@ from PIL import Image
 try:
     from ssd import SSDPipeline
 except ImportError:
-    raise ImportError("SSDWrapper requires the 'ssd' package. Package not installed.")
+    raise ImportError("SSDTechnique requires the 'ssd' package. Package not installed.")
 
 from ...registry import register_technique
 from ...logging_utils import get_logger
@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("ssd")
-class SSDWrapper:
+class SSDTechnique:
     """
     Thin wrapper around the external SSD package.
 
@@ -39,11 +39,13 @@ class SSDWrapper:
         self.pipeline = SSDPipeline(
             model_id=self.config.model_id,
             device=self.config.device,
+            use_fp16=self.config.use_fp16,
             erase_concept=self.config.erase_concept,
             alpha=self.config.alpha,
             num_fisher_samples=self.config.num_fisher_samples,
             dampening_coeff=self.config.dampening_coeff,
             save_path=self.config.save_path,
+            load_path=self.config.load_path,
         )
 
     def generate(

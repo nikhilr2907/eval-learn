@@ -46,18 +46,7 @@ _PRESETS: Dict[str, Dict[str, Any]] = {
 
 @dataclass(frozen=True)
 class SLDConfig(BaseConfig):
-    """
-    Configuration for Safe Latent Diffusion (SLD).
-
-    Use ``preset`` to select a named safety level (NONE, WEAK, MEDIUM, STRONG, MAX)
-    instead of setting individual SLD parameters. Individual parameters can still
-    be passed alongside a preset to override specific values.
-
-    SLD suppresses all unsafe content simultaneously (nudity, violence, hate,
-    disturbing). ``erase_concept`` indicates the primary category of interest
-    for benchmarking purposes but does not change what the model suppresses —
-    valid values are: "nudity", "violence", "hate", "disturbing".
-    """
+    """Configuration for Safe Latent Diffusion (SLD)."""
 
     model_id: str = field(init=False, default="AIML-TUDA/stable-diffusion-safe")
     device: str = "cuda"
@@ -69,24 +58,21 @@ class SLDConfig(BaseConfig):
     sld_threshold: float = 1.0
     sld_momentum_scale: float = 0.5
     sld_mom_beta: float = 0.7
+    num_inference_steps: int = 50
+    guidance_scale: float = 7.5
+
+    def __post_init__(self):
+        if not self.erase_concept:
+            raise ValueError("erase_concept must not be empty.")
+        if self.erase_concept.lower() not in _VALID_ERASE_CONCEPTS:
+            raise ValueError(
+                f"erase_concept must be one of {sorted(_VALID_ERASE_CONCEPTS)}, "
+                f"got '{self.erase_concept}'."
+            )
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SLDConfig":
-        """Create config from a dict, resolving preset values first.
-
-        If ``preset`` is provided, its parameter values are used as defaults.
-        Any SLD parameters explicitly present in *data* take precedence over
-        the preset.
-        """
         data = dict(data)
-
-        erase_concept = data.get("erase_concept", "nudity")
-        if erase_concept.lower() not in _VALID_ERASE_CONCEPTS:
-            raise ValueError(
-                f"SLD suppresses nudity, violence, hate, and disturbing content simultaneously. "
-                f"erase_concept must be one of {sorted(_VALID_ERASE_CONCEPTS)} to indicate "
-                f"the primary category being benchmarked. Got: '{erase_concept}'."
-            )
 
         preset = data.get("preset")
         if preset is not None:

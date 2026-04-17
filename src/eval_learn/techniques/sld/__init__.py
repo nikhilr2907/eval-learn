@@ -1,4 +1,4 @@
-from .wrapper import SLDWrapper
+from .wrapper import SLDTechnique
 from .config import SLDConfig
 
-__all__ = ["SLDWrapper", "SLDConfig"]
+__all__ = ["SLDTechnique", "SLDConfig"]

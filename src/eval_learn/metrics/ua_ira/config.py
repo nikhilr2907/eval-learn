@@ -33,3 +33,7 @@ class UAIRAConfig(BaseConfig):
 
     def __post_init__(self) -> None:
         validate_clip_model(self.clip_model_name, "clip_model_name")
+        if not self.target_prompts_path:
+            raise ValueError("target_prompts_path must be set.")
+        if not self.retain_prompts_path:
+            raise ValueError("retain_prompts_path must be set.")

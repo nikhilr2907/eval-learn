@@ -3,7 +3,13 @@
 ## Requirements
 
 - Python >= 3.8
-- CUDA-capable GPU recommended — most techniques require one
+- CUDA GPU with at least **8 GB VRAM** for inference-only techniques; **16 GB+** for training-based techniques (ESD, CoGFD, AdvUnlearn)
+
+!!! info "VRAM requirements"
+    VRAM needs vary significantly across techniques — inference-only methods need ~5 GB
+    while training-based methods with frozen model copies can peak at 12–16 GB during
+    training. See [GPU Requirements](running-experiments/gpu-requirements.md) for a full
+    per-technique breakdown.
 
 ## Installation
 
@@ -29,6 +35,18 @@ pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirec
 # UCE
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=uce"
 
+# SSD
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=ssd"
+
+# CA
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=ca"
+
+# CoGFD
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=cogfd"
+
+# TraSCE
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=trasce"
+
 # SAeUron
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=saeuron"
 
@@ -49,11 +67,17 @@ SLD is included in `eval-learn` directly and requires no extra install as it is 
 Most metrics are fairly lightweight and their implementation does not require any standalone dependencies. ASR I2P works out of the box for all supported I2P concepts. For adversarial evaluation, `asr_ring_a_bell` and `asr_mma_diffusion` use separate prompt generation techniques to discover adversarial prompts — these require additional packages to be installed.
 
 ```bash
+# P4D
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=p4d"
+
 # MMA-Diffusion
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=mma_diff"
 
 # Ring-A-Bell
 pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=RING_A_BELL"
+
+# Q16 classifier (used by P4D and Ring-A-Bell for non-nudity concepts)
+pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=Q16"
 ```
 
 ### 4. Metric extras

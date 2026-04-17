@@ -49,9 +49,10 @@ All techniques are compatible with TIFA. No concept restrictions.
 ## Warnings
 
 !!! warning "BLIP-2 GPU memory"
-    `Salesforce/blip2-flan-t5-xl` is a large model (~15B parameters). It requires
-    substantial GPU memory (16GB+ recommended). In a multi-metric run, TIFA should
-    be listed last to avoid GPU memory conflicts with other metrics that are still loaded.
+    `Salesforce/blip2-flan-t5-xl` is a large model (~4–5B parameters, ~8GB in fp16).
+    It requires substantial GPU memory (16GB+ recommended when accounting for activations
+    and image tensors). In a multi-metric run, TIFA should be listed last to avoid GPU
+    memory conflicts with other metrics that are still loaded.
 
 !!! warning "qa_pairs metadata requirement"
     TIFA requires each batch to carry `qa_pairs` metadata — lists of

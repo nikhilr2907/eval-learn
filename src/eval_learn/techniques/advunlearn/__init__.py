@@ -1,3 +1,3 @@
-from .wrapper import AdvUnlearnWrapper
+from .wrapper import AdvUnlearnTechnique
 
-__all__ = ["AdvUnlearnWrapper"]
+__all__ = ["AdvUnlearnTechnique"]

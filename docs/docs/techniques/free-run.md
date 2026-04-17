@@ -1,41 +1,26 @@
-# Free Run — Baseline Unmodified Generation
+# Free Run — Custom Model Evaluation
 
 ## Overview
 
-Free Run is not an unlearning technique — it is a baseline. It loads any HuggingFace
-text-to-image model and generates images without any safety filtering, weight modification,
-or inference-time intervention.
+Free Run loads any HuggingFace text-to-image model and generates images without any weight
+modification or inference-time intervention. Use it to evaluate a model you already have —
+an external checkpoint, a fine-tuned variant, or any T2I model not covered by the built-in
+technique wrappers.
 
-Use Free Run to establish baseline metric scores before applying an unlearning technique.
-The delta between a Free Run result and a technique's result is the actual measured effect
-of that technique. Without a Free Run baseline, scores from individual techniques are
-difficult to interpret in isolation.
+Unlike every other technique, Free Run does not fix a base model. You supply the `model_id`
+and Free Run loads it via `AutoPipelineForText2Image`, which supports SD 1.x, SD 2.x, SDXL,
+FLUX, PixArt-α/Σ, Kandinsky, HunyuanDiT, and any other model whose HuggingFace repo
+specifies a compatible pipeline class.
 
-Unlike every other technique in the suite, Free Run accepts any model ID via `model_id`
-rather than fixing a base model. This makes it useful for baselining alternative SD
-checkpoints (e.g. SD 1.5, SD 2.0).
-
-!!! warning "No nudity filtering"
-    Free Run generates without any safety constraints. When used with ASR or ERR, it will
-    produce high ASR scores by design — this is the expected baseline behaviour.
+No erasure, filtering, or safety mechanism is applied — what the model generates is what
+gets evaluated.
 
 ---
 
 ## Compatible metrics
 
-| Metric | Compatible | Notes |
-|--------|-----------|-------|
-| ASR | Yes | free_run bypasses nudity concept check |
-| ERR | Yes | free_run bypasses nudity concept check |
-| FID | Yes | General image quality |
-| CLIP Score | Yes | General text-image alignment |
-| UA_IRA | Yes | Requires custom prompt CSVs |
-| TIFA | Yes | General faithfulness |
-| ASR Custom | Yes | Concept-agnostic via CLIP |
-| MMA-Diffusion | Yes | Requires explicit target prompts for non-nudity concepts |
-
-Free Run is the only technique exempt from nudity-concept validation. ASR and ERR can
-be used with Free Run regardless of concept.
+All metrics are compatible. Free Run is exempt from nudity-concept validation, so ASR and
+ERR can be used regardless of concept.
 
 ---
 
@@ -43,89 +28,88 @@ be used with Free Run regardless of concept.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `model_id` | `str` | `""` | **Required.** HuggingFace model ID for any text-to-image diffusion model. |
+| `model_id` | `str` | — | **Required.** HuggingFace model ID for any T2I model supported by `AutoPipelineForText2Image`. |
 | `device` | `str \| None` | `None` | Device to run on. Auto-detects CUDA → MPS → CPU if `None`. |
-| `use_fp16` | `bool` | `True` | Run in half precision. |
+| `use_fp16` | `bool` | `True` | Run in half precision on CUDA. Ignored on CPU and MPS (always float32). |
+| `num_inference_steps` | `int` | `50` | Number of denoising steps. |
+| `guidance_scale` | `float` | `7.5` | Classifier-free guidance scale. |
+
+### Default value notes
+
+`num_inference_steps=50` and `guidance_scale=7.5` are calibrated for SD 1.x. Set them
+explicitly when evaluating other model families:
+
+| Model | Typical steps | Typical guidance |
+|-------|--------------|-----------------|
+| SD 1.x / SD 2.x | 50 | 7.5 |
+| SDXL | 25–40 | 5.0–7.5 |
+| FLUX | 20–28 | 3.5–4.0 |
+| PixArt | 20 | 4.5 |
 
 ---
 
 ## Warnings
 
 !!! warning "model_id is required"
-    Free Run has no fixed base model. Leaving `model_id` as an empty string or omitting it
-    will raise an error when the pipeline is loaded. Always specify a valid HuggingFace
-    model ID.
+    Free Run has no fixed base model. Omitting `model_id` raises a `ValueError` at
+    initialisation.
 
-!!! warning "No num_inference_steps or guidance_scale"
-    Unlike other techniques, Free Run does not expose `num_inference_steps` or
-    `guidance_scale` in its config. These are controlled by each metric's own generation
-    parameters or the runner defaults.
+!!! warning "No safety filtering"
+    Free Run disables the safety checker on any model that has one. Images are generated
+    without constraint — high ASR scores are expected when evaluating concepts the model
+    has not been trained to suppress.
+
+!!! warning "num_inference_steps and guidance_scale defaults are SD-centric"
+    The defaults produce valid output for other model families but may not reflect
+    published results for those models. Set them explicitly when evaluating SDXL, FLUX,
+    or PixArt.
 
 ---
 
 ## Examples
 
-### Single metric — ASR baseline
+### Evaluating a custom model checkpoint
 
 ```json
 {
-  "output_dir": "results/free_run_asr_baseline",
+  "output_dir": "results/my_model_nudity",
   "technique": {
     "name": "free_run",
     "config": {
-      "model_id": "CompVis/stable-diffusion-v1-4",
-      "device": "cuda"
-    }
-  },
-  "metric": {
-    "name": "asr",
-    "config": {
-      "device": "cuda",
-      "limit": 500
-    }
-  }
-}
-```
-
-### Single metric — FID baseline with SD 1.5
-
-```json
-{
-  "output_dir": "results/free_run_fid_baseline",
-  "technique": {
-    "name": "free_run",
-    "config": {
-      "model_id": "runwayml/stable-diffusion-v1-5",
-      "device": "cuda"
-    }
-  },
-  "metric": {
-    "name": "fid",
-    "config": {
-      "device": "cuda",
-      "limit": 1000
-    }
-  }
-}
-```
-
-### Multiple metrics — full baseline
-
-```json
-{
-  "output_dir": "results/free_run_baseline",
-  "technique": {
-    "name": "free_run",
-    "config": {
-      "model_id": "CompVis/stable-diffusion-v1-4",
+      "model_id": "my-org/my-finetuned-sd",
       "device": "cuda"
     }
   },
   "metrics": [
-    { "name": "asr", "config": { "device": "cuda", "limit": 500 } },
+    {
+      "name": "asr_i2p",
+      "config": { "concept_name": "nudity", "device": "cuda", "limit": 500 }
+    },
+    {
+      "name": "fid",
+      "config": { "device": "cuda", "limit": 1000 }
+    }
+  ]
+}
+```
+
+### SDXL
+
+```json
+{
+  "output_dir": "results/sdxl_eval",
+  "technique": {
+    "name": "free_run",
+    "config": {
+      "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
+      "num_inference_steps": 30,
+      "guidance_scale": 5.0,
+      "device": "cuda"
+    }
+  },
+  "metrics": [
     { "name": "fid", "config": { "device": "cuda", "limit": 1000 } },
-    { "name": "clip_score", "config": { "device": "cuda", "limit": 300 } },
-    { "name": "tifa", "config": { "device": "cuda", "limit": 200 } }
+    { "name": "clip_score", "config": { "device": "cuda", "limit": 500 } }
   ]
 }
 ```

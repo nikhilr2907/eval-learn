@@ -45,22 +45,6 @@ def validate_nudity_metrics(
         )
 
 
-def validate_nudity_techniques(
-    technique_name: str, erase_concept: Optional[str]
-) -> None:
-    """Validate nudity-specific techniques can only be used with nudity."""
-    nudity_only_techniques = {"safree", "sld", "concept_steerers", "saeuron"}
-
-    if technique_name not in nudity_only_techniques:
-        return
-
-    if erase_concept != "nudity":
-        raise ValidationError(
-            f"Technique '{technique_name}' only supports nudity concept. "
-            f"Got erase_concept='{erase_concept}'. "
-            f"For other concepts, use esd, mace, or uce (if preset available)."
-        )
-
 
 def validate_uce_concept(erase_concept: Optional[str]) -> None:
     """Validate UCE concept matches one of its 3 pre-trained presets."""
@@ -100,9 +84,6 @@ def validate_technique_metric_pair(
 
     # Rule 1: Nudity-specific metrics
     validate_nudity_metrics(technique_name, erase_concept, metric_name)
-
-    # Rule 3: Nudity-only techniques
-    validate_nudity_techniques(technique_name, erase_concept)
 
     # Rule 4: UCE preset validation
     if technique_name == "uce":

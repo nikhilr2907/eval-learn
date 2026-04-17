@@ -44,7 +44,8 @@ to `erase_concept`, which is useful when a concept has many surface forms (e.g.
 | `erase_concept` | `str \| list[str]` | `"nudity"` | Concept(s) to erase. A single string or a list of synonyms. All listed terms are mapped to the neutral representation. |
 | `erase_from` | `str \| list[str] \| None` | `None` | Scope restriction. If set, only erases the concept when it appears in the context of this broader concept. Defaults to `None` (fully erase to neutral with no scope). |
 | `lambda_cfr` | `float` | `0.1` | CFR regularisation strength. Higher = more conservative update, weaker erasure. Lower = more aggressive erasure, higher risk of side effects on related concepts. |
-| `save_path` | `str \| None` | `None` | Path to save modified UNet weights. If `None`, weights are held in memory only. |
+| `load_path` | `str \| None` | `None` | Path to a `.pt` file containing a pre-modified UNet state dict (saved by a previous MACE run). If set, the CFR computation is skipped entirely and these weights are loaded directly. |
+| `save_path` | `str \| None` | `None` | Path to save the CFR-modified UNet state dict as a `.pt` file after computation. Only used when CFR runs (i.e. `load_path` is not set). |
 | `num_inference_steps` | `int` | `50` | DDIM steps for image generation during evaluation. |
 | `guidance_scale` | `float` | `7.5` | Classifier-free guidance scale for generation. |
 | `use_fp16` | `bool` | `True` | Run in half precision. |
@@ -54,9 +55,17 @@ to `erase_concept`, which is useful when a concept has many surface forms (e.g.
 
 ## Warnings
 
-!!! warning "Saving weights"
-    If `save_path` is `None`, the CFR computation runs on every invocation. While MACE is
-    fast, set `save_path` for any repeated evaluation runs.
+!!! warning "load_path and save_path are distinct"
+    `load_path` and `save_path` serve different purposes and should not be set to the same
+    file. Set `save_path` on a first run to persist the modified weights. On subsequent runs,
+    set `load_path` to skip the CFR computation entirely. If neither is set, CFR re-runs on
+    every invocation.
+
+!!! warning "Checkpoint format"
+    Both `load_path` and `save_path` refer to a single `.pt` file containing the full UNet
+    state dict (`torch.save(unet.state_dict(), path)`), not a HuggingFace model directory.
+    The saved weights include all UNet parameters — only the cross-attention K/V matrices
+    differ from the base model, but the full state dict is stored for a clean load.
 
 !!! warning "lambda_cfr tuning"
     The default `lambda_cfr=0.1` is a reasonable starting point. If ASR remains high after
@@ -155,3 +164,13 @@ to `erase_concept`, which is useful when a concept has many surface forms (e.g.
   ]
 }
 ```
+
+
+---
+
+!!! tip "Reusing trained weights across runs"
+    Set `save_path` on the first run to persist the trained weights, then use `load_path`
+    on all subsequent runs to skip retraining. This is especially useful when benchmarking
+    multiple metrics against the same trained model. See
+    [Caching adversarial prompts and technique weights](../running-experiments/caching-adversarial-prompts.md)
+    for the full workflow.

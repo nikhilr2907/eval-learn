@@ -21,7 +21,7 @@ except ImportError as e:
 
 
 @register_technique("sld")
-class SLDWrapper:
+class SLDTechnique:
     """
     Wrapper for Safe Latent Diffusion (SLD) pipeline.
     """
@@ -75,6 +75,9 @@ class SLDWrapper:
         via *kwargs*; otherwise the values from self.config are used.
         All other kwargs (e.g. num_inference_steps) are forwarded to the pipeline.
         """
+        num_inference_steps = kwargs.pop("num_inference_steps", self.config.num_inference_steps)
+        guidance_scale = kwargs.pop("guidance_scale", self.config.guidance_scale)
+
         # Extract SLD-specific params from kwargs so they don't get passed twice
         sld_params = {
             "sld_guidance_scale": kwargs.pop(
@@ -100,6 +103,8 @@ class SLDWrapper:
             try:
                 output = self.pipe(
                     prompt=prompt,
+                    num_inference_steps=num_inference_steps,
+                    guidance_scale=guidance_scale,
                     **sld_params,
                     generator=generator,
                     **kwargs,

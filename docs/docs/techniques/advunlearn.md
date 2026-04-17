@@ -24,7 +24,7 @@ but the pre-built retention datasets are curated for nudity erasure.
 
 | Metric | Compatible | Notes |
 |--------|-----------|-------|
-| ASR I2P | Any I2P concept | NudeNet for nudity; CLIP for all others |
+| ASR I2P | Any I2P concept | NudeNet for nudity; Q16 for all others |
 | ERR | nudity only | Requires `erase_concept="nudity"` |
 | FID | Any | General image quality |
 | CLIP Score | Any | General text-image alignment |
@@ -48,8 +48,8 @@ but the pre-built retention datasets are curated for nudity erasure.
 | `retain_loss_w` | `float` | `1.0` | Weight of the retention loss term. |
 | `start_guidance` | `float` | `3.0` | Initial classifier-free guidance scale during training. |
 | `negative_guidance` | `float` | `1.0` | Guidance scale for the erasing objective. |
-| `iterations` | `int` | `5` | Total training iterations. Must be > 0. |
-| `lr` | `float` | `1e-5` | Learning rate. Must be > 0. |
+| `train_steps` | `int` | `5` | Total training iterations. Must be > 0. |
+| `learning_rate` | `float` | `1e-5` | Learning rate. Must be > 0. |
 | `attack_method` | `str` | `"pgd"` | Inner-loop attack algorithm. `"pgd"` (Projected Gradient Descent) or `"fast_at"`. |
 | `attack_step` | `int` | `30` | Number of attack steps per iteration. Must be > 0. |
 | `attack_lr` | `float` | `1e-3` | Step size for the attack optimiser. Must be > 0. |
@@ -58,13 +58,13 @@ but the pre-built retention datasets are curated for nudity erasure.
 | `attack_embd_type` | `str` | `"word_embd"` | Embedding space for the attack. Only `"word_embd"` is supported. |
 | `adv_prompt_num` | `int` | `1` | Number of adversarial prompts generated per step. Must be > 0. |
 | `adv_prompt_update_step` | `int` | `1` | How often to refresh adversarial prompts. |
-| `warmup_iter` | `int` | `1` | Warmup iterations before adversarial training begins. Must be < `iterations`. |
+| `warmup_iter` | `int` | `1` | Warmup iterations before adversarial training begins. Must be < `train_steps`. |
 | `component` | `str` | `"all"` | UNet component to modify. `"all"`, `"ffn"`, or `"attn"`. |
 | `norm_layer` | `bool` | `False` | Include layer normalisation in trainable parameters. |
 | `ddim_steps` | `int` | `50` | DDIM steps during training rollouts. |
 | `save_interval` | `int` | `1` | Checkpoint save frequency (in iterations). |
-| `save_dir` | `str \| None` | `None` | Directory to save checkpoints. |
-| `checkpoint_path` | `str \| None` | `None` | Path to a previously saved checkpoint to resume from. |
+| `save_dir` | `str \| None` | `None` | Directory to save checkpoints. After training, a `.pt` file is written here named `{concept}_{text_encoder\|unet}.pt` (e.g. `nudity_text_encoder.pt`). The suffix depends on `train_method`: `text_encoder` for any `text_encoder_*` method, `unet` for all others. |
+| `load_path` | `str \| None` | `None` | Path to a `.pt` file saved by a previous AdvUnlearn run (from `save_dir`). If the file exists, training is skipped and these weights are loaded. Must match the current `train_method` — a text-encoder checkpoint cannot be loaded with a UNet `train_method` and vice versa. |
 | `num_inference_steps` | `int` | `50` | DDIM steps for image generation during evaluation. |
 | `guidance_scale` | `float` | `7.5` | CFG scale for generation. |
 | `use_fp16` | `bool` | `True` | Run in half precision. |
@@ -100,19 +100,26 @@ but the pre-built retention datasets are curated for nudity erasure.
 
 ## Warnings
 
-!!! warning "warmup_iter must be less than iterations"
-    If `warmup_iter >= iterations`, AdvUnlearn raises a `ValidationError` on startup.
-    With `iterations=5`, `warmup_iter` must be at most `4`.
+!!! warning "Checkpoint format and train_method compatibility"
+    `load_path` must point to a `.pt` file written by `save_dir` from a previous run.
+    The file contains a state dict keyed with `text_encoder.*` prefixes (for `text_encoder_*`
+    methods) or bare UNet parameter names (for UNet methods). Loading a text-encoder
+    checkpoint with a UNet `train_method` (or vice versa) will raise a key mismatch error.
+    Always use the same `train_method` when resuming from a checkpoint.
+
+!!! warning "warmup_iter must be less than train_steps"
+    If `warmup_iter >= train_steps`, AdvUnlearn raises a `ValidationError` on startup.
+    With `train_steps=5`, `warmup_iter` must be at most `4`.
 
 !!! warning "Training time"
     AdvUnlearn is significantly slower than MACE or UCE. Each outer iteration runs
-    `attack_step` inner PGD steps. With defaults (`iterations=5`, `attack_step=30`),
+    `attack_step` inner PGD steps. With defaults (`train_steps=5`, `attack_step=30`),
     expect substantially longer wall-clock time than other techniques. Reduce `attack_step`
     for faster (but less robust) training.
 
-!!! warning "Low iterations default"
-    The default `iterations=5` is minimal. Published results typically use 100–1000
-    iterations. The default is set low to keep demo runs feasible — increase it for
+!!! warning "Low train_steps default"
+    The default `train_steps=5` is minimal. Published results typically use 100–1000
+    steps. The default is set low to keep demo runs feasible — increase it for
     production benchmarks.
 
 !!! warning "attack_embd_type"
@@ -133,7 +140,7 @@ but the pre-built retention datasets are curated for nudity erasure.
     "config": {
       "erase_concept": "nudity",
       "train_method": "text_encoder_full",
-      "iterations": 100,
+      "train_steps": 100,
       "attack_step": 30,
       "warmup_iter": 5,
       "save_dir": "checkpoints/advunlearn_nudity",
@@ -160,8 +167,8 @@ but the pre-built retention datasets are curated for nudity erasure.
     "config": {
       "erase_concept": "nudity",
       "train_method": "text_encoder_full",
-      "iterations": 100,
-      "lr": 1e-5,
+      "train_steps": 100,
+      "learning_rate": 1e-5,
       "attack_method": "pgd",
       "attack_step": 30,
       "attack_lr": 1e-3,
@@ -192,3 +199,13 @@ but the pre-built retention datasets are curated for nudity erasure.
   ]
 }
 ```
+
+
+---
+
+!!! tip "Reusing trained weights across runs"
+    Set `save_path` on the first run to persist the trained weights, then use `load_path`
+    on all subsequent runs to skip retraining. This is especially useful when benchmarking
+    multiple metrics against the same trained model. See
+    [Caching adversarial prompts and technique weights](../running-experiments/caching-adversarial-prompts.md)
+    for the full workflow.

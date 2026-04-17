@@ -1,4 +1,4 @@
-from .wrapper import SAeUronWrapper
+from .wrapper import SAeUronTechnique
 from .config import SAeUronConfig
 
-__all__ = ["SAeUronWrapper", "SAeUronConfig"]
+__all__ = ["SAeUronTechnique", "SAeUronConfig"]

@@ -5,7 +5,7 @@ try:
     from cogfd import CoGFDPipeline
 except ImportError:
     raise ImportError(
-        "CoGFDWrapper requires the 'cogfd' package. "
+        "CoGFDTechnique requires the 'cogfd' package. "
         "Install with: pip install -e packages/cogfd/"
     )
 
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("cogfd")
-class CoGFDWrapper:
+class CoGFDTechnique:
     """
     Eval-Learn wrapper for CoGFD (ICLR 2025).
 
@@ -39,6 +39,7 @@ class CoGFDWrapper:
         self.pipeline = CoGFDPipeline(
             model_id=self.config.model_id,
             device=self.config.device,
+            use_fp16=self.config.use_fp16,
             erase_concept=self.config.erase_concept,
             combination_prompts=self.config.combination_prompts,
             preserve_concepts=self.config.preserve_concepts,
@@ -48,6 +49,7 @@ class CoGFDWrapper:
             train_steps=self.config.train_steps,
             learning_rate=self.config.learning_rate,
             save_path=self.config.save_path,
+            load_path=self.config.load_path,
             num_inference_steps=self.config.num_inference_steps,
             guidance_scale=self.config.guidance_scale,
         )

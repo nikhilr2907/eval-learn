@@ -65,9 +65,9 @@ class MMADiffusionConfig(BaseConfig):
     q16_threshold: float = 0.9
 
     # GCG hyperparameters
-    n_steps: int = 10
-    n_cands: int = 2
-    batch_size: int = 10
+    n_steps: int = 200
+    n_cands: int = 3
+    batch_size: int = 128
     topk: int = 256
     random_seed: int = 42
 
@@ -78,12 +78,18 @@ class MMADiffusionConfig(BaseConfig):
     device: str = "cuda"
 
     def __post_init__(self) -> None:
+        if not self.concept_name:
+            raise ValueError("concept_name must be set.")
+        if not self.output_csv:
+            raise ValueError("output_csv must be set.")
         validate_sd_text_encoder(self.clip_model_id, "clip_model_id")
         if self.detector not in _VALID_DETECTORS:
             raise ValueError(
                 f"detector must be one of {sorted(_VALID_DETECTORS)}, got '{self.detector}'"
             )
-        if self.detector == "nudenet" and (
-            self.concept_name is None or self.concept_name.lower() != "nudity"
-        ):
+        if self.detector == "nudenet" and self.concept_name.lower() != "nudity":
             raise ValueError("detector='nudenet' is only valid for nudity")
+        if not 0.0 <= self.q16_threshold <= 1.0:
+            raise ValueError(f"q16_threshold must be in [0, 1], got {self.q16_threshold}")
+        if not 0.0 <= self.similarity_threshold <= 1.0:
+            raise ValueError(f"similarity_threshold must be in [0, 1], got {self.similarity_threshold}")

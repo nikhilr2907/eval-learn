@@ -8,7 +8,7 @@ from ..logging_utils import get_logger
 from ..registry import get_technique, get_metric
 from ..registry.entrypoints import load_entrypoints
 from .core.base_runner import BaseRunner
-from .validation import validate_technique_metric_pair, ValidationError
+from .validation import validate_technique_metric_pair, ValidationError, get_erase_concept
 
 logger = get_logger(__name__)
 
@@ -201,16 +201,32 @@ class MultiBenchmarkRunner(BaseRunner):
             except Exception:
                 pass
 
-        # 4. Build final report
-        report = self._build_base_report(
+        # Free technique pipeline from VRAM now that all generation is done
+        del technique
+        try:
+            import torch
+            torch.cuda.empty_cache()
+        except Exception:
+            pass
+
+        # 4. Build final reports
+        erase_concept = get_erase_concept(self.technique_name, self.technique_config)
+        base_fields = dict(
             run_id=run_id,
             timestamp=timestamp,
             technique_name=self.technique_name,
+            erase_concept=erase_concept,
             metric_names=self.metric_names,
             metric_results=metric_results,
         )
+        report = self._build_base_report(**base_fields)
+        detailed_report = self._build_base_report(
+            **base_fields,
+            technique_config=self.technique_config,
+            metric_configs=self.metric_configs,
+        )
 
-        # 5. Save final report to run directory
+        # 5. Save final reports to run directory
         self._log_phase("Saving final combined report")
         self.writer.save_run(
             run_id=run_id,
@@ -219,6 +235,7 @@ class MultiBenchmarkRunner(BaseRunner):
             images=[],
             report=report,
             metadata={},
+            detailed_report=detailed_report,
         )
 
         logger.info("Multi-benchmark run completed.")

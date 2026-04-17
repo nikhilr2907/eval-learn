@@ -8,7 +8,7 @@ from ..logging_utils import get_logger
 from ..registry import get_technique, get_metric
 from ..registry.entrypoints import load_entrypoints
 from .core.base_runner import BaseRunner
-from .validation import validate_technique_metric_pair, ValidationError
+from .validation import validate_technique_metric_pair, ValidationError, get_erase_concept
 
 logger = get_logger(__name__)
 
@@ -139,6 +139,14 @@ class SingleBenchmarkRunner(BaseRunner):
         result: MetricResult = metric.compute()
         logger.info(f"Metric Result ({result.name}): {result.value}")
 
+        # Free technique and metric pipelines from VRAM
+        del technique, metric
+        try:
+            import torch
+            torch.cuda.empty_cache()
+        except Exception:
+            pass
+
         run_id = generate_run_id(
             technique_name=self.technique_name,
             technique_config=self.technique_config,
@@ -149,21 +157,28 @@ class SingleBenchmarkRunner(BaseRunner):
         )
         logger.info(f"Run ID: {run_id}")
 
-        # 7. Prepare Report
-        report = self._build_base_report(
+        # 7. Prepare Reports
+        erase_concept = get_erase_concept(self.technique_name, self.technique_config)
+        metric_result = {
+            "name": result.name,
+            "value": result.value,
+            "details": result.details,
+        }
+        base_fields = dict(
             run_id=run_id,
             timestamp=timestamp,
             technique_name=self.technique_name,
+            erase_concept=erase_concept,
             metric_name=self.metric_name,
             dataset_name=dataset_name,
             dataset_metadata={**accumulated_metadata, "total_loaded": total_generated},
+            metric_result=metric_result,
+        )
+        report = self._build_base_report(**base_fields)
+        detailed_report = self._build_base_report(
+            **base_fields,
             technique_config=self.technique_config,
             metric_config=self.metric_config,
-            metric_result={
-                "name": result.name,
-                "value": result.value,
-                "details": result.details,
-            },
         )
 
         # 8. Save Artifacts
@@ -174,6 +189,7 @@ class SingleBenchmarkRunner(BaseRunner):
             images=all_images,
             report=report,
             metadata=accumulated_metadata,
+            detailed_report=detailed_report,
         )
 
         logger.info("Benchmark run completed.")

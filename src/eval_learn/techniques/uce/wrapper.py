@@ -5,7 +5,7 @@ from PIL import Image
 try:
     from uce import UCEPipeline
 except ImportError:
-    raise ImportError("UCEWrapper requires the 'uce' package. Package not installed.")
+    raise ImportError("UCETechnique requires the 'uce' package. Package not installed.")
 
 from ...registry import register_technique
 from ...logging_utils import get_logger
@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("uce")
-class UCEWrapper:
+class UCETechnique:
     """
     Thin wrapper around the external UCE package.
 
@@ -33,9 +33,12 @@ class UCEWrapper:
         self.pipeline = UCEPipeline(
             model_id=self.config.model_id,
             device=self.config.device,
-            preset=self.config.preset,
-            weights_path=self.config.uce_weights_path,
             use_fp16=self.config.use_fp16,
+            preset=self.config.preset,
+            load_path=self.config.load_path,
+            erase_concept=self.config.erase_concept,
+            concept_type=self.config.concept_type,
+            save_path=self.config.save_path,
         )
 
     def generate(

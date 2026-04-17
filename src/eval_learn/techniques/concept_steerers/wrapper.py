@@ -6,7 +6,7 @@ try:
     from concept_steerers import ConceptSteeringPipeline
 except ImportError:
     raise ImportError(
-        "ConceptSteerersWrapper requires the 'concept-steerers' package. Package not installed."
+        "ConceptSteerersTechnique requires the 'concept-steerers' package. Package not installed."
     )
 
 from ...registry import register_technique
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 @register_technique("concept_steerers")
-class ConceptSteerersWrapper:
+class ConceptSteerersTechnique:
     """
     Thin wrapper around the external concept-steerers package.
 
@@ -35,7 +35,6 @@ class ConceptSteerersWrapper:
         self.pipeline = ConceptSteeringPipeline(
             model_id=self.config.model_id,
             device=self.config.device,
-            sae_path=self.config.sae_path,
             concept=self.config.erase_concept,
             multiplier=self.config.multiplier,
             use_fp16=self.config.use_fp16,
@@ -55,7 +54,16 @@ class ConceptSteerersWrapper:
         Returns:
             List of PIL Images.
         """
+        num_inference_steps = kwargs.pop("num_inference_steps", self.config.num_inference_steps)
+        guidance_scale = kwargs.pop("guidance_scale", self.config.guidance_scale)
+
         logger.info(
             f"Generating {len(prompts)} images with concept steering (strength: {self.config.multiplier})"
         )
-        return self.pipeline.generate(prompts, seed=seed, **kwargs)
+        return self.pipeline.generate(
+            prompts,
+            seed=seed,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            **kwargs,
+        )
