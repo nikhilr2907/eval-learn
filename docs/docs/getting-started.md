@@ -23,41 +23,28 @@ pip install eval-learn
 
 To ensure of a lightweight and clean package, the precise implementation of all unlearning techniques are in  seperate installable packages hosted on [Hugging Face](https://huggingface.co/datasets/Unlearningltd/Packages).
 
-Install only the ones you need:
+Some packages bundle large weight files tracked via Git LFS. Installing via `pip install git+...` will give you a broken pointer file instead of the real weights. Clone the packages repo once and install editably:
 
 ```bash
-# ESD
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=esd"
+git clone https://huggingface.co/datasets/Unlearningltd/Packages
+cd Packages
+git lfs pull
+```
 
-# MACE
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=mace"
+Then install only the ones you need:
 
-# UCE
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=uce"
-
-# SSD
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=ssd"
-
-# CA
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=ca"
-
-# CoGFD
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=cogfd"
-
-# TraSCE
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=trasce"
-
-# SAeUron
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=saeuron"
-
-# SAFREE
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=safree"
-
-# Concept Steerers
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=concept-steerers"
-
-# AdvUnlearn
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=advunlearn"
+```bash
+pip install -e esd/
+pip install -e mace/
+pip install -e uce/
+pip install -e ssd/
+pip install -e ca/
+pip install -e cogfd/
+pip install -e trasce/
+pip install -e saeuron/
+pip install -e safree/
+pip install -e concept-steerers/
+pip install -e advunlearn/
 ```
 
 SLD is included in `eval-learn` directly and requires no extra install as it is implemented within the [Hugging-Face] [diffusers] library, a required dependency of the package.
@@ -66,18 +53,13 @@ SLD is included in `eval-learn` directly and requires no extra install as it is 
 
 Most metrics are fairly lightweight and their implementation does not require any standalone dependencies. ASR I2P works out of the box for all supported I2P concepts. For adversarial evaluation, `asr_ring_a_bell` and `asr_mma_diffusion` use separate prompt generation techniques to discover adversarial prompts — these require additional packages to be installed.
 
+From the cloned `Packages` directory (see step 2 above):
+
 ```bash
-# P4D
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=p4d"
-
-# MMA-Diffusion
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=mma_diff"
-
-# Ring-A-Bell
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=RING_A_BELL"
-
-# Q16 classifier (used by P4D and Ring-A-Bell for non-nudity concepts)
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=Q16"
+pip install -e p4d/
+pip install -e mma_diff/
+pip install -e RING_A_BELL/
+pip install -e Q16/
 ```
 
 ### 4. Metric extras

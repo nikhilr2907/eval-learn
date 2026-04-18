@@ -50,39 +50,42 @@ pip install eval-learn
 
 ### 2. Install technique packages
 
-Technique implementations are hosted on [Hugging Face](https://huggingface.co/datasets/Unlearningltd/Packages). Install only what you need:
+Technique implementations are hosted on [Hugging Face](https://huggingface.co/datasets/Unlearningltd/Packages). Clone the repo once, pull LFS files, then install only what you need:
 
 ```bash
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=esd"
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=mace"
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=uce"
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=ssd"
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=ca"
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=cogfd"
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=trasce"
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=saeuron"
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=safree"
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=concept-steerers"
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=advunlearn"
+git clone https://huggingface.co/datasets/Unlearningltd/Packages
+cd Packages
+git lfs pull
+```
+
+```bash
+pip install -e esd/
+pip install -e mace/
+pip install -e uce/
+pip install -e ssd/
+pip install -e ca/
+pip install -e cogfd/
+pip install -e trasce/
+pip install -e saeuron/
+pip install -e safree/
+pip install -e concept-steerers/
+pip install -e advunlearn/
 ```
 
 SLD is built into eval-learn via the `diffusers` library and requires no extra install.
 
 ### 3. Install metric packages
 
+From the cloned `Packages` directory (see step 2 above):
+
 ```bash
-# P4D adversarial attack
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=p4d"
+pip install -e p4d/
+pip install -e mma_diff/
+pip install -e RING_A_BELL/
+pip install -e Q16/
+```
 
-# MMA-Diffusion adversarial attack
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=mma_diff"
-
-# Ring-A-Bell adversarial prompt discovery
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=RING_A_BELL"
-
-# Q16 classifier (used by P4D and Ring-A-Bell for non-nudity concepts)
-pip install "git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=Q16"
-
+```bash
 # NudeNet (nudity ASR)
 pip install "eval-learn[asr]"
 
