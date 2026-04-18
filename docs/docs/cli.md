@@ -225,7 +225,7 @@ whether `metric` (singular) or `metrics` (list) is present.
         }
       },
       "metrics": [
-        { "name": "asr",  "config": { "device": "cuda", "limit": 500 } },
+        { "name": "asr_i2p",  "config": { "device": "cuda", "limit": 500 } },
         { "name": "fid",  "config": { "device": "cuda" } }
       ],
       "output_dir": "results/esd_nudity"

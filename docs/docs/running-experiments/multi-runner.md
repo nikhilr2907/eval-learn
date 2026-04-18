@@ -68,7 +68,7 @@ The multi runner is selected automatically when your config contains a `metrics`
         }
       },
       "metrics": [
-        { "name": "asr",        "config": { "device": "cuda", "limit": 500 } },
+        { "name": "asr_i2p",        "config": { "device": "cuda", "limit": 500 } },
         { "name": "fid",        "config": { "device": "cuda", "limit": 1000 } },
         { "name": "clip_score", "config": { "device": "cuda", "limit": 300 } }
       ],
@@ -137,8 +137,8 @@ The combined report is written to `multi/report.json` after all metrics complete
   "technique_name": "esd",
   "metric_names": ["asr", "fid", "clip_score"],
   "metric_results": {
-    "asr": {
-      "name": "asr",
+    "asr_i2p": {
+      "name": "asr_i2p",
       "value": 0.12,
       "details": { "..." }
     },

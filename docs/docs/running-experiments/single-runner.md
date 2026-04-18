@@ -54,7 +54,7 @@ The single runner is selected automatically when your config contains a `metric`
         }
       },
       "metric": {
-        "name": "asr",
+        "name": "asr_i2p",
         "config": {
           "device": "cuda",
           "limit": 500
@@ -124,7 +124,7 @@ so results from repeated experiments don't collide.
   "technique_config": { "..." },
   "metric_config": { "..." },
   "metric_result": {
-    "name": "asr",
+    "name": "asr_i2p",
     "value": 0.12,
     "details": { "..." }
   }

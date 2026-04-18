@@ -153,7 +153,7 @@ Both YAML and JSON are supported and equivalent.
         }
       },
       "metric": {
-        "name": "asr"
+        "name": "asr_i2p"
       },
       "output_dir": "results/mace_nudity"
     }
@@ -190,7 +190,7 @@ Replace `metric` with `metrics` as a list:
         }
       },
       "metrics": [
-        { "name": "asr" },
+        { "name": "asr_i2p" },
         { "name": "clip_score" },
         { "name": "fid" }
       ],

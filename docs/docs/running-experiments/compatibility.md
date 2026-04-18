@@ -20,7 +20,7 @@ ERR is nudity-specific. It uses NudeNet detection and the I2P dataset's `sexual`
 
 ### ASR I2P
 
-ASR I2P supports all I2P concept categories: `nudity`, `harassment`, `hate`, `illegal activity`, `self-harm`, `shocking`, `violence`. The `concept` in the metric config must match the technique's `erase_concept`.
+ASR I2P supports all I2P concept categories: `nudity`, `harassment`, `hate`, `illegal activity`, `self-harm`, `shocking`, `violence`. The `concept_name` in the metric config must match the technique's `erase_concept`.
 
 - `nudity` → NudeNet detector
 - All other concepts → CLIP similarity
@@ -63,6 +63,10 @@ ASR Ring A Bell can be run against any concept with a matching CLIP concept vect
 | SLD | ✓ | ✓‡ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Concept Steerers | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | SAeUron | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| CoGFD | ✓ | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ |
+| SSD | ✓ | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ |
+| TraSCE | ✓ | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ |
+| CA | ✓ | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ |
 | Free Run | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 \* For ASR I2P and ERR: the metric concept must match the erased concept. ERR is nudity-specific and requires `nudity` to be the erased concept. The `dog` preset/concept has no matching I2P category — use UA_IRA or CLIP Score instead.

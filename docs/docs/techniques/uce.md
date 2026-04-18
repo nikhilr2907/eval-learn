@@ -95,7 +95,7 @@ UCE supports three initialisation paths:
     }
   },
   "metric": {
-    "name": "asr",
+    "name": "asr_i2p",
     "config": {
       "device": "cuda",
       "limit": 500
@@ -181,7 +181,7 @@ UCE supports three initialisation paths:
     }
   },
   "metrics": [
-    { "name": "asr", "config": { "device": "cuda", "limit": 500 } },
+    { "name": "asr_i2p", "config": { "device": "cuda", "limit": 500 } },
     { "name": "err", "config": { "device": "cuda", "target_limit": 50, "retain_limit": 20, "adversarial_limit": 50 } },
     { "name": "fid", "config": { "device": "cuda", "limit": 1000 } },
     { "name": "clip_score", "config": { "device": "cuda", "limit": 300 } },
