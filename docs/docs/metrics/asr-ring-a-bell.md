@@ -172,7 +172,15 @@ a header row and pass it as `seed_prompts_csv` with `enable_discovery=false`.
     omitting `concept_vector_path` raises a `ValueError`.
 
     With `enable_discovery=false`: only `seed_prompts_csv` is required. Providing
-    `concept_vector_path` or `generated_prompts_output` has no effect.
+    `concept_vector_path` or `generated_prompts_output` has no effect — a warning is logged
+    if either is set.
+
+!!! warning "Concept vector must match clip_model_id"
+    The concept vector's embedding dimension must match the model configured via `clip_model_id`.
+    For the default `openai/clip-vit-large-patch14` this is 768 dimensions. A mismatch is
+    detected at initialisation and raises a `ValueError` before any computation begins. If you
+    compute your own concept vector, use the same `clip_model_id` you intend to pass in the
+    metric config.
 
 !!! warning "GA is slow"
     Ring-A-Bell prompt discovery can take tens of minutes depending on `generations` and

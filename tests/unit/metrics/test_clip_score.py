@@ -14,7 +14,7 @@ class TestCLIPScoreConfig:
     def test_config_defaults(self):
         """Test default configuration values."""
         config = CLIPScoreConfig()
-        assert config.clip_model_name == "openai/clip-vit-base-patch32"
+        assert config.clip_model_name == "openai/clip-vit-large-patch14"
         assert config.device is None
         assert config.limit == 300
 
