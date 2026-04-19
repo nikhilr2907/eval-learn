@@ -1,8 +1,6 @@
 """Unit tests for ASR I2P (Attack Success Rate) metric."""
 
-import os
-import tempfile
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import pytest
 from PIL import Image
 

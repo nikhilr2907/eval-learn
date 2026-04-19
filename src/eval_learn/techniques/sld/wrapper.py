@@ -10,7 +10,6 @@ logger = get_logger(__name__)
 try:
     import torch
     from diffusers import DiffusionPipeline
-    from diffusers.pipelines.stable_diffusion_safe import SafetyConfig
     from huggingface_hub import login
 except ImportError as e:
     logger.error("Optional dependencies for SLD missing.")

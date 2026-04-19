@@ -1,10 +1,12 @@
 """Unit tests for FID (Fréchet Inception Distance) metric."""
 
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 import pytest
 import numpy as np
 from PIL import Image
+
+pytest.importorskip("torchvision")
 
 from eval_learn.metrics.fid.metric import FIDMetric, _calculate_fid
 from eval_learn.metrics.fid.config import FIDConfig
@@ -156,15 +158,16 @@ class TestCalculateFID:
 class TestFIDMetricInitialization:
     """Test FIDMetric initialization."""
 
+    @patch("eval_learn.metrics.fid.metric._load_inception")
     @patch("eval_learn.metrics.fid.metric.torch")
-    def test_init_success_cpu(self, mock_torch):
+    def test_init_success_cpu(self, mock_torch, mock_load_inception):
         """Test successful initialization on CPU."""
         mock_torch.cuda.is_available.return_value = False
 
         metric = FIDMetric(device="cpu")
 
         assert metric.device == "cpu"
-        assert metric._inception_model is None  # Lazy loaded
+        assert metric._inception_model is not None
         assert metric._real_activations is None
         assert metric._real_count == 0
         assert metric._gen_activations == []
@@ -361,7 +364,7 @@ class TestFIDMetricUpdateCompute:
 
     @patch("eval_learn.metrics.fid.metric.torch")
     def test_compute_error_handling(self, mock_torch):
-        """Test compute handles exceptions gracefully."""
+        """Test compute re-raises exceptions from _calculate_fid."""
         mock_torch.cuda.is_available.return_value = False
 
         metric = FIDMetric(device="cpu")
@@ -369,13 +372,9 @@ class TestFIDMetricUpdateCompute:
         metric._real_count = 10
         metric._gen_activations = [np.random.randn(10, 2048)]
 
-        # Mock _calculate_fid to raise exception
         with patch("eval_learn.metrics.fid.metric._calculate_fid", side_effect=ValueError("Test error")):
-            result = metric.compute()
-
-            assert result.name == "FID"
-            assert np.isinf(result.value)
-            assert "error" in result.details
+            with pytest.raises(ValueError, match="Test error"):
+                metric.compute()
 
     @patch("eval_learn.metrics.fid.metric.torch")
     def test_full_workflow_update_compute(self, mock_torch):

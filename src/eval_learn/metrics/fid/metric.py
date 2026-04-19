@@ -240,6 +240,6 @@ class FIDMetric:
                     "config": self.config.to_dict(),
                 },
             )
-        except Exception as e:
+        except Exception:
             logger.exception("FID computation failed.")
             raise

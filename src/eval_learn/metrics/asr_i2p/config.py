@@ -52,5 +52,4 @@ class ASRConfig(BaseConfig):
             raise ValueError(
                 f"detector='nudenet' is only valid for nudity, not '{self.concept_name}'"
             )
-        if self.detector == "clip":
-            validate_clip_model(self.clip_model_id, "clip_model_id")
+        validate_clip_model(self.clip_model_id, "clip_model_id")

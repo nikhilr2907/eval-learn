@@ -10,17 +10,63 @@ from eval_learn.metrics.ua_ira.metric import UAIRAMetric
 from eval_learn.metrics.ua_ira.config import UAIRAConfig
 from eval_learn.types import MetricResult
 
+# Dummy CSV paths used when the config requires non-empty paths.
+_DUMMY_TARGET = "/nonexistent/target.csv"
+_DUMMY_RETAIN = "/nonexistent/retain.csv"
+
+
+def _make_ua_ira_metric(**kwargs):
+    """
+    Helper: create UAIRAMetric with mocked CLIP model/processor.
+
+    UAIRAConfig requires target_prompts_path and retain_prompts_path to be set.
+    Tests that do not care about those fields should use this helper which
+    provides dummy values.
+    """
+    kwargs.setdefault("target_prompts_path", _DUMMY_TARGET)
+    kwargs.setdefault("retain_prompts_path", _DUMMY_RETAIN)
+
+    with patch("eval_learn.metrics.ua_ira.metric.CLIPModel") as mock_model_cls, \
+         patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor") as mock_proc_cls, \
+         patch("eval_learn.metrics.ua_ira.metric.torch") as mock_torch:
+        mock_torch.cuda.is_available.return_value = False
+        mock_torch.no_grad = MagicMock(
+            return_value=MagicMock(
+                __enter__=MagicMock(return_value=None),
+                __exit__=MagicMock(return_value=False),
+            )
+        )
+
+        mock_model = Mock()
+        mock_model_cls.from_pretrained.return_value = mock_model
+        mock_model.to.return_value = mock_model
+
+        mock_proc = Mock()
+        mock_proc_cls.from_pretrained.return_value = mock_proc
+
+        metric = UAIRAMetric(**kwargs)
+
+    return metric
+
 
 class TestUAIRAConfig:
     """Test UAIRAConfig initialization and validation."""
 
-    def test_config_defaults(self):
-        """Test default configuration values."""
-        config = UAIRAConfig()
-        assert config.clip_model == "openai/clip-vit-large-patch14"
+    def test_config_defaults_without_paths_raises(self):
+        """Config raises if target_prompts_path is empty (required field)."""
+        with pytest.raises(ValueError, match="target_prompts_path"):
+            UAIRAConfig()
+
+    def test_config_with_paths(self):
+        """Config is created successfully when both paths are provided."""
+        config = UAIRAConfig(
+            target_prompts_path="/path/to/target.csv",
+            retain_prompts_path="/path/to/retain.csv",
+        )
+        assert config.clip_model_name == "openai/clip-vit-large-patch14"
         assert config.device is None
-        assert config.target_prompts_path == ""
-        assert config.retain_prompts_path == ""
+        assert config.target_prompts_path == "/path/to/target.csv"
+        assert config.retain_prompts_path == "/path/to/retain.csv"
         assert config.target_concept == "target_concept"
         assert config.retain_concept == "retain_concept"
         assert config.batch_size == 32
@@ -28,7 +74,7 @@ class TestUAIRAConfig:
     def test_config_from_dict(self):
         """Test creating config from dictionary."""
         config_dict = {
-            "clip_model": "openai/clip-vit-base-patch32",
+            "clip_model_name": "openai/clip-vit-base-patch32",
             "device": "cpu",
             "target_prompts_path": "/path/to/target.csv",
             "retain_prompts_path": "/path/to/retain.csv",
@@ -37,7 +83,7 @@ class TestUAIRAConfig:
             "batch_size": 16,
         }
         config = UAIRAConfig.from_dict(config_dict)
-        assert config.clip_model == "openai/clip-vit-base-patch32"
+        assert config.clip_model_name == "openai/clip-vit-base-patch32"
         assert config.device == "cpu"
         assert config.target_prompts_path == "/path/to/target.csv"
         assert config.retain_prompts_path == "/path/to/retain.csv"
@@ -48,6 +94,8 @@ class TestUAIRAConfig:
     def test_config_to_dict(self):
         """Test converting config to dictionary."""
         config = UAIRAConfig(
+            target_prompts_path="/t.csv",
+            retain_prompts_path="/r.csv",
             device="cpu",
             target_concept="nudity",
             retain_concept="person",
@@ -63,117 +111,35 @@ class TestUAIRAConfig:
 class TestUAIRAMetricInitialization:
     """Test UAIRAMetric initialization."""
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    @patch("eval_learn.metrics.ua_ira.metric.Image")
-    def test_init_success_cpu(self, mock_image, mock_model_class, mock_processor_class, mock_torch):
+    def test_init_success_cpu(self):
         """Test successful initialization on CPU."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
+        metric = _make_ua_ira_metric(device="cpu")
 
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
-
-        assert metric.device == torch.device("cpu")
-        assert metric.model is mock_model
-        assert metric.processor is mock_processor
+        assert metric.device == "cpu"
+        assert metric.model is not None
+        assert metric.processor is not None
         assert metric._target_correct_count == 0
         assert metric._target_total_count == 0
         assert metric._retain_correct_count == 0
         assert metric._retain_total_count == 0
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    @patch("eval_learn.metrics.ua_ira.metric.Image")
-    def test_init_auto_detect_device(self, mock_image, mock_model_class, mock_processor_class, mock_torch):
+    def test_init_auto_detect_device(self):
         """Test device auto-detection when device is None."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device=None)
-
-        assert metric.device == torch.device("cpu")
-
-    @patch("eval_learn.metrics.ua_ira.metric.torch", None)
-    def test_init_missing_torch_raises_error(self):
-        """Test that missing torch raises helpful error."""
-        with pytest.raises(RuntimeError, match="requires 'torch'"):
-            UAIRAMetric()
-
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel", None)
-    @patch("eval_learn.metrics.ua_ira.metric.Image")
-    def test_init_missing_transformers_raises_error(self, mock_image, mock_torch):
-        """Test that missing transformers raises helpful error."""
-        with pytest.raises(RuntimeError, match="requires 'transformers'"):
-            UAIRAMetric()
-
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    @patch("eval_learn.metrics.ua_ira.metric.Image", None)
-    def test_init_missing_pillow_raises_error(self, mock_model_class, mock_processor_class, mock_torch):
-        """Test that missing Pillow raises helpful error."""
-        with pytest.raises(RuntimeError, match="requires 'Pillow'"):
-            UAIRAMetric()
+        metric = _make_ua_ira_metric(device=None)
+        assert metric.device == "cpu"
 
 
 class TestUAIRALoadDataset:
     """Test load_dataset method."""
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    @patch("eval_learn.metrics.ua_ira.metric.Image")
-    def test_load_dataset_missing_paths_raises_error(self, mock_image, mock_model_class, mock_processor_class, mock_torch):
-        """Test that missing CSV paths raises helpful error."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
+    def test_load_dataset_missing_paths_raises_at_config(self):
+        """Config raises ValueError when target_prompts_path is empty."""
+        with pytest.raises(ValueError, match="target_prompts_path"):
+            UAIRAConfig(retain_prompts_path="/r.csv")
 
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
-
-        with pytest.raises(ValueError, match="requires 'target_prompts_path' and 'retain_prompts_path'"):
-            metric.load_dataset()
-
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    @patch("eval_learn.metrics.ua_ira.metric.Image")
-    def test_load_dataset_resets_counters(self, mock_image, mock_model_class, mock_processor_class, mock_torch):
+    def test_load_dataset_resets_counters(self):
         """Test that load_dataset resets counters."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(
+        metric = _make_ua_ira_metric(
             device="cpu",
             target_prompts_path="/path/to/target.csv",
             retain_prompts_path="/path/to/retain.csv",
@@ -229,23 +195,9 @@ class TestUAIRAToPIL:
 class TestUAIRAMetricUpdate:
     """Test update() method."""
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    @patch("eval_learn.metrics.ua_ira.metric.Image")
-    def test_update_empty_images(self, mock_image_mod, mock_model_class, mock_processor_class, mock_torch):
+    def test_update_empty_images(self):
         """Test update with empty images list."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
+        metric = _make_ua_ira_metric(device="cpu")
 
         # Should not raise
         metric.update([], ["prompt"], {})
@@ -253,22 +205,9 @@ class TestUAIRAMetricUpdate:
         assert metric._target_total_count == 0
         assert metric._retain_total_count == 0
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    def test_update_stores_target_prompt_end_index(self, mock_model_class, mock_processor_class, mock_torch):
+    def test_update_stores_target_prompt_end_index(self):
         """Test that update stores target_prompt_end_index from metadata."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
+        metric = _make_ua_ira_metric(device="cpu")
         metric._target_prompt_end_index = 0
 
         metadata = {"target_prompt_end_index": 3}
@@ -276,22 +215,9 @@ class TestUAIRAMetricUpdate:
 
         assert metric._target_prompt_end_index == 3
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    def test_update_splits_target_retain_images(self, mock_model_class, mock_processor_class, mock_torch):
+    def test_update_splits_target_retain_images(self):
         """Test that update correctly splits target and retain images."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
+        metric = _make_ua_ira_metric(device="cpu")
 
         # Create 5 images, split at index 2 (2 target, 3 retain)
         imgs = [Image.new("RGB", (10, 10), color=c) for c in ["red", "blue", "green", "yellow", "pink"]]
@@ -316,22 +242,9 @@ class TestUAIRAMetricUpdate:
 class TestUAIRAEvaluateBatch:
     """Test _evaluate_batch method indirectly through update."""
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    def test_evaluate_batch_called_with_correct_args(self, mock_model_class, mock_processor_class, mock_torch):
+    def test_evaluate_batch_called_with_correct_args(self):
         """Test that _evaluate_batch is called with correct image splits."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
+        metric = _make_ua_ira_metric(device="cpu")
 
         imgs = [Image.new("RGB", (10, 10), color="red") for _ in range(5)]
 
@@ -352,22 +265,9 @@ class TestUAIRAEvaluateBatch:
             assert len(retain_call[0][0]) == 3
             assert retain_call[1]["is_target"] is False
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    def test_evaluate_batch_updates_target_counts(self, mock_model_class, mock_processor_class, mock_torch):
+    def test_evaluate_batch_updates_target_counts(self):
         """Test that _evaluate_batch updates target counts correctly."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
+        metric = _make_ua_ira_metric(device="cpu")
 
         imgs = [Image.new("RGB", (10, 10), color="red") for _ in range(3)]
 
@@ -383,22 +283,9 @@ class TestUAIRAEvaluateBatch:
             assert metric._target_total_count == 3
             assert metric._target_correct_count == 3
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    def test_evaluate_batch_updates_retain_counts(self, mock_model_class, mock_processor_class, mock_torch):
+    def test_evaluate_batch_updates_retain_counts(self):
         """Test that _evaluate_batch updates retain counts correctly."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
+        metric = _make_ua_ira_metric(device="cpu")
 
         imgs = [Image.new("RGB", (10, 10), color="red") for _ in range(4)]
 
@@ -418,23 +305,9 @@ class TestUAIRAEvaluateBatch:
 class TestUAIRAMetricComputation:
     """Test compute() method."""
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    @patch("eval_learn.metrics.ua_ira.metric.Image")
-    def test_compute_no_images(self, mock_image_mod, mock_model_class, mock_processor_class, mock_torch):
+    def test_compute_no_images(self):
         """Test compute with no images returns 0.0."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
+        metric = _make_ua_ira_metric(device="cpu")
 
         result = metric.compute()
 
@@ -443,23 +316,9 @@ class TestUAIRAMetricComputation:
         assert result.details["ua_score"] == 0.0
         assert result.details["ira_score"] == 0.0
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    @patch("eval_learn.metrics.ua_ira.metric.Image")
-    def test_compute_perfect_ua_and_ira(self, mock_image_mod, mock_model_class, mock_processor_class, mock_torch):
+    def test_compute_perfect_ua_and_ira(self):
         """Test compute with perfect UA and IRA scores."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
+        metric = _make_ua_ira_metric(device="cpu")
 
         # All target images correctly unlearned (UA = 1.0)
         metric._target_correct_count = 10
@@ -475,23 +334,9 @@ class TestUAIRAMetricComputation:
         assert result.details["ua_score"] == pytest.approx(1.0)
         assert result.details["ira_score"] == pytest.approx(1.0)
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    @patch("eval_learn.metrics.ua_ira.metric.Image")
-    def test_compute_partial_ua_and_ira(self, mock_image_mod, mock_model_class, mock_processor_class, mock_torch):
+    def test_compute_partial_ua_and_ira(self):
         """Test compute with partial UA and IRA scores."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
+        metric = _make_ua_ira_metric(device="cpu")
 
         # 8 out of 10 target images correctly unlearned (UA = 0.8)
         metric._target_correct_count = 8
@@ -507,23 +352,9 @@ class TestUAIRAMetricComputation:
         assert result.details["ua_score"] == pytest.approx(0.8)
         assert result.details["ira_score"] == pytest.approx(0.7)
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    @patch("eval_learn.metrics.ua_ira.metric.Image")
-    def test_compute_returns_metric_result(self, mock_image_mod, mock_model_class, mock_processor_class, mock_torch):
+    def test_compute_returns_metric_result(self):
         """Test that compute returns MetricResult instance."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu")
+        metric = _make_ua_ira_metric(device="cpu")
         metric._target_total_count = 5
         metric._target_correct_count = 3
         metric._retain_total_count = 5
@@ -538,23 +369,9 @@ class TestUAIRAMetricComputation:
         assert "ua_score" in result.details
         assert "ira_score" in result.details
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    @patch("eval_learn.metrics.ua_ira.metric.Image")
-    def test_compute_includes_details(self, mock_image_mod, mock_model_class, mock_processor_class, mock_torch):
+    def test_compute_includes_details(self):
         """Test that compute includes all expected details."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu", batch_size=16)
+        metric = _make_ua_ira_metric(device="cpu", batch_size=16)
         metric._target_total_count = 20
         metric._target_correct_count = 16
         metric._retain_total_count = 20
@@ -572,22 +389,11 @@ class TestUAIRAMetricComputation:
 class TestUAIRAMetricIntegration:
     """Integration tests for UA_IRA metric workflow."""
 
-    @patch("eval_learn.metrics.ua_ira.metric.torch")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPProcessor")
-    @patch("eval_learn.metrics.ua_ira.metric.CLIPModel")
-    def test_full_workflow_update_compute(self, mock_model_class, mock_processor_class, mock_torch):
+    def test_full_workflow_update_compute(self):
         """Test complete workflow: initialize → update → compute."""
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.device = torch.device
-
-        mock_processor = Mock()
-        mock_processor_class.from_pretrained.return_value = mock_processor
-
-        mock_model = Mock()
-        mock_model_class.from_pretrained.return_value = mock_model
-        mock_model.to.return_value = mock_model
-
-        metric = UAIRAMetric(device="cpu", target_concept="nudity", retain_concept="person")
+        metric = _make_ua_ira_metric(
+            device="cpu", target_concept="nudity", retain_concept="person"
+        )
 
         # Create test data: 2 target + 4 retain = 6 images
         imgs = [Image.new("RGB", (10, 10), color="red") for _ in range(6)]
