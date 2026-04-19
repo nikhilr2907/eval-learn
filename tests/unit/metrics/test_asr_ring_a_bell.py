@@ -17,15 +17,19 @@ DIM = 16  # small embedding dimension for test tensors
 
 
 def _make_metric(concept="nudity", threshold=0.3, device="cpu"):
-    """Instantiate ASRRingABellMetric with mocked CLIP models, no discovery."""
-    with (
-        patch("eval_learn.metrics.asr_ring_a_bell.metric.CLIPModel") as mock_model_cls,
-        patch("eval_learn.metrics.asr_ring_a_bell.metric.CLIPProcessor") as mock_proc_cls,
-    ):
+    """Instantiate ASRRingABellMetric with mocked CLIP models, no discovery.
+
+    Uses detector="clip" explicitly so that tests can control CLIP features
+    via _set_clip_response regardless of whether nudenet/q16 is installed.
+    """
+    with patch("eval_learn.metrics.asr_ring_a_bell.metric.CLIPModel") as mock_model_cls, \
+            patch("eval_learn.metrics.asr_ring_a_bell.metric.CLIPProcessor") as mock_proc_cls:
         mock_model_cls.from_pretrained.return_value = MagicMock()
         mock_proc_cls.from_pretrained.return_value = MagicMock()
 
-        import tempfile, csv, os
+        import tempfile
+        import csv
+        import os
         tmp = tempfile.NamedTemporaryFile(
             mode="w", suffix=".csv", delete=False, newline=""
         )
@@ -39,6 +43,7 @@ def _make_metric(concept="nudity", threshold=0.3, device="cpu"):
             seed_prompts_csv=tmp.name,
             enable_discovery=False,
             similarity_threshold=threshold,
+            detector="clip",
             device=device,
         )
         os.unlink(tmp.name)
@@ -75,7 +80,7 @@ class TestEvaluateBatchClip:
         imgs = [Image.new("RGB", (4, 4))]
         result = metric._evaluate_batch_clip(imgs)
 
-        assert result == [True], f"Expected [True], got {result}"
+        assert [bool(r) for r in result] == [True], f"Expected [True], got {result}"
 
     def test_below_threshold_marked_safe(self):
         """Image with similarity < threshold should be flagged safe."""
@@ -91,7 +96,7 @@ class TestEvaluateBatchClip:
         imgs = [Image.new("RGB", (4, 4))]
         result = metric._evaluate_batch_clip(imgs)
 
-        assert result == [False], f"Expected [False], got {result}"
+        assert [bool(r) for r in result] == [False], f"Expected [False], got {result}"
 
     def test_batch_mixed_safe_and_unsafe(self):
         """Batch where some images are above threshold and some below."""
@@ -110,8 +115,8 @@ class TestEvaluateBatchClip:
         imgs = [Image.new("RGB", (4, 4)), Image.new("RGB", (4, 4))]
         result = metric._evaluate_batch_clip(imgs)
 
-        assert result[0] is True,  f"img 0 should be unsafe, got {result[0]}"
-        assert result[1] is False, f"img 1 should be safe, got {result[1]}"
+        assert bool(result[0]) is True,  f"img 0 should be unsafe, got {result[0]}"
+        assert bool(result[1]) is False, f"img 1 should be safe, got {result[1]}"
 
     def test_at_threshold_is_safe(self):
         """Similarity exactly equal to threshold is NOT flagged (strict >)."""
@@ -134,7 +139,7 @@ class TestEvaluateBatchClip:
         imgs = [Image.new("RGB", (4, 4))]
         result = metric._evaluate_batch_clip(imgs)
 
-        assert result == [False], f"sim==threshold should be safe, got {result}"
+        assert [bool(r) for r in result] == [False], f"sim==threshold should be safe, got {result}"
 
     def test_clip_exception_returns_all_false(self):
         """If CLIP processing raises, _evaluate_batch_clip returns all False (not a crash)."""
@@ -144,7 +149,7 @@ class TestEvaluateBatchClip:
         imgs = [Image.new("RGB", (4, 4))] * 3
         result = metric._evaluate_batch_clip(imgs)
 
-        assert result == [False, False, False]
+        assert [bool(r) for r in result] == [False, False, False]
         assert metric._total == 0, "update counters should not be touched"
 
     def test_numpy_array_images_accepted(self):
@@ -171,8 +176,10 @@ class TestUpdate:
 
     def test_update_increments_total(self):
         metric = _make_metric(device="cpu")
-        feat = torch.zeros(1, DIM); feat[0, 1] = 1.0  # safe (orthogonal)
-        txt  = torch.zeros(1, DIM); txt[0, 0] = 1.0
+        feat = torch.zeros(1, DIM)
+        feat[0, 1] = 1.0  # safe (orthogonal)
+        txt = torch.zeros(1, DIM)
+        txt[0, 0] = 1.0
         _set_clip_response(metric, feat, txt)
 
         metric.update([Image.new("RGB", (4, 4))], ["prompt"])
@@ -199,8 +206,10 @@ class TestUpdate:
         metric.update([Image.new("RGB", (4, 4))], ["p"])
 
         # Second call: safe (orthogonal)
-        img_feat = torch.zeros(1, DIM); img_feat[0, 0] = 1.0
-        txt_feat = torch.zeros(1, DIM); txt_feat[0, 1] = 1.0
+        img_feat = torch.zeros(1, DIM)
+        img_feat[0, 0] = 1.0
+        txt_feat = torch.zeros(1, DIM)
+        txt_feat[0, 1] = 1.0
         _set_clip_response(metric, img_feat, txt_feat)
         metric.update([Image.new("RGB", (4, 4))], ["p"])
 

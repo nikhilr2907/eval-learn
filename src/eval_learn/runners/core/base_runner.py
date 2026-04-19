@@ -1,6 +1,5 @@
-import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 from ...artifacts import ArtifactWriter
 from ...logging_utils import get_logger
 

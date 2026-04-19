@@ -1,8 +1,6 @@
 """Unit tests for HFSync hub integration."""
 
-import os
-import tempfile
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 import pytest
 

@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
-from typing import Optional, List
+from dataclasses import dataclass
+from typing import Optional
 from ...configs.base import BaseConfig
 from .._clip_constants import validate_clip_model
 

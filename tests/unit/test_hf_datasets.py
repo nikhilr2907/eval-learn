@@ -14,6 +14,7 @@ def get_first_row(ds):
     return next(iter(ds))
 
 
+@pytest.mark.integration
 class TestHFDatasets:
     """Verify HuggingFace datasets load with correct schemas and columns."""
 
@@ -35,14 +36,13 @@ class TestHFDatasets:
             "AIML-TUDA/i2p",
             data_files="i2p_benchmark.csv",
             features=features,
+            split="train",
             streaming=True,
             token=token,
         )
         print(f"[DEBUG] i2p dataset type: {type(ds)}")
 
-        # Validate it's an IterableDataset, not DatasetDict
-        from datasets import IterableDataset, DatasetDict
-        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
+        from datasets import IterableDataset
         assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
 
         first_row = get_first_row(ds)
@@ -63,7 +63,7 @@ class TestHFDatasets:
         print(f"[DEBUG] i2p with split type: {type(ds)}")
 
         # Must be IterableDataset, not DatasetDict
-        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
+        assert not isinstance(ds, DatasetDict), "Expected IterableDataset, got DatasetDict"
         assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
 
         first_row = get_first_row(ds)
@@ -100,11 +100,11 @@ class TestHFDatasets:
             "Unlearningltd/datasets",
             data_files="ERR/raw_csv_data/challenge_dataset.csv",
             features=features,
+            split="train",
             streaming=True,
             token=token,
         )
         print(f"[DEBUG] challenge dataset type: {type(ds)}")
-        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
         assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
 
         first_row = get_first_row(ds)
@@ -124,11 +124,11 @@ class TestHFDatasets:
             "Unlearningltd/datasets",
             data_files="ring_a_bell/ring_a_bell_dataset.csv",
             features=features,
+            split="train",
             streaming=True,
             token=token,
         )
         print(f"[DEBUG] ring_a_bell dataset type: {type(ds)}")
-        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
         assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
 
         first_row = get_first_row(ds)
@@ -144,7 +144,9 @@ class TestHFDatasets:
         cfg = load_hf_config("tifa")
         text_ds = load_dataset(
             cfg["repo_id"],
-            data_files=cfg.get("text_file"),
+            data_files=cfg.get("data_files"),
+            split=cfg.get("split", "train"),
+            streaming=True,
             token=token,
         )
         print(f"[DEBUG] tifa text dataset type: {type(text_ds)}")
@@ -162,7 +164,9 @@ class TestHFDatasets:
         cfg = load_hf_config("tifa")
         qa_ds = load_dataset(
             cfg["repo_id"],
-            data_files=cfg.get("qa_file"),
+            data_files=cfg.get("data_files"),
+            split=cfg.get("split", "train"),
+            streaming=True,
             token=token,
         )
         print(f"[DEBUG] tifa qa dataset type: {type(qa_ds)}")
@@ -170,8 +174,9 @@ class TestHFDatasets:
             print(f"[WARNING] TIFA QA is DatasetDict with splits: {list(qa_ds.keys())}")
         qa_row = get_first_row(qa_ds)
         assert "qas" in qa_row
-        # Verify qas is a list of dicts with question/answer
-        assert isinstance(qa_row["qas"], list)
-        assert len(qa_row["qas"]) > 0
-        assert "question" in qa_row["qas"][0]
-        assert "answer" in qa_row["qas"][0]
+        import json
+        qas = json.loads(qa_row["qas"]) if isinstance(qa_row["qas"], str) else qa_row["qas"]
+        assert isinstance(qas, list)
+        assert len(qas) > 0
+        assert "question" in qas[0]
+        assert "answer" in qas[0]

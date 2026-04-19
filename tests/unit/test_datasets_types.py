@@ -10,7 +10,7 @@ from PIL import Image
 load_dotenv()
 
 def test_dataset_types():
-    from datasets import load_dataset, DatasetDict, IterableDataset, IterableDatasetDict
+    from datasets import load_dataset, IterableDataset, IterableDatasetDict
 
     token = os.getenv("HF_TOKEN")
 
