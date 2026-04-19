@@ -11,6 +11,7 @@ try:
     import torch
     from transformers import CLIPModel, CLIPProcessor
     from scipy.stats import hmean
+
 except ImportError as e:
     raise ImportError(
         "ERR metric requires 'torch', 'transformers', 'scipy', and 'Pillow'. "
