@@ -6,7 +6,6 @@ from eval_learn.runners.validation import (
     ValidationError,
     get_erase_concept,
     validate_nudity_metrics,
-    validate_nudity_techniques,
     validate_uce_concept,
     validate_ua_ira_paths,
     validate_technique_metric_pair,
@@ -79,44 +78,6 @@ class TestValidateNudityMetrics:
 
 
 # ---------------------------------------------------------------------------
-# validate_nudity_techniques
-# ---------------------------------------------------------------------------
-
-class TestValidateNudityTechniques:
-    # Only saeuron is restricted to nudity — safree, sld, concept_steerers
-    # now support other concepts (e.g. violence).
-    nudity_only = ["saeuron"]
-    unrestricted = ["safree", "sld", "concept_steerers"]
-
-    def test_non_nudity_technique_always_passes(self):
-        validate_nudity_techniques("esd", "dog")
-        validate_nudity_techniques("mace", None)
-
-    @pytest.mark.parametrize("technique", nudity_only)
-    def test_nudity_only_technique_with_nudity_passes(self, technique):
-        validate_nudity_techniques(technique, "nudity")
-
-    @pytest.mark.parametrize("technique", nudity_only)
-    def test_nudity_only_technique_with_other_concept_raises(self, technique):
-        with pytest.raises(ValidationError, match="only supports nudity"):
-            validate_nudity_techniques(technique, "dog")
-
-    @pytest.mark.parametrize("technique", nudity_only)
-    def test_nudity_only_technique_with_none_concept_raises(self, technique):
-        with pytest.raises(ValidationError, match="only supports nudity"):
-            validate_nudity_techniques(technique, None)
-
-    @pytest.mark.parametrize("technique", unrestricted)
-    def test_previously_nudity_only_techniques_now_support_violence(self, technique):
-        # safree, sld, concept_steerers support violence and other concepts
-        validate_nudity_techniques(technique, "violence")
-
-    @pytest.mark.parametrize("technique", unrestricted)
-    def test_previously_nudity_only_techniques_support_none_concept(self, technique):
-        validate_nudity_techniques(technique, None)
-
-
-# ---------------------------------------------------------------------------
 # validate_uce_concept
 # ---------------------------------------------------------------------------
 
@@ -176,10 +137,9 @@ class TestValidateTechniqueMetricPair:
         # ASR is no longer nudity-restricted
         validate_technique_metric_pair("esd", {"erase_concept": "dog"}, "asr")
 
-    def test_nudity_only_technique_with_wrong_concept_raises(self):
-        # saeuron is the only nudity-restricted technique
-        with pytest.raises(ValidationError):
-            validate_technique_metric_pair("saeuron", {"erase_concept": "dog"}, "fid")
+    def test_saeuron_with_non_nudity_concept_passes(self):
+        # saeuron is no longer restricted to nudity
+        validate_technique_metric_pair("saeuron", {"erase_concept": "dog"}, "fid")
 
     def test_sld_with_violence_passes(self):
         # sld is no longer nudity-restricted
