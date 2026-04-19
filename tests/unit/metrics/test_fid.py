@@ -6,6 +6,8 @@ import pytest
 import numpy as np
 from PIL import Image
 
+pytest.importorskip("torchvision")
+
 from eval_learn.metrics.fid.metric import FIDMetric, _calculate_fid
 from eval_learn.metrics.fid.config import FIDConfig
 from eval_learn.types import MetricResult
