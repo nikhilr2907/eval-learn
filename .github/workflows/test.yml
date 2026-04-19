@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: ["**"]
 
+permissions:
+  id-token: write  # required for trusted publishing
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -27,3 +30,24 @@ jobs:
 
       - name: Run unit tests
         run: pytest tests/unit -m "not integration" -v
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build package
+        run: |
+          pip install build
+          python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
