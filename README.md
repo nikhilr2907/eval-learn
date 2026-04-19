@@ -170,6 +170,8 @@ Full configuration reference, technique guides, metric descriptions, and experim
 
 **https://eval-learn.readthedocs.io**
 
+Package on PyPI: **https://pypi.org/project/eval-learn/**
+
 Key pages:
 
 - [Getting started](docs/docs/getting-started.md)

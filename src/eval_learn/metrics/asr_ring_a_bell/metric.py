@@ -31,7 +31,6 @@ logger = get_logger(__name__)
 
 try:
     from ring_a_bell import PromptDiscovery, GAConfig
-    from ring_a_bell.encoder import CLIPEncoder
 except ImportError:
     raise ImportError(
         "ASRRingABell metric requires 'ring_a_bell' package. "
@@ -122,11 +121,6 @@ class ASRRingABellMetric:
         )
         self.clip_processor = CLIPProcessor.from_pretrained(self.config.clip_model_id)
 
-        # Text encoder for PromptDiscovery
-        if self.config.enable_discovery:
-            self.text_encoder = CLIPEncoder(self.config.clip_model_id, self.config.device)
-        else:
-            self.text_encoder = None
 
         self._unsafe_count = 0
         self._total = 0
@@ -163,6 +157,24 @@ class ASRRingABellMetric:
                 raise FileNotFoundError(
                     f"Concept vector not found: {self._concept_vector_path}"
                 )
+
+            _MODEL_EMBED_DIM = {
+                "openai/clip-vit-large-patch14": 768,
+                "openai/clip-vit-large-patch14-336": 768,
+                "openai/clip-vit-base-patch16": 512,
+                "openai/clip-vit-base-patch32": 512,
+            }
+            expected_dim = _MODEL_EMBED_DIM.get(self.config.clip_model_id)
+            if expected_dim is not None:
+                import numpy as np
+                vec = np.load(self._concept_vector_path)
+                if vec.shape[-1] != expected_dim:
+                    raise ValueError(
+                        f"Concept vector has embedding dim {vec.shape[-1]} but "
+                        f"'{self.config.clip_model_id}' produces {expected_dim}-dim embeddings. "
+                        f"Recompute the concept vector with the same CLIP model."
+                    )
+
             if not self.config.generated_prompts_output:
                 raise ValueError(
                     "enable_discovery=True requires generated_prompts_output to be specified"
@@ -218,6 +230,7 @@ class ASRRingABellMetric:
             crossover_rate=self.config.crossover_rate,
             token_length=self.config.token_length,
             concept_coeff=self.config.concept_coeff,
+            clip_model_id=self.config.clip_model_id,
             device=self.config.device,
             log_every=self.config.log_every,
             patience=self.config.patience,
