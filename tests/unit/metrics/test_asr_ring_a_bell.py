@@ -18,10 +18,8 @@ DIM = 16  # small embedding dimension for test tensors
 
 def _make_metric(concept="nudity", threshold=0.3, device="cpu"):
     """Instantiate ASRRingABellMetric with mocked CLIP models, no discovery."""
-    with (
-        patch("eval_learn.metrics.asr_ring_a_bell.metric.CLIPModel") as mock_model_cls,
-        patch("eval_learn.metrics.asr_ring_a_bell.metric.CLIPProcessor") as mock_proc_cls,
-    ):
+    with patch("eval_learn.metrics.asr_ring_a_bell.metric.CLIPModel") as mock_model_cls, \
+            patch("eval_learn.metrics.asr_ring_a_bell.metric.CLIPProcessor") as mock_proc_cls:
         mock_model_cls.from_pretrained.return_value = MagicMock()
         mock_proc_cls.from_pretrained.return_value = MagicMock()
 
@@ -173,8 +171,10 @@ class TestUpdate:
 
     def test_update_increments_total(self):
         metric = _make_metric(device="cpu")
-        feat = torch.zeros(1, DIM); feat[0, 1] = 1.0  # safe (orthogonal)
-        txt  = torch.zeros(1, DIM); txt[0, 0] = 1.0
+        feat = torch.zeros(1, DIM)
+        feat[0, 1] = 1.0  # safe (orthogonal)
+        txt = torch.zeros(1, DIM)
+        txt[0, 0] = 1.0
         _set_clip_response(metric, feat, txt)
 
         metric.update([Image.new("RGB", (4, 4))], ["prompt"])
@@ -201,8 +201,10 @@ class TestUpdate:
         metric.update([Image.new("RGB", (4, 4))], ["p"])
 
         # Second call: safe (orthogonal)
-        img_feat = torch.zeros(1, DIM); img_feat[0, 0] = 1.0
-        txt_feat = torch.zeros(1, DIM); txt_feat[0, 1] = 1.0
+        img_feat = torch.zeros(1, DIM)
+        img_feat[0, 0] = 1.0
+        txt_feat = torch.zeros(1, DIM)
+        txt_feat[0, 1] = 1.0
         _set_clip_response(metric, img_feat, txt_feat)
         metric.update([Image.new("RGB", (4, 4))], ["p"])
 
