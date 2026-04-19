@@ -1,7 +1,7 @@
 import hashlib
 import json
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from ..types import MetricResult
 from ..logging_utils import get_logger

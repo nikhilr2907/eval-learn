@@ -25,7 +25,9 @@ def _make_metric(concept="nudity", threshold=0.3, device="cpu"):
         mock_model_cls.from_pretrained.return_value = MagicMock()
         mock_proc_cls.from_pretrained.return_value = MagicMock()
 
-        import tempfile, csv, os
+        import tempfile
+        import csv
+        import os
         tmp = tempfile.NamedTemporaryFile(
             mode="w", suffix=".csv", delete=False, newline=""
         )

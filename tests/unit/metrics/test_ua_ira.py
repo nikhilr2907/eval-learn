@@ -1,7 +1,7 @@
 """Unit tests for UA_IRA (Unlearning Accuracy & In-domain Retain Accuracy) metric."""
 
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import pytest
 import torch
 from PIL import Image

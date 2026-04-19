@@ -1,9 +1,8 @@
 """Unit tests for ERR (Erasing-Retention-Robustness) metric."""
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import pytest
 import torch
-import numpy as np
 from PIL import Image
 
 from eval_learn.metrics.err.metric import ERRMetric

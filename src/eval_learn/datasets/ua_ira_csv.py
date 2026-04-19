@@ -42,7 +42,7 @@ def load_ua_ira_csv(
         retain_limit: Max retain prompts to load.
         batch_size: Number of prompts per batch.
     """
-    logger.info(f"Loading UA_IRA from CSV files...")
+    logger.info("Loading UA_IRA from CSV files...")
     logger.info(f"  Target: {target_prompts_path} (concept: {target_concept_name})")
     logger.info(f"  Retain: {retain_prompts_path} (concept: {retain_concept_name})")
 

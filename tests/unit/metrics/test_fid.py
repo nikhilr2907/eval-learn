@@ -1,7 +1,7 @@
 """Unit tests for FID (Fréchet Inception Distance) metric."""
 
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 import pytest
 import numpy as np
 from PIL import Image

@@ -42,7 +42,7 @@ class TestHFDatasets:
 
         # Validate it's an IterableDataset, not DatasetDict
         from datasets import IterableDataset, DatasetDict
-        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
+        assert not isinstance(ds, DatasetDict), "Expected IterableDataset, got DatasetDict"
         assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
 
         first_row = get_first_row(ds)
@@ -63,7 +63,7 @@ class TestHFDatasets:
         print(f"[DEBUG] i2p with split type: {type(ds)}")
 
         # Must be IterableDataset, not DatasetDict
-        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
+        assert not isinstance(ds, DatasetDict), "Expected IterableDataset, got DatasetDict"
         assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
 
         first_row = get_first_row(ds)
@@ -104,7 +104,7 @@ class TestHFDatasets:
             token=token,
         )
         print(f"[DEBUG] challenge dataset type: {type(ds)}")
-        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
+        assert not isinstance(ds, DatasetDict), "Expected IterableDataset, got DatasetDict"
         assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
 
         first_row = get_first_row(ds)
@@ -128,7 +128,7 @@ class TestHFDatasets:
             token=token,
         )
         print(f"[DEBUG] ring_a_bell dataset type: {type(ds)}")
-        assert not isinstance(ds, DatasetDict), f"Expected IterableDataset, got DatasetDict"
+        assert not isinstance(ds, DatasetDict), "Expected IterableDataset, got DatasetDict"
         assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
 
         first_row = get_first_row(ds)

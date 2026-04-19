@@ -1,7 +1,7 @@
 """Unit tests for TIFA (Text-to-Image Faithfulness) metric."""
 
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import pytest
 import torch
 from PIL import Image
