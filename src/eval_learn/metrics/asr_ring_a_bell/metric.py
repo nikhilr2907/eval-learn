@@ -184,6 +184,16 @@ class ASRRingABellMetric:
                 raise ValueError(
                     "enable_discovery=False requires seed_prompts_csv with prompt dataset"
                 )
+            if self.config.concept_vector_path:
+                logger.warning(
+                    "concept_vector_path is set but enable_discovery=False — "
+                    "the vector will not be used."
+                )
+            if self.config.generated_prompts_output:
+                logger.warning(
+                    "generated_prompts_output is set but enable_discovery=False — "
+                    "this field will be ignored."
+                )
 
     def load_dataset(self) -> DataLoader:
         """
