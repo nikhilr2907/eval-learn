@@ -56,6 +56,7 @@ class MultiBenchmarkRunner(BaseRunner):
         technique_config: Optional[Dict[str, Any]] = None,
         metric_configs: Optional[Dict[str, Dict[str, Any]]] = None,
         output_dir: str = "results",
+        seed: Optional[int] = None,
     ):
         super().__init__(output_dir)
 
@@ -63,6 +64,7 @@ class MultiBenchmarkRunner(BaseRunner):
         self.metric_names = metric_names
         self.technique_config = technique_config or {}
         self.metric_configs = metric_configs or {}
+        self.seed = seed
 
         load_entrypoints()
         self._validate()
@@ -149,7 +151,7 @@ class MultiBenchmarkRunner(BaseRunner):
             category_counters: Dict[str, int] = {}
 
             for batch in loader:
-                batch_images = technique.generate(prompts=batch.prompts)
+                batch_images = technique.generate(prompts=batch.prompts, seed=self.seed)
                 metric.update(batch_images, batch.prompts, batch.metadata)
 
                 self.writer.save_run(

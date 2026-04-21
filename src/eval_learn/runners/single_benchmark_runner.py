@@ -55,6 +55,7 @@ class SingleBenchmarkRunner(BaseRunner):
         technique_config: Optional[Dict[str, Any]] = None,
         metric_config: Optional[Dict[str, Any]] = None,
         output_dir: str = "results",
+        seed: Optional[int] = None,
     ):
         super().__init__(output_dir)
 
@@ -62,6 +63,7 @@ class SingleBenchmarkRunner(BaseRunner):
         self.metric_config = metric_config or {}
         self.technique_name = technique_name
         self.metric_name = metric_name
+        self.seed = seed
 
         load_entrypoints()
         self._validate()
@@ -127,7 +129,7 @@ class SingleBenchmarkRunner(BaseRunner):
         for batch in loader:
             dataset_name = batch.metadata.get("source", dataset_name)
 
-            batch_images = technique.generate(prompts=batch.prompts)
+            batch_images = technique.generate(prompts=batch.prompts, seed=self.seed)
             metric.update(batch_images, batch.prompts, batch.metadata)
 
             self.writer.save_run(

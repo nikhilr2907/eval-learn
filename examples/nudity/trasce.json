@@ -1,5 +1,6 @@
 {
     "output_dir": "results/trasce_nudity",
+    "seed": 42,
     "technique": {
         "name": "trasce",
         "config": {

@@ -1,5 +1,6 @@
 {
     "output_dir": "results/uce_nudity",
+    "seed": 42,
     "technique": {
         "name": "uce",
         "config": {

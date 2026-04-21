@@ -1,5 +1,6 @@
 {
     "output_dir": "results/free_run_nudity",
+    "seed": 42,
     "technique": {
         "name": "free_run",
         "config": {

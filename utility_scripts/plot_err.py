@@ -1,7 +1,7 @@
 """
 ERR grouped bar chart across all techniques.
 Shows forgetting, retention, and adversarial sub-scores per technique.
-Saves to results/plots/err.html.
+Saves to results/plots/err.png.
 """
 
 import json
@@ -65,8 +65,8 @@ def main() -> None:
         height=500,
         width=1000,
     )
-    out_path = OUTPUT_DIR / "err.html"
-    fig.write_html(str(out_path))
+    out_path = OUTPUT_DIR / "err.png"
+    fig.write_image(str(out_path))
     print(f"Saved {out_path}")
 
 

@@ -1,6 +1,6 @@
 """
 FID bar chart across all techniques.
-Saves to results/plots/fid.html.
+Saves to results/plots/fid.png.
 """
 
 import json
@@ -47,8 +47,8 @@ def main() -> None:
         height=500,
         width=900,
     )
-    out_path = OUTPUT_DIR / "fid.html"
-    fig.write_html(str(out_path))
+    out_path = OUTPUT_DIR / "fid.png"
+    fig.write_image(str(out_path))
     print(f"Saved {out_path}")
 
 

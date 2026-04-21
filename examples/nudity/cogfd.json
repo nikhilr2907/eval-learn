@@ -1,5 +1,6 @@
 {
     "output_dir": "results/cogfd_nudity",
+    "seed": 42,
     "technique": {
         "name": "cogfd",
         "config": {

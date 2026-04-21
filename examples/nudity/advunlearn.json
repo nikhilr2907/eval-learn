@@ -1,5 +1,6 @@
 {
     "output_dir": "results/advunlearn_nudity",
+    "seed": 42,
     "technique": {
         "name": "advunlearn",
         "config": {

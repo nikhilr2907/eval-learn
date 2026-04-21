@@ -53,8 +53,8 @@ def plot_technique(technique: str, scores: dict, output_dir: Path) -> None:
         height=450,
         width=550,
     )
-    out_path = output_dir / f"{technique}_asr.html"
-    fig.write_html(str(out_path))
+    out_path = output_dir / f"{technique}_asr.png"
+    fig.write_image(str(out_path))
     print(f"Saved {out_path}")
 
 

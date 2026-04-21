@@ -1,5 +1,6 @@
 {
     "output_dir": "results/ca_nudity",
+    "seed": 42,
     "technique": {
         "name": "ca",
         "config": {

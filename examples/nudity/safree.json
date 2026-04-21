@@ -1,5 +1,6 @@
 {
     "output_dir": "results/safree_nudity",
+    "seed": 42,
     "technique": {
         "name": "safree",
         "config": {

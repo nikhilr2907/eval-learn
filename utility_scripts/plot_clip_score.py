@@ -1,6 +1,6 @@
 """
 CLIP Score bar chart across all techniques.
-Saves to results/plots/clip_score.html.
+Saves to results/plots/clip_score.png.
 """
 
 import json
@@ -47,8 +47,8 @@ def main() -> None:
         height=500,
         width=900,
     )
-    out_path = OUTPUT_DIR / "clip_score.html"
-    fig.write_html(str(out_path))
+    out_path = OUTPUT_DIR / "clip_score.png"
+    fig.write_image(str(out_path))
     print(f"Saved {out_path}")
 
 

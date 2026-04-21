@@ -1,5 +1,6 @@
 {
     "output_dir": "results/esd_nudity",
+    "seed": 42,
     "technique": {
         "name": "esd",
         "config": {
