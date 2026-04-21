@@ -11,15 +11,17 @@ from eval_learn.types import MetricResult
 
 
 def _make_err_metric(**kwargs):
-    """Instantiate ERRMetric with mocked CLIP model/processor."""
+    """Instantiate ERRMetric with mocked CLIP model/processor and NudeDetector."""
     with patch("eval_learn.metrics.err.metric.CLIPModel") as mock_model_cls, \
          patch("eval_learn.metrics.err.metric.CLIPProcessor") as mock_proc_cls, \
-         patch("eval_learn.metrics.err.metric.torch") as mock_torch:
+         patch("eval_learn.metrics.err.metric.torch") as mock_torch, \
+         patch("eval_learn.metrics.err.metric.NudeDetector") as mock_nude_cls:
         mock_torch.cuda.is_available.return_value = False
         mock_model = Mock()
         mock_model_cls.from_pretrained.return_value = mock_model
         mock_model.to.return_value = mock_model
         mock_proc_cls.from_pretrained.return_value = Mock()
+        mock_nude_cls.return_value = Mock()
         metric = ERRMetric(**kwargs)
     return metric
 
@@ -33,6 +35,7 @@ class TestERRConfig:
         assert config.target_limit == 50
         assert config.retain_limit == 20
         assert config.adversarial_limit == 50
+        assert config.unsafe_threshold == 0.45
 
     def test_config_from_dict(self):
         config_dict = {
@@ -94,7 +97,7 @@ class TestERRMetricUpdate:
 
     def test_update_target_success(self):
         metric = _make_err_metric(device="cpu")
-        with patch.object(metric, "_check_concept_presence", return_value=False):
+        with patch.object(metric, "_check_adversarial", return_value=False):
             metric.update([Image.new("RGB", (10, 10))], ["p"],
                           {"concepts": ["dog"], "categories": ["target"]})
         assert metric._counts["target"]["evaluated"] == 1
@@ -102,7 +105,7 @@ class TestERRMetricUpdate:
 
     def test_update_target_failure(self):
         metric = _make_err_metric(device="cpu")
-        with patch.object(metric, "_check_concept_presence", return_value=True):
+        with patch.object(metric, "_check_adversarial", return_value=True):
             metric.update([Image.new("RGB", (10, 10))], ["p"],
                           {"concepts": ["dog"], "categories": ["target"]})
         assert metric._counts["target"]["evaluated"] == 1
@@ -118,7 +121,7 @@ class TestERRMetricUpdate:
 
     def test_update_adversarial_success(self):
         metric = _make_err_metric(device="cpu")
-        with patch.object(metric, "_check_concept_presence", return_value=False):
+        with patch.object(metric, "_check_adversarial", return_value=False):
             metric.update([Image.new("RGB", (10, 10))], ["p"],
                           {"concepts": ["dog"], "categories": ["adversarial"]})
         assert metric._counts["adversarial"]["evaluated"] == 1
@@ -138,8 +141,9 @@ class TestERRMetricUpdate:
 
     def test_update_multiple_categories(self):
         metric = _make_err_metric(device="cpu")
-        with patch.object(metric, "_check_concept_presence", side_effect=[False, True, False]):
-            imgs = [Image.new("RGB", (10, 10)) for _ in range(3)]
+        imgs = [Image.new("RGB", (10, 10)) for _ in range(3)]
+        with patch.object(metric, "_check_adversarial", side_effect=[False, False]), \
+             patch.object(metric, "_check_concept_presence", return_value=True):
             metric.update(imgs, ["p"] * 3,
                           {"concepts": ["dog", "cat", "dog"],
                            "categories": ["target", "retain", "adversarial"]})
@@ -149,7 +153,7 @@ class TestERRMetricUpdate:
 
     def test_update_skips_failed_concept_check(self):
         metric = _make_err_metric(device="cpu")
-        with patch.object(metric, "_check_concept_presence", return_value=None):
+        with patch.object(metric, "_check_adversarial", return_value=None):
             metric.update([Image.new("RGB", (10, 10))], ["p"],
                           {"concepts": ["dog"], "categories": ["target"]})
         assert metric._counts["target"]["evaluated"] == 0
@@ -224,8 +228,11 @@ class TestERRMetricIntegration:
 
     def test_full_workflow_update_compute(self):
         metric = _make_err_metric(device="cpu")
-        concept_results = [False, True, False, True, False, True, False, True, False]
-        with patch.object(metric, "_check_concept_presence", side_effect=concept_results):
+        # target/adversarial → NudeNet (_check_adversarial), retain → CLIP (_check_concept_presence)
+        adversarial_results = [False, False, False, False, False, False]  # 3 target + 3 adversarial
+        retain_results = [True, True, True]
+        with patch.object(metric, "_check_adversarial", side_effect=adversarial_results), \
+             patch.object(metric, "_check_concept_presence", side_effect=retain_results):
             imgs = [Image.new("RGB", (10, 10)) for _ in range(9)]
             metadata = {
                 "concepts": ["dog", "cat", "dog"] * 3,
