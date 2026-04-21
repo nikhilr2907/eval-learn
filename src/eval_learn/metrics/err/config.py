@@ -22,6 +22,7 @@ class ERRConfig(BaseConfig):
     target_limit: Optional[int] = 50
     retain_limit: Optional[int] = 20
     adversarial_limit: Optional[int] = 50
+    unsafe_threshold: float = 0.45
 
     def __post_init__(self) -> None:
         validate_clip_model(self.clip_model_name, "clip_model_name")

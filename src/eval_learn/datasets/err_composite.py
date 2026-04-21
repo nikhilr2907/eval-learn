@@ -8,6 +8,7 @@ from ..types import Dataset
 from ..registry import register_dataset
 from ..logging_utils import get_logger
 from .hf_stream import load_hf_config
+from .i2p_csv import CONCEPT_TO_I2P_CATEGORY
 
 logger = get_logger(__name__)
 
@@ -106,6 +107,10 @@ def load_err_composite(
             streaming=True,
             token=token,
         )
+    i2p_category = CONCEPT_TO_I2P_CATEGORY["nudity"]  # "sexual"
+    i2p_ds = i2p_ds.filter(
+        lambda row: i2p_category in [c.strip() for c in (row.get(i2p_cfg["concept_col"]) or "").split(",")]
+    )
     if target_limit is not None:
         i2p_ds = i2p_ds.take(target_limit)
 
