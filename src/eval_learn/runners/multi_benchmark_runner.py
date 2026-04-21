@@ -196,17 +196,6 @@ class MultiBenchmarkRunner(BaseRunner):
             # Track dataset source for report
             metric_datasets[metric_name] = dataset_source
 
-            # Save per-metric report stub (images already flushed per-batch)
-            self._log_phase(f"Saving artifacts for metric '{metric_name}'")
-            self.writer.save_run(
-                run_id=run_id,
-                technique_name=self.technique_name,
-                metric_name=metric_name,
-                images=[],
-                report=None,
-                metadata=metric_metadata,
-            )
-
             # Free metric and its GPU models before loading the next metric
             del metric
             try:
