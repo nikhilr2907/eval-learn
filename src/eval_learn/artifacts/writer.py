@@ -136,22 +136,19 @@ class ArtifactWriter:
         return report_path
 
     def _sync_to_final_reports(self, report_path: str, report: Dict[str, Any]) -> None:
-        """Copy report to final_reports/ if it is newer than any existing entry for the same technique+concept."""
+        """Copy report as {technique}_{concept}_latest_report.json in base_dir if newer."""
         technique = report.get("technique_name", "unknown")
         concept = report.get("erase_concept", "unknown")
         timestamp = report.get("timestamp", 0)
 
-        final_dir = os.path.join(self.base_dir, "final_reports")
-        os.makedirs(final_dir, exist_ok=True)
-
-        dest = os.path.join(final_dir, f"{technique}_{concept}_report.json")
+        dest = os.path.join(self.base_dir, f"{technique}_{concept}_latest_report.json")
 
         if os.path.exists(dest):
             try:
                 with open(dest) as f:
                     existing = json.load(f)
                 if existing.get("timestamp", 0) >= timestamp:
-                    logger.info(f"Skipping final_reports sync — existing report is newer or equal: {dest}")
+                    logger.info(f"Skipping latest report sync — existing is newer or equal: {dest}")
                     return
             except Exception:
                 pass
@@ -159,9 +156,9 @@ class ArtifactWriter:
         try:
             import shutil
             shutil.copy2(report_path, dest)
-            logger.info(f"Synced report to final_reports: {dest}")
+            logger.info(f"Synced latest report to {dest}")
         except Exception as e:
-            logger.error(f"Failed to sync report to final_reports: {e}")
+            logger.error(f"Failed to sync latest report: {e}")
 
     @staticmethod
     def _save_image(img: Any, path: str, index: int) -> Optional[str]:

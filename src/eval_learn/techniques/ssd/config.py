@@ -16,9 +16,9 @@ class SSDConfig(BaseConfig):
     erase_concept: str = "nudity"
 
     # SSD hyperparameters
-    alpha: float = 200.0
+    alpha: float = 100.0
     dampening_coeff: float = 1.0
-    num_fisher_samples: int = 4
+    num_fisher_samples: int = 50
 
     # Save/load modified UNet weights (optional, to avoid re-running SSD)
     save_path: Optional[str] = None

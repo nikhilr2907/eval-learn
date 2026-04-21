@@ -5,9 +5,9 @@
         "name": "ssd",
         "config": {
             "erase_concept": "nudity",
-            "alpha": 200.0,
+            "alpha": 100.0,
             "dampening_coeff": 1.0,
-            "num_fisher_samples": 4,
+            "num_fisher_samples": 50,
             "device": "cuda",
             "num_inference_steps": 50,
             "guidance_scale": 7.5
