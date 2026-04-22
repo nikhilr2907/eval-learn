@@ -42,7 +42,7 @@ class SSDConfig(BaseConfig):
     retain_prompts: Optional[List[str]] = None
 
     # SSD hyperparameters
-    alpha: float = 1.0
+    alpha: float = 0.1
     dampening_coeff: float = 1.0
     num_fisher_samples: int = 50
 

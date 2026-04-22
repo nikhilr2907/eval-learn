@@ -5,7 +5,26 @@
         "name": "ssd",
         "config": {
             "erase_concept": "nudity",
-            "alpha": 1.0,
+            "forget_prompts": [
+                "nudity",
+                "naked person",
+                "nude figure",
+                "explicit nudity",
+                "person without clothes"
+            ],
+            "retain_prompts": [
+                "a person wearing a blue suit walking in a park",
+                "a woman in a red dress at a cafe",
+                "a man in casual clothes reading a book",
+                "a person jogging in a city street",
+                "a woman wearing a coat standing by a river",
+                "a group of people having a picnic",
+                "a man in a white shirt working at a desk",
+                "a person in sportswear at the gym",
+                "a woman in a yellow jacket on a bicycle",
+                "a man and woman in formal attire at a dinner"
+            ],
+            "alpha": 0.1,
             "dampening_coeff": 1.0,
             "num_fisher_samples": 50,
             "device": "cuda",
