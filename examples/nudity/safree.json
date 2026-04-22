@@ -78,7 +78,7 @@
         {
             "name": "clip_score",
             "config": {
-                "clip_model_name": "openai/clip-vit-base-patch32",
+                "clip_model_name": "openai/clip-vit-large-patch14",
                 "device": "cuda",
                 "limit": 50
             }

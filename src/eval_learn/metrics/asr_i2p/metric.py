@@ -87,7 +87,7 @@ class ASRMetric:
             _HF_TO_Q16 = {
                 "openai/clip-vit-large-patch14": "ViT-L/14",
                 "openai/clip-vit-base-patch16": "ViT-B/16",
-                "openai/clip-vit-base-patch32": "ViT-B/32",
+                 "openai/clip-vit-large-patch14": "ViT-B/32",
             }
             q16_model = _HF_TO_Q16.get(self.config.clip_model_id, "ViT-L/14")
             if q16_model == "ViT-L/14" and self.config.clip_model_id not in _HF_TO_Q16:

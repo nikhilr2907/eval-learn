@@ -39,14 +39,14 @@ class TestERRConfig:
 
     def test_config_from_dict(self):
         config_dict = {
-            "clip_model_name": "openai/clip-vit-base-patch32",
+            "clip_model_name":  "openai/clip-vit-large-patch14",
             "device": "cpu",
             "target_limit": 50,
             "retain_limit": 75,
             "adversarial_limit": 60,
         }
         config = ERRConfig.from_dict(config_dict)
-        assert config.clip_model_name == "openai/clip-vit-base-patch32"
+        assert config.clip_model_name ==  "openai/clip-vit-large-patch14"
         assert config.device == "cpu"
         assert config.target_limit == 50
         assert config.retain_limit == 75

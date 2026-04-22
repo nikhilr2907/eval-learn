@@ -5,7 +5,7 @@
         "name": "ssd",
         "config": {
             "erase_concept": "nudity",
-            "alpha": 100.0,
+            "alpha": 1.0,
             "dampening_coeff": 1.0,
             "num_fisher_samples": 50,
             "device": "cuda",
@@ -74,7 +74,7 @@
         {
             "name": "clip_score",
             "config": {
-                "clip_model_name": "openai/clip-vit-base-patch32",
+                "clip_model_name": "openai/clip-vit-large-patch14",
                 "device": "cuda",
                 "limit": 50
             }

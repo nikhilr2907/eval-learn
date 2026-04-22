@@ -41,6 +41,8 @@ class SSDTechnique:
             device=self.config.device,
             use_fp16=self.config.use_fp16,
             erase_concept=self.config.erase_concept,
+            forget_prompts=self.config.resolved_forget_prompts(),
+            retain_prompts=self.config.resolved_retain_prompts(),
             alpha=self.config.alpha,
             num_fisher_samples=self.config.num_fisher_samples,
             dampening_coeff=self.config.dampening_coeff,

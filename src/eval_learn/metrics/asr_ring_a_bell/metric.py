@@ -101,7 +101,7 @@ class ASRRingABellMetric:
             _HF_TO_Q16 = {
                 "openai/clip-vit-large-patch14": "ViT-L/14",
                 "openai/clip-vit-base-patch16": "ViT-B/16",
-                "openai/clip-vit-base-patch32": "ViT-B/32",
+                 "openai/clip-vit-large-patch14": "ViT-B/32",
             }
             q16_model = _HF_TO_Q16.get(self.config.clip_model_id, "ViT-L/14")
             if q16_model == "ViT-L/14" and self.config.clip_model_id not in _HF_TO_Q16:
@@ -162,7 +162,7 @@ class ASRRingABellMetric:
                 "openai/clip-vit-large-patch14": 768,
                 "openai/clip-vit-large-patch14-336": 768,
                 "openai/clip-vit-base-patch16": 512,
-                "openai/clip-vit-base-patch32": 512,
+                 "openai/clip-vit-large-patch14": 512,
             }
             expected_dim = _MODEL_EMBED_DIM.get(self.config.clip_model_id)
             if expected_dim is not None:

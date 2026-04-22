@@ -74,7 +74,7 @@ class TestUAIRAConfig:
     def test_config_from_dict(self):
         """Test creating config from dictionary."""
         config_dict = {
-            "clip_model_name": "openai/clip-vit-base-patch32",
+            "clip_model_name":  "openai/clip-vit-large-patch14",
             "device": "cpu",
             "target_prompts_path": "/path/to/target.csv",
             "retain_prompts_path": "/path/to/retain.csv",
@@ -83,7 +83,7 @@ class TestUAIRAConfig:
             "batch_size": 16,
         }
         config = UAIRAConfig.from_dict(config_dict)
-        assert config.clip_model_name == "openai/clip-vit-base-patch32"
+        assert config.clip_model_name ==  "openai/clip-vit-large-patch14"
         assert config.device == "cpu"
         assert config.target_prompts_path == "/path/to/target.csv"
         assert config.retain_prompts_path == "/path/to/retain.csv"

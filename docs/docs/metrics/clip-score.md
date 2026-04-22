@@ -29,7 +29,7 @@ All techniques are compatible with CLIP Score. No concept restrictions.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `clip_model_name` | `str` | `"openai/clip-vit-base-patch32"` | CLIP model for embedding extraction. See supported models below. |
+| `clip_model_name` | `str` | ` "openai/clip-vit-large-patch14"` | CLIP model for embedding extraction. See supported models below. |
 | `device` | `str \| None` | `None` | Device for CLIP inference. Auto-detects CUDA if `None`. |
 | `limit` | `int \| None` | `300` | Maximum number of prompts from the TIFA dataset. |
 
@@ -84,7 +84,7 @@ All techniques are compatible with CLIP Score. No concept restrictions.
   "metric": {
     "name": "clip_score",
     "config": {
-      "clip_model_name": "openai/clip-vit-base-patch32",
+      "clip_model_name":  "openai/clip-vit-large-patch14",
       "device": "cuda",
       "limit": 300
     }
@@ -98,7 +98,7 @@ All techniques are compatible with CLIP Score. No concept restrictions.
 {
   "name": "clip_score",
   "config": {
-    "clip_model_name": "openai/clip-vit-base-patch32",
+    "clip_model_name":  "openai/clip-vit-large-patch14",
     "device": "cuda",
     "limit": 300
   }
