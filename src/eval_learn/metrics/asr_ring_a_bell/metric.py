@@ -162,7 +162,7 @@ class ASRRingABellMetric:
                 "openai/clip-vit-large-patch14": 768,
                 "openai/clip-vit-large-patch14-336": 768,
                 "openai/clip-vit-base-patch16": 512,
-                 "openai/clip-vit-large-patch14": 512,
+                "openai/clip-vit-base-patch32": 512,
             }
             expected_dim = _MODEL_EMBED_DIM.get(self.config.clip_model_id)
             if expected_dim is not None:
