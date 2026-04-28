@@ -11,6 +11,7 @@ Each technique is a concept unlearning method that modifies a Stable Diffusion m
 | [CA](ca.md) | [ICCV 2023](https://arxiv.org/abs/2303.13516) | Ablates concept by fine-tuning cross-attention to map it to an anchor |
 | [CoGFD](cogfd.md) | [ICLR 2025](https://openreview.net/forum?id=OBjF5I4PWg) | Erases concept *combinations* while preserving individual components |
 | [AdvUnlearn](advunlearn.md) | [NeurIPS 2024](https://arxiv.org/abs/2405.15234) | Adversarially robust unlearning via text-encoder fine-tuning |
+| [RECE](rece.md) | [ECCV 2024](https://arxiv.org/abs/2307.12523) | Iterative closed-form adversarial embedding updates on cross-attention weights |
 
 ## Inference-time
 

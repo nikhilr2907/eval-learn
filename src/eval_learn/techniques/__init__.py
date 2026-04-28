@@ -52,6 +52,12 @@ except Exception as e:
     import logging
     logging.getLogger(__name__).warning("Could not register trasce: %s", e)
 
+try:
+    from .rece.wrapper import RECETechnique
+except Exception as e:
+    import logging
+    logging.getLogger(__name__).warning("Could not register rece: %s", e)
+
 __all__ = [
     name
     for name in [
@@ -68,6 +74,7 @@ __all__ = [
         "SSDTechnique",
         "TraSCETechnique",
         "CATechnique",
+        "RECETechnique",
     ]
     if name in globals()
 ]

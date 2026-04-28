@@ -71,6 +71,7 @@ advunlearn = "eval_learn.techniques.advunlearn.wrapper:AdvUnlearnTechnique"
 ssd = "eval_learn.techniques.ssd.wrapper:SSDTechnique"
 trasce = "eval_learn.techniques.trasce.wrapper:TraSCETechnique"
 ca = "eval_learn.techniques.ca.wrapper:CATechnique"
+rece = "eval_learn.techniques.rece.wrapper:RECETechnique"
 
 [project.entry-points."eval_learn.metrics"]
 asr_p4d = "eval_learn.metrics.asr_p4d.metric:ASRP4D"

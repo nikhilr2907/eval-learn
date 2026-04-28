@@ -178,3 +178,31 @@ class TestValidateTechniqueMetricPair:
         # Should not raise — metric_config=None is handled internally
         validate_technique_metric_pair("esd", {"erase_concept": "nudity"}, "fid", None)
 
+    def test_rece_with_nudity_fid_passes(self):
+        validate_technique_metric_pair("rece", {"erase_concept": "nudity"}, "fid")
+
+    def test_rece_with_nudity_asr_passes(self):
+        validate_technique_metric_pair("rece", {"erase_concept": "nudity"}, "asr_i2p")
+
+    def test_rece_with_nudity_err_passes(self):
+        validate_technique_metric_pair("rece", {"erase_concept": "nudity"}, "err")
+
+    def test_rece_with_violence_err_raises(self):
+        with pytest.raises(ValidationError, match="nudity-specific"):
+            validate_technique_metric_pair("rece", {"erase_concept": "violence"}, "err")
+
+    def test_rece_with_violence_fid_passes(self):
+        validate_technique_metric_pair("rece", {"erase_concept": "violence"}, "fid")
+
+    def test_rece_ua_ira_without_paths_raises(self):
+        with pytest.raises(ValidationError, match="target_prompts_path"):
+            validate_technique_metric_pair("rece", {"erase_concept": "nudity"}, "ua_ira")
+
+    def test_rece_ua_ira_with_paths_passes(self):
+        validate_technique_metric_pair(
+            "rece",
+            {"erase_concept": "nudity"},
+            "ua_ira",
+            {"target_prompts_path": "/t.csv", "retain_prompts_path": "/r.csv"},
+        )
+

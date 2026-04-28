@@ -38,6 +38,7 @@ nav:
     - SSD: techniques/ssd.md
     - TraSCE: techniques/trasce.md
     - CA: techniques/ca.md
+    - RECE: techniques/rece.md
   - Running Experiments:
     - GPU Requirements: running-experiments/gpu-requirements.md
     - Compatibility: running-experiments/compatibility.md
