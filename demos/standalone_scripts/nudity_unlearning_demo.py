@@ -64,10 +64,10 @@ def main():
         #     "CoGFD — Concept Graph-based high-level Feature Decoupling",
         #     "examples/nudity/cogfd.json",
         # ),
-        (
-            "SSD — Selective Synaptic Dampening",
-            "examples/nudity/ssd.json",
-        ),
+        # (
+        #     "SSD — Selective Synaptic Dampening",
+        #     "examples/nudity/ssd.json",
+        # ),
         # (
         #     "TraSCE — Training-free Stable Concept Editing",
         #     "examples/nudity/trasce.json",
@@ -102,6 +102,10 @@ def main():
         #     "AdvUnlearn — Adversarial Unlearning",
         #     "examples/nudity/advunlearn.json",
         # ),
+        (
+            "RECE — Reliable and Efficient Concept Erasure",
+            "examples/nudity/rece.json",
+        ),
     ]
 
     for title, config_path in techniques:

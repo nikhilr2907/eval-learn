@@ -17,6 +17,7 @@
 -e ../packages/cogfd/
 -e ../packages/trasce/
 -e ../packages/ca/
+-e ../packages/rece/
  
 # HuggingFace package installs (WARNING PROBLEMATIC CURRENTLY)
 # git+https://huggingface.co/datasets/Unlearningltd/Packages#subdirectory=esd
