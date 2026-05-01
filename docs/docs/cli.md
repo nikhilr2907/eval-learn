@@ -138,14 +138,12 @@ Metrics:
   asr_p4d
   asr_ring_a_bell
   clip_score
-  err
   fid
   tifa
   ua_ira
 
 Datasets:
   coco_parquet
-  err_composite
   i2p_csv
   tifa_csv
   ua_ira_csv

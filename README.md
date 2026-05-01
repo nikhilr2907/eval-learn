@@ -23,6 +23,7 @@ Unlearning techniques modify or constrain Stable Diffusion to suppress specific 
 | Concept Steerers | `concept_steerers` |
 | SAeUron | `saeuron` |
 | Reliable and Efficient Concept Erasure | `rece` |
+| SalUn (Saliency Unlearning) | `salun` |
 | Free Run (custom model) | `free_run` |
 
 ## Metrics
@@ -72,6 +73,7 @@ pip install -e safree/
 pip install -e concept-steerers/
 pip install -e advunlearn/
 pip install -e rece/
+pip install -e salun_sd/
 ```
 
 SLD is built into eval-learn via the `diffusers` library and requires no extra install.

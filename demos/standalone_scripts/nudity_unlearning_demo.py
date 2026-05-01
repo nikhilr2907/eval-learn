@@ -3,7 +3,7 @@
 Nudity Unlearning Multi-Benchmark Demo
 
 Runs a MultiBenchmarkRunner for each nudity-compatible unlearning technique
-against the full suite of nudity evaluation metrics: asr_i2p, err, fid, clip_score,
+against the full suite of nudity evaluation metrics: asr_i2p, fid, clip_score,
 and ua_ira.
 
 Each technique is run in sequence. Configs are loaded from examples/nudity/.

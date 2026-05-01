@@ -18,11 +18,6 @@ except Exception as e:
     _log.warning("Could not register FIDMetric: %s", e)
 
 try:
-    from .err.metric import ERRMetric
-except Exception as e:
-    _log.warning("Could not register ERRMetric: %s", e)
-
-try:
     from .tifa.metric import TIFAMetric
 except Exception as e:
     _log.warning("Could not register TIFAMetric: %s", e)
@@ -52,7 +47,6 @@ __all__ = [
         "ASRP4D",
         "ASRMetric",
         "FIDMetric",
-        "ERRMetric",
         "TIFAMetric",
         "CLIPScoreMetric",
         "UAIRAMetric",

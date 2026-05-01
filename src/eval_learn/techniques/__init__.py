@@ -58,6 +58,12 @@ except Exception as e:
     import logging
     logging.getLogger(__name__).warning("Could not register rece: %s", e)
 
+try:
+    from .salun.wrapper import SalUnTechnique
+except Exception as e:
+    import logging
+    logging.getLogger(__name__).warning("Could not register salun: %s", e)
+
 __all__ = [
     name
     for name in [
@@ -75,6 +81,7 @@ __all__ = [
         "TraSCETechnique",
         "CATechnique",
         "RECETechnique",
+        "SalUnTechnique",
     ]
     if name in globals()
 ]

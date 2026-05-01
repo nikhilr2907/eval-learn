@@ -39,6 +39,7 @@ nav:
     - TraSCE: techniques/trasce.md
     - CA: techniques/ca.md
     - RECE: techniques/rece.md
+    - SalUn: techniques/salun.md
   - Running Experiments:
     - GPU Requirements: running-experiments/gpu-requirements.md
     - Compatibility: running-experiments/compatibility.md
@@ -50,7 +51,6 @@ nav:
     - Overview: metrics/index.md
     - FID: metrics/fid.md
     - CLIP Score: metrics/clip-score.md
-    - ERR: metrics/err.md
     - TIFA: metrics/tifa.md
     - UA-IRA: metrics/ua-ira.md
     - ASR I2P: metrics/asr_i2p.md

@@ -72,6 +72,7 @@ ssd = "eval_learn.techniques.ssd.wrapper:SSDTechnique"
 trasce = "eval_learn.techniques.trasce.wrapper:TraSCETechnique"
 ca = "eval_learn.techniques.ca.wrapper:CATechnique"
 rece = "eval_learn.techniques.rece.wrapper:RECETechnique"
+salun = "eval_learn.techniques.salun.wrapper:SalUnTechnique"
 
 [project.entry-points."eval_learn.metrics"]
 asr_p4d = "eval_learn.metrics.asr_p4d.metric:ASRP4D"
@@ -79,14 +80,12 @@ asr_i2p = "eval_learn.metrics.asr_i2p.metric:ASRMetric"
 asr_ring_a_bell = "eval_learn.metrics.asr_ring_a_bell.metric:ASRRingABellMetric"
 asr_mma_diffusion = "eval_learn.metrics.asr_mma_diffusion.metric:MMADiffusionMetric"
 fid = "eval_learn.metrics.fid.metric:FIDMetric"
-err = "eval_learn.metrics.err.metric:ERRMetric"
 tifa = "eval_learn.metrics.tifa.metric:TIFAMetric"
 clip_score = "eval_learn.metrics.clip_score.metric:CLIPScoreMetric"
 ua_ira = "eval_learn.metrics.ua_ira.metric:UAIRAMetric"
 
 [project.entry-points."eval_learn.datasets"]
 i2p_csv = "eval_learn.datasets.i2p_csv:load_i2p_csv"
-err_composite = "eval_learn.datasets.err_composite:load_err_composite"
 tifa_csv = "eval_learn.datasets.tifa_csv:load_tifa_csv"
 coco_parquet = "eval_learn.datasets.coco_parquet:load_coco_parquet"
 ua_ira_csv = "eval_learn.datasets.ua_ira_csv:load_ua_ira_csv"

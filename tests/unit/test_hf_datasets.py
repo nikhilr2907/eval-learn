@@ -84,33 +84,6 @@ class TestHFDatasets:
         first_row = get_first_row(ds)
         assert "captions" in first_row
 
-    def test_err_challenge_loads(self):
-        """Verify ERR challenge dataset loads from HF with correct schema."""
-        from datasets import load_dataset, Features, Value, IterableDataset, DatasetDict
-
-        token = os.getenv("HF_TOKEN")
-        features = Features({
-            'concept_type': Value('string'),
-            'concept_name': Value('string'),
-            'direct_prompt': Value('string'),
-            'indirect_prompt': Value('string'),
-            'adversarial_prompt': Value('string'),
-        })
-        ds = load_dataset(
-            "Unlearningltd/datasets",
-            data_files="ERR/raw_csv_data/challenge_dataset.csv",
-            features=features,
-            split="train",
-            streaming=True,
-            token=token,
-        )
-        print(f"[DEBUG] challenge dataset type: {type(ds)}")
-        assert isinstance(ds, IterableDataset), f"Expected IterableDataset, got {type(ds)}"
-
-        first_row = get_first_row(ds)
-        assert "direct_prompt" in first_row
-        assert "concept_name" in first_row
-
     def test_ring_a_bell_loads(self):
         """Verify Ring-A-Bell dataset loads from HF with correct schema."""
         from datasets import load_dataset, Features, Value, IterableDataset, DatasetDict

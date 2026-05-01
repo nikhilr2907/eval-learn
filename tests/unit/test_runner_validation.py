@@ -5,7 +5,6 @@ import pytest
 from eval_learn.runners.validation import (
     ValidationError,
     get_erase_concept,
-    validate_nudity_metrics,
     validate_uce_concept,
     validate_ua_ira_paths,
     validate_technique_metric_pair,
@@ -31,50 +30,6 @@ class TestGetEraseConcept:
 
     def test_lowercases_value(self):
         assert get_erase_concept("mace", {"erase_concept": "DOG"}) == "dog"
-
-
-# ---------------------------------------------------------------------------
-# validate_nudity_metrics
-# ---------------------------------------------------------------------------
-
-class TestValidateNudityMetrics:
-    def test_non_nudity_metric_always_passes(self):
-        # fid, clip_score, ua_ira don't care about erase_concept
-        validate_nudity_metrics("esd", "dog", "fid")
-        validate_nudity_metrics("esd", None, "clip_score")
-
-    def test_asr_with_nudity_passes(self):
-        validate_nudity_metrics("esd", "nudity", "asr")
-
-    def test_asr_with_non_nudity_concept_passes(self):
-        # ASR I2P supports all concepts — no restriction at the validation layer
-        validate_nudity_metrics("esd", "violence", "asr")
-        validate_nudity_metrics("esd", "dog", "asr")
-        validate_nudity_metrics("esd", None, "asr")
-
-    def test_err_with_nudity_passes(self):
-        validate_nudity_metrics("esd", "nudity", "err")
-
-    def test_err_with_none_concept_raises(self):
-        with pytest.raises(ValidationError, match="nudity-specific"):
-            validate_nudity_metrics("esd", None, "err")
-
-    def test_err_with_violence_raises(self):
-        with pytest.raises(ValidationError, match="nudity-specific"):
-            validate_nudity_metrics("esd", "violence", "err")
-
-    def test_err_with_free_run_passes(self):
-        # free_run has no erase_concept — explicitly exempted
-        validate_nudity_metrics("free_run", None, "err")
-
-    def test_asr_i2p_with_violence_passes(self):
-        validate_nudity_metrics("esd", "violence", "asr_i2p")
-
-    def test_asr_p4d_with_violence_passes(self):
-        validate_nudity_metrics("esd", "violence", "asr_p4d")
-
-    def test_asr_mma_diffusion_with_violence_passes(self):
-        validate_nudity_metrics("esd", "violence", "asr_mma_diffusion")
 
 
 # ---------------------------------------------------------------------------
@@ -151,10 +106,6 @@ class TestValidateTechniqueMetricPair:
     def test_concept_steerers_with_violence_passes(self):
         validate_technique_metric_pair("concept_steerers", {"erase_concept": "violence"}, "fid")
 
-    def test_err_with_violence_raises(self):
-        with pytest.raises(ValidationError, match="nudity-specific"):
-            validate_technique_metric_pair("esd", {"erase_concept": "violence"}, "err")
-
     def test_uce_with_invalid_preset_raises(self):
         with pytest.raises(ValidationError, match="UCE only supports presets"):
             validate_technique_metric_pair("uce", {"preset": "cat"}, "fid")
@@ -183,13 +134,6 @@ class TestValidateTechniqueMetricPair:
 
     def test_rece_with_nudity_asr_passes(self):
         validate_technique_metric_pair("rece", {"erase_concept": "nudity"}, "asr_i2p")
-
-    def test_rece_with_nudity_err_passes(self):
-        validate_technique_metric_pair("rece", {"erase_concept": "nudity"}, "err")
-
-    def test_rece_with_violence_err_raises(self):
-        with pytest.raises(ValidationError, match="nudity-specific"):
-            validate_technique_metric_pair("rece", {"erase_concept": "violence"}, "err")
 
     def test_rece_with_violence_fid_passes(self):
         validate_technique_metric_pair("rece", {"erase_concept": "violence"}, "fid")

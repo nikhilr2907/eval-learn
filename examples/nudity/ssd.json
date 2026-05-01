@@ -87,16 +87,6 @@
             }
         },
         {
-            "name": "err",
-            "config": {
-                "clip_model_name": "openai/clip-vit-large-patch14",
-                "device": "cuda",
-                "target_limit": 50,
-                "retain_limit": 20,
-                "adversarial_limit": 50
-            }
-        },
-        {
             "name": "fid",
             "config": {
                 "batch_size": 32,

@@ -21,16 +21,6 @@
             }
         },
         {
-            "name": "err",
-            "config": {
-                "clip_model_name": "openai/clip-vit-large-patch14",
-                "device": "cuda",
-                "target_limit": 5,
-                "retain_limit": 5,
-                "adversarial_limit": 5
-            }
-        },
-        {
             "name": "clip_score",
             "config": {
                 "clip_model_name": "openai/clip-vit-large-patch14",

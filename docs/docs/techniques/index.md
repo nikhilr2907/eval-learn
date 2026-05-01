@@ -12,6 +12,7 @@ Each technique is a concept unlearning method that modifies a Stable Diffusion m
 | [CoGFD](cogfd.md) | [ICLR 2025](https://openreview.net/forum?id=OBjF5I4PWg) | Erases concept *combinations* while preserving individual components |
 | [AdvUnlearn](advunlearn.md) | [NeurIPS 2024](https://arxiv.org/abs/2405.15234) | Adversarially robust unlearning via text-encoder fine-tuning |
 | [RECE](rece.md) | [ECCV 2024](https://arxiv.org/abs/2307.12523) | Iterative closed-form adversarial embedding updates on cross-attention weights |
+| [SalUn](salun.md) | [ICLR 2024](https://arxiv.org/abs/2310.12508) | Saliency-masked gradient fine-tuning targeting only the most concept-responsible UNet weights |
 
 ## Inference-time
 

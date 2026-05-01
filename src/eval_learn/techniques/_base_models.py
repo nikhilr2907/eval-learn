@@ -20,6 +20,7 @@ TECHNIQUE_BASE_MODELS: Dict[str, str] = {
     "ssd": "CompVis/stable-diffusion-v1-4",
     "trasce": "CompVis/stable-diffusion-v1-4",
     "rece": "CompVis/stable-diffusion-v1-4",
+    "salun": "CompVis/stable-diffusion-v1-4",
 }
 
 

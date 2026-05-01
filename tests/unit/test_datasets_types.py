@@ -34,15 +34,7 @@ def test_dataset_types():
     print(f"   Is IterableDatasetDict: {isinstance(ds2, IterableDatasetDict)}")
     assert isinstance(ds2, IterableDataset) and not isinstance(ds2, IterableDatasetDict), "Must be IterableDataset, not IterableDatasetDict"
 
-    # Test 3: Challenge with data_files
-    print("\n3. Challenge with data_files:")
-    ds3 = load_dataset("Unlearningltd/datasets", data_files="ERR/raw_csv_data/challenge_dataset.csv", split="train", streaming=True, token=token)
-    print(f"   Type: {type(ds3)}")
-    print(f"   Is IterableDataset: {isinstance(ds3, IterableDataset)}")
-    print(f"   Is IterableDatasetDict: {isinstance(ds3, IterableDatasetDict)}")
-    assert isinstance(ds3, IterableDataset) and not isinstance(ds3, IterableDatasetDict), "Must be IterableDataset, not IterableDatasetDict"
-
-    # Test 4: TIFA with data_files (with streaming)
+    # Test 3: TIFA with data_files (with streaming)
     print("\n4. TIFA with data_files (with streaming):")
     ds4 = load_dataset("Unlearningltd/datasets", data_files="tifa/tifa_dataset.csv", split="train", streaming=True, token=token)
     print(f"   Type: {type(ds4)}")

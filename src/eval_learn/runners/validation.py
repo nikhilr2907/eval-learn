@@ -24,28 +24,6 @@ def get_erase_concept(
 
 
 
-def validate_nudity_metrics(
-    technique_name: str, erase_concept: Optional[str], metric_name: str
-) -> None:
-    """Validate ERR requires nudity concept. ASR is multi-concept and not restricted here."""
-    if metric_name != "err":
-        return
-
-    # free_run doesn't have erase_concept field - allow it
-    if technique_name == "free_run":
-        return
-
-    # ERR uses NudeNet + I2P and is nudity-specific
-    if erase_concept != "nudity":
-        raise ValidationError(
-            f"Metric 'err' is nudity-specific "
-            f"(uses NudeNet detector and I2P dataset). "
-            f"Got erase_concept='{erase_concept}'. "
-            f"For non-nudity concepts, use UA_IRA, FID, or CLIP_Score."
-        )
-
-
-
 def validate_uce_concept(erase_concept: Optional[str]) -> None:
     """Validate UCE concept matches one of its 3 pre-trained presets."""
     valid_presets = {"nudity", "violence", "dog"}
@@ -82,10 +60,7 @@ def validate_technique_metric_pair(
     erase_concept = get_erase_concept(technique_name, technique_config)
     metric_config = metric_config or {}
 
-    # Rule 1: Nudity-specific metrics
-    validate_nudity_metrics(technique_name, erase_concept, metric_name)
-
-    # Rule 4: UCE preset validation
+    # UCE preset validation
     if technique_name == "uce":
         validate_uce_concept(erase_concept)
 
