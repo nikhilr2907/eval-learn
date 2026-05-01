@@ -80,6 +80,10 @@ class MMADiffusionConfig(BaseConfig):
     def __post_init__(self) -> None:
         if not self.concept_name:
             raise ValueError("concept_name must be set.")
+        if not self.target_prompts and not self.concept_name.lower() == "nudity":
+            raise ValueError("target_prompts must be set for non-nudity concepts.")
+        if not isinstance(self.target_prompts, list) and not (isinstance(self.target_prompts, str) and self.target_prompts.endswith(".csv")):
+            raise ValueError("target_prompts must be a list of strings or a path to a CSV file.")
         if not self.output_csv:
             raise ValueError("output_csv must be set.")
         validate_sd_text_encoder(self.clip_model_id, "clip_model_id")

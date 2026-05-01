@@ -106,6 +106,10 @@ def main():
             "RECE — Reliable and Efficient Concept Erasure",
             "examples/nudity/rece.json",
         ),
+        # (
+        #     "SalUn — Saliency Unlearning",
+        #     "examples/nudity/salun.json",
+        # ),
     ]
 
     for title, config_path in techniques:
